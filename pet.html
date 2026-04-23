@@ -1,0 +1,94 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Pet — PetAdopt</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Fraunces:ital,opsz,wght@0,9..144,300..900;1,9..144,300..900&family=DM+Sans:wght@300;400;500;600;700&display=swap" rel="stylesheet">
+<link rel="stylesheet" href="css/petadopt.css">
+<link rel="stylesheet" href="css/pet.css">
+</head>
+<body>
+
+<!-- TOAST -->
+<div id="toast" class="toast"></div>
+
+<!-- NAV -->
+<nav class="nav">
+  <div class="nav-i">
+    <a href="index.html" class="logo">🐾 PetAdopt</a>
+    <ul class="nav-links">
+      <li><a href="pets.html" class="nav-link">Encontrar Pet</a></li>
+      <li><a href="ongs.html" class="nav-link">ONGs</a></li>
+      <li><a href="new-pet.html" class="nav-link">Cadastrar Pet</a></li>
+      <li><a href="sobre.html" class="nav-link">Sobre</a></li>
+    </ul>
+    <div class="nav-auth">
+      <a href="login.html" class="btn-nav-login">Entrar</a>
+      <a href="register.html" class="btn-nav-register">Criar conta</a>
+    </div>
+  </div>
+</nav>
+
+<!-- BREADCRUMB -->
+<div class="breadcrumb-wrap">
+  <nav class="breadcrumb" aria-label="Breadcrumb">
+    <a href="index.html">Início</a>
+    <span class="sep">›</span>
+    <a href="pets.html">Pets</a>
+    <span class="sep">›</span>
+    <span class="bc-current" id="bc-name">…</span>
+  </nav>
+</div>
+
+<!-- DETAIL CONTENT (rendered by pet.js) -->
+<div class="detail-wrap reveal" id="detail-content">
+  <!-- JS renders gallery + info panel here -->
+</div>
+
+<!-- SIMILAR PETS -->
+<section class="similar-section reveal reveal-delay-1">
+  <h2 class="similar-title">Outros pets disponíveis 🐾</h2>
+  <div id="similar-grid"></div>
+</section>
+
+<!-- ADOPTION MODAL -->
+<div class="modal-overlay" id="modal" onclick="closeModal(event)" role="dialog" aria-modal="true" aria-labelledby="modal-heading">
+  <div class="modal-box" id="modal-content">
+    <!-- JS renders modal content here -->
+  </div>
+</div>
+
+<!-- FOOTER -->
+<footer class="footer">
+  <div class="footer-compact">
+    <div class="footer-logo">🐾 PetAdopt</div>
+    <span style="font-size:.88rem;color:rgba(255,255,255,0.5)">Conectando pets a lares cheios de amor.</span>
+  </div>
+  <div class="footer-bar">
+    <span>© 2025 PetAdopt. Feito com ❤️ para os animais.</span>
+    <span>🐾 Adote, não compre.</span>
+  </div>
+</footer>
+
+<script src="js/pet.js"></script>
+<script>
+// ===== SCROLL REVEAL =====
+(function () {
+  var els = document.querySelectorAll('.reveal');
+  if (!els.length) return;
+  var observer = new IntersectionObserver(function (entries) {
+    entries.forEach(function (entry) {
+      if (entry.isIntersecting) {
+        entry.target.classList.add('visible');
+        observer.unobserve(entry.target);
+      }
+    });
+  }, { threshold: 0.08 });
+  els.forEach(function (el) { observer.observe(el); });
+})();
+</script>
+</body>
+</html>

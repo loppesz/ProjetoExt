@@ -1,0 +1,208 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Minha Área — PetAdopt</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Fraunces:ital,opsz,wght@0,9..144,300..900;1,9..144,300..900&family=DM+Sans:wght@300;400;500;600;700&display=swap" rel="stylesheet">
+<link rel="stylesheet" href="css/petadopt.css">
+<link rel="stylesheet" href="css/dashboard.css">
+</head>
+<body>
+
+<!-- TOAST -->
+<div class="toast" id="toast"></div>
+
+<!-- NAV -->
+<nav class="nav">
+  <div class="nav-i">
+    <a href="index.html" class="logo">🐾 PetAdopt</a>
+    <ul class="nav-links">
+      <li><a href="pets.html" class="nav-link">Encontrar Pet</a></li>
+      <li><a href="ongs.html" class="nav-link">ONGs</a></li>
+      <li><a href="new-pet.html" class="nav-link">Cadastrar Pet</a></li>
+    </ul>
+    <div class="nav-auth">
+      <span id="nav-user">Olá, Usuário</span>
+      <button class="btn-nav-logout" onclick="logout()">Sair</button>
+    </div>
+  </div>
+</nav>
+
+<!-- DASHBOARD LAYOUT -->
+<div class="dashboard-wrap">
+
+  <!-- SIDEBAR -->
+  <aside class="sidebar">
+    <!-- User Card -->
+    <div class="user-card">
+      <div class="user-avatar">🧑</div>
+      <div class="user-name" id="sb-name">Maria Silva</div>
+      <div class="user-email" id="sb-email">maria@email.com</div>
+      <span class="user-badge" id="sb-badge">Membro ativo</span>
+    </div>
+
+    <!-- Sidebar Nav -->
+    <nav class="sidebar-nav" id="sidebar-nav">
+      <div class="sidebar-link active" onclick="showTab('overview',this)">
+        <span class="icon">📊</span> Resumo
+      </div>
+      <div class="sidebar-link" onclick="showTab('my-pets',this)">
+        <span class="icon">🐾</span> Meus Pets
+        <span class="badge" id="badge-mypets">0</span>
+      </div>
+      <div class="sidebar-link" onclick="showTab('adoptions',this)">
+        <span class="icon">💌</span> Minhas Adoções
+        <span class="badge">2</span>
+      </div>
+      <div class="sidebar-link" onclick="showTab('received',this)">
+        <span class="icon">📬</span> Pedidos Recebidos
+        <span class="badge">1</span>
+      </div>
+      <div class="sidebar-link" onclick="showTab('favorites',this)">
+        <span class="icon">❤️</span> Favoritos
+      </div>
+      <!-- Admin moderation tab injected by JS -->
+      <div style="border-top:1px solid #f0f4f8;margin:12px 0"></div>
+      <div class="sidebar-link" onclick="logout()" style="color:#e74c3c;">
+        <span class="icon">🚪</span> Sair da conta
+      </div>
+    </nav>
+  </aside>
+
+  <!-- MAIN CONTENT -->
+  <main class="content">
+
+    <!-- TAB: OVERVIEW -->
+    <div class="tab-panel active" id="tab-overview">
+      <h2 style="font-family:'Fraunces',serif;font-size:1.7rem;font-weight:700;color:#1a4161;margin-bottom:24px">
+        Olá, <span id="greet-name">Maria</span>! 👋
+      </h2>
+
+      <!-- Stats -->
+      <div class="stats-grid">
+        <div class="stat-card">
+          <div class="stat-value" id="stat-mypets">0</div>
+          <div class="stat-label">Pets cadastrados</div>
+        </div>
+        <div class="stat-card blue">
+          <div class="stat-value">2</div>
+          <div class="stat-label">Solicitações enviadas</div>
+        </div>
+        <div class="stat-card gold">
+          <div class="stat-value">1</div>
+          <div class="stat-label">Pedidos recebidos</div>
+        </div>
+      </div>
+
+      <!-- Quick Actions -->
+      <div class="quick-card">
+        <div class="quick-card-title">Ações rápidas</div>
+        <div class="quick-actions">
+          <a href="new-pet.html" class="btn btn-primary">🐾 Cadastrar pet</a>
+          <a href="pets.html" class="btn btn-outline">🔍 Explorar pets</a>
+          <button class="btn btn-ghost" onclick="showTab('received', document.querySelector('[onclick*=received]'))">📬 Ver pedidos</button>
+        </div>
+
+        <!-- Recent Activity -->
+        <div class="activity-list">
+          <div class="activity-label">Atividade recente</div>
+          <div class="activity-item">
+            <span class="activity-icon">💌</span>
+            <span>Você solicitou a adoção de <strong>Luna</strong></span>
+            <span class="activity-time">há 2 dias</span>
+          </div>
+          <div class="activity-item">
+            <span class="activity-icon">🐾</span>
+            <span>Você cadastrou <strong>Nina</strong> para adoção</span>
+            <span class="activity-time">há 5 dias</span>
+          </div>
+          <div class="activity-item">
+            <span class="activity-icon">📬</span>
+            <span><strong>João Santos</strong> quer adotar <strong>Bob</strong></span>
+            <span class="activity-time">há 1 semana</span>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <!-- TAB: MEUS PETS -->
+    <div class="tab-panel" id="tab-my-pets">
+      <div class="panel-header">
+        <div class="panel-title">Meus Pets</div>
+        <a href="new-pet.html" class="btn btn-primary btn-sm">+ Novo pet</a>
+      </div>
+      <div id="my-pets-list"></div>
+    </div>
+
+    <!-- TAB: MINHAS ADOÇÕES -->
+    <div class="tab-panel" id="tab-adoptions">
+      <div class="panel-header">
+        <div class="panel-title">Minhas Solicitações</div>
+      </div>
+      <div id="adoptions-list"></div>
+    </div>
+
+    <!-- TAB: PEDIDOS RECEBIDOS -->
+    <div class="tab-panel" id="tab-received">
+      <div class="panel-header">
+        <div class="panel-title">Pedidos Recebidos</div>
+      </div>
+      <div id="received-list"></div>
+    </div>
+
+    <!-- TAB: FAVORITOS -->
+    <div class="tab-panel" id="tab-favorites">
+      <div class="panel-header">
+        <div class="panel-title">Favoritos</div>
+      </div>
+      <div class="mini-pets-grid" id="favorites-list"></div>
+    </div>
+
+    <!-- TAB: MODERAÇÃO (admin) -->
+    <div class="tab-panel" id="tab-moderation">
+      <div class="panel-header">
+        <div class="panel-title">🛡️ Moderação</div>
+      </div>
+      <div class="stats-grid" style="margin-bottom:24px">
+        <div class="stat-card gold">
+          <div class="stat-value" id="mod-pending">0</div>
+          <div class="stat-label">Pendentes</div>
+        </div>
+        <div class="stat-card">
+          <div class="stat-value" id="mod-approved">0</div>
+          <div class="stat-label">Aprovados</div>
+        </div>
+        <div class="stat-card" style="border-top-color:#dc2626">
+          <div class="stat-value" id="mod-removed" style="color:#dc2626">0</div>
+          <div class="stat-label">Removidos</div>
+        </div>
+      </div>
+      <div id="moderation-list"></div>
+    </div>
+
+  </main>
+</div>
+
+<!-- MODAL -->
+<div class="modal-overlay" id="modal" onclick="closeModal(event)">
+  <div class="modal-box" id="modal-content"></div>
+</div>
+
+<!-- FOOTER -->
+<footer class="footer">
+  <div class="footer-compact">
+    <div class="footer-logo">🐾 PetAdopt</div>
+    <span style="font-size:.88rem;color:rgba(255,255,255,0.5)">Conectando pets a lares cheios de amor.</span>
+  </div>
+  <div class="footer-bar">
+    <span>© 2025 PetAdopt. Feito com ❤️ para os animais.</span>
+    <span>🐾 Adote, não compre.</span>
+  </div>
+</footer>
+
+<script src="js/dashboard.js"></script>
+</body>
+</html>

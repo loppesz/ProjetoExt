@@ -1,0 +1,358 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>PetAdopt — Adote com amor</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Fraunces:ital,opsz,wght@0,9..144,300..900;1,9..144,300..900&family=DM+Sans:wght@300;400;500;600;700&display=swap" rel="stylesheet">
+<link rel="stylesheet" href="css/petadopt.css">
+<link rel="stylesheet" href="css/index.css">
+</head>
+<body>
+
+<div id="toast" class="toast"></div>
+
+<nav class="nav">
+  <div class="nav-i">
+    <a href="index.html" class="logo">🐾 PetAdopt</a>
+    <ul class="nav-links">
+      <li><a href="pets.html" class="nav-link">Encontrar Pet</a></li>
+      <li><a href="ongs.html" class="nav-link">ONGs</a></li>
+      <li><a href="new-pet.html" class="nav-link">Cadastrar Pet</a></li>
+      <li><a href="sobre.html" class="nav-link">Sobre</a></li>
+    </ul>
+    <div class="nav-auth">
+      <a href="login.html" class="btn-nav-login">Entrar</a>
+      <a href="register.html" class="btn-nav-register">Criar conta</a>
+    </div>
+  </div>
+</nav>
+
+<section class="hero">
+  <div class="hero-inner">
+    <div class="hero-left">
+      <div class="hero-eyebrow">🐾 Plataforma de adoção responsável</div>
+      <h1 class="hero-headline">
+        Cada pet merece um lar.<br>
+        Cada lar merece <span class="hero-word-cycle" id="hero-word">amor</span>.
+      </h1>
+      <p class="hero-sub">
+        Conectamos tutores responsáveis a pets que precisam de um lar. Simples, gratuito e cheio de amor.
+      </p>
+      <div class="hero-ctas">
+        <a href="pets.html" class="btn-hero-primary">Ver pets disponíveis →</a>
+        <a href="new-pet.html" class="btn-hero-outline">Cadastrar para adoção</a>
+      </div>
+      <div class="hero-stats">
+        <div class="hero-stat">
+          <span class="hero-stat-num" id="cnt-pets">0</span>
+          <span class="hero-stat-label">Pets cadastrados</span>
+        </div>
+        <div class="hero-stat">
+          <span class="hero-stat-num" id="cnt-adopted">0</span>
+          <span class="hero-stat-label">Adoções realizadas</span>
+        </div>
+        <div class="hero-stat">
+          <span class="hero-stat-num" id="cnt-cities">0</span>
+          <span class="hero-stat-label">Cidades atendidas</span>
+        </div>
+      </div>
+    </div>
+    <div class="hero-right">
+      <div class="hero-img-wrap">
+        <img src="https://images.unsplash.com/photo-1587300003388-59208cc962cb?w=700&q=80" alt="Cachorro feliz esperando adoção" loading="eager">
+      </div>
+      <div class="float-card">Thor foi adotado! 🎉</div>
+      <div class="float-card">❤️ 3 novos pets hoje</div>
+      <div class="float-card">🏠 92 cidades</div>
+    </div>
+  </div>
+</section>
+
+<div class="marquee-strip" aria-hidden="true">
+  <div class="marquee-track">
+    <div class="marquee-item"><span>🐾</span> +1.200 pets cadastrados</div>
+    <div class="marquee-item"><span>🏠</span> 840+ adoções realizadas</div>
+    <div class="marquee-item"><span>❤️</span> 92 cidades atendidas</div>
+    <div class="marquee-item"><span>🤝</span> 100% gratuito</div>
+    <div class="marquee-item"><span>⭐</span> Plataforma confiável</div>
+    <div class="marquee-item"><span>🐾</span> +1.200 pets cadastrados</div>
+    <div class="marquee-item"><span>🏠</span> 840+ adoções realizadas</div>
+    <div class="marquee-item"><span>❤️</span> 92 cidades atendidas</div>
+    <div class="marquee-item"><span>🤝</span> 100% gratuito</div>
+    <div class="marquee-item"><span>⭐</span> Plataforma confiável</div>
+  </div>
+</div>
+
+<section class="section-pets">
+  <div class="section-header reveal">
+    <h2 class="section-title">Pets esperando por você 🐾</h2>
+    <p class="section-sub">Conheça alguns dos pets disponíveis para adoção agora mesmo.</p>
+  </div>
+  <div class="filter-pills reveal">
+    <button class="sp-pill active" onclick="filterSpecies('', this)">🐾 Todos</button>
+    <button class="sp-pill" onclick="filterSpecies('dog', this)">🐶 Cães</button>
+    <button class="sp-pill" onclick="filterSpecies('cat', this)">🐱 Gatos</button>
+    <button class="sp-pill" onclick="filterSpecies('bird', this)">🐦 Pássaros</button>
+    <button class="sp-pill" onclick="filterSpecies('rabbit', this)">🐰 Coelhos</button>
+  </div>
+  <div id="pets-grid" class="pets-grid"></div>
+  <div class="section-cta reveal">
+    <a href="pets.html" class="btn-section">Ver todos os pets →</a>
+  </div>
+</section>
+
+<section class="section-impact" id="impact">
+  <svg class="wave-top" viewBox="0 0 1440 60" preserveAspectRatio="none" xmlns="http://www.w3.org/2000/svg"><path d="M0,60 C360,0 1080,0 1440,60 L1440,0 L0,0 Z" fill="#ffffff"/></svg>
+  <div class="section-header reveal" style="position:relative;z-index:1;padding:0 28px">
+    <h2 class="section-title" style="color:#fff">Nosso impacto em números</h2>
+    <p class="section-sub" style="color:rgba(255,255,255,0.65)">Cada número representa uma vida transformada.</p>
+  </div>
+  <div class="impact-grid">
+    <div class="impact-item reveal reveal-delay-1">
+      <span class="impact-num" data-target="1247" data-suffix="">0</span>
+      <span class="impact-label">Pets cadastrados</span>
+    </div>
+    <div class="impact-item reveal reveal-delay-2">
+      <span class="impact-num" data-target="843" data-suffix="">0</span>
+      <span class="impact-label">Adoções realizadas</span>
+    </div>
+    <div class="impact-item reveal reveal-delay-3">
+      <span class="impact-num" data-target="92" data-suffix="">0</span>
+      <span class="impact-label">Cidades atendidas</span>
+    </div>
+    <div class="impact-item reveal reveal-delay-4">
+      <span class="impact-num" data-target="3400" data-suffix="+">0</span>
+      <span class="impact-label">Usuários cadastrados</span>
+    </div>
+  </div>
+  <svg class="wave-bottom" viewBox="0 0 1440 60" preserveAspectRatio="none" xmlns="http://www.w3.org/2000/svg"><path d="M0,0 C360,60 1080,60 1440,0 L1440,60 L0,60 Z" fill="#e8f1f9"/></svg>
+</section>
+
+<section class="section-how">
+  <div class="section-header reveal">
+    <h2 class="section-title">Como funciona 🚀</h2>
+    <p class="section-sub">Em três passos simples, você encontra o companheiro perfeito.</p>
+  </div>
+  <div class="how-grid">
+    <div class="how-card reveal reveal-delay-1">
+      <div class="how-num">1</div>
+      <div class="how-icon">🔍</div>
+      <h3 class="how-title">Explore os pets</h3>
+      <p class="how-desc">Navegue por centenas de pets disponíveis. Filtre por espécie, tamanho, cidade e muito mais para encontrar o match perfeito.</p>
+    </div>
+    <div class="how-card reveal reveal-delay-2">
+      <div class="how-num">2</div>
+      <div class="how-icon">💬</div>
+      <h3 class="how-title">Solicite a adoção</h3>
+      <p class="how-desc">Entre em contato com a ONG ou tutor responsável. Conheça o pet, tire suas dúvidas e agende uma visita.</p>
+    </div>
+    <div class="how-card reveal reveal-delay-3">
+      <div class="how-num">3</div>
+      <div class="how-icon">🏠</div>
+      <h3 class="how-title">Leve para casa</h3>
+      <p class="how-desc">Após aprovação, leve seu novo companheiro para casa. Uma vida transformada — para você e para ele.</p>
+    </div>
+  </div>
+</section>
+
+<section class="section-testimonials">
+  <div class="section-header reveal">
+    <h2 class="section-title">O que dizem nossos adotantes 💬</h2>
+    <p class="section-sub">Histórias reais de pessoas que encontraram seu companheiro perfeito.</p>
+  </div>
+  <div class="testimonials-grid">
+    <div class="testimonial-card reveal reveal-delay-1">
+      <div class="testimonial-avatar">👩</div>
+      <div class="testimonial-stars">★★★★★</div>
+      <p class="testimonial-quote">"Adotei a Luna há 6 meses e foi a melhor decisão da minha vida. O processo foi super simples e a ONG me acompanhou em tudo. Hoje ela é a rainha da casa!"</p>
+      <div class="testimonial-name">Mariana Costa</div>
+      <div class="testimonial-city">📍 São Paulo, SP</div>
+    </div>
+    <div class="testimonial-card reveal reveal-delay-2">
+      <div class="testimonial-avatar">👨</div>
+      <div class="testimonial-stars">★★★★★</div>
+      <p class="testimonial-quote">"Encontrei o Thor em menos de uma semana. A plataforma é incrível, fácil de usar e com muitas opções. Meu filho ficou apaixonado na hora!"</p>
+      <div class="testimonial-name">Carlos Mendes</div>
+      <div class="testimonial-city">📍 Rio de Janeiro, RJ</div>
+    </div>
+    <div class="testimonial-card reveal reveal-delay-3">
+      <div class="testimonial-avatar">👩‍🦱</div>
+      <div class="testimonial-stars">★★★★★</div>
+      <p class="testimonial-quote">"Sempre quis adotar mas não sabia por onde começar. O PetAdopt tornou tudo tão simples! Hoje tenho dois gatos e não me arrependo nem um pouco."</p>
+      <div class="testimonial-name">Fernanda Lima</div>
+      <div class="testimonial-city">📍 Belo Horizonte, MG</div>
+    </div>
+  </div>
+</section>
+
+<section class="section-ongs">
+  <div class="section-header reveal" style="position:relative;z-index:1;padding:0 28px">
+    <h2 class="section-title">ONGs que fazem a diferença 🤝</h2>
+    <p class="section-sub">Parceiros comprometidos com o bem-estar animal em todo o Brasil.</p>
+  </div>
+  <div class="ongs-grid">
+    <div class="ong-card reveal reveal-delay-1">
+      <div class="ong-img"><img src="https://images.unsplash.com/photo-1601758124096-7093b3fef44d?w=600&q=80" alt="Patinhas do Bem" loading="lazy"></div>
+      <div class="ong-body">
+        <div class="ong-name">Patinhas do Bem</div>
+        <div class="ong-city">📍 São Paulo, SP</div>
+        <div class="ong-stats"><span>🐾 12 pets</span><span>🏠 320 adoções</span></div>
+        <a href="ongs.html" class="btn-ong">Conhecer ONG</a>
+      </div>
+    </div>
+    <div class="ong-card reveal reveal-delay-2">
+      <div class="ong-img"><img src="https://images.unsplash.com/photo-1587300003388-59208cc962cb?w=600&q=80" alt="Lar dos Bichos" loading="lazy"></div>
+      <div class="ong-body">
+        <div class="ong-name">Lar dos Bichos</div>
+        <div class="ong-city">📍 Rio de Janeiro, RJ</div>
+        <div class="ong-stats"><span>🐾 8 pets</span><span>🏠 185 adoções</span></div>
+        <a href="ongs.html" class="btn-ong">Conhecer ONG</a>
+      </div>
+    </div>
+    <div class="ong-card reveal reveal-delay-3">
+      <div class="ong-img"><img src="https://images.unsplash.com/photo-1548199973-03cce0bbc87b?w=600&q=80" alt="Amigos de Patas" loading="lazy"></div>
+      <div class="ong-body">
+        <div class="ong-name">Amigos de Patas</div>
+        <div class="ong-city">📍 Belo Horizonte, MG</div>
+        <div class="ong-stats"><span>🐾 15 pets</span><span>🏠 210 adoções</span></div>
+        <a href="ongs.html" class="btn-ong">Conhecer ONG</a>
+      </div>
+    </div>
+    <div class="ong-card reveal reveal-delay-4">
+      <div class="ong-img"><img src="https://images.unsplash.com/photo-1552053831-71594a27632d?w=600&q=80" alt="Refugio Animal Sul" loading="lazy"></div>
+      <div class="ong-body">
+        <div class="ong-name">Refúgio Animal Sul</div>
+        <div class="ong-city">📍 Porto Alegre, RS</div>
+        <div class="ong-stats"><span>🐾 22 pets</span><span>🏠 140 adoções</span></div>
+        <a href="ongs.html" class="btn-ong">Conhecer ONG</a>
+      </div>
+    </div>
+  </div>
+  <div class="section-cta reveal" style="position:relative;z-index:1;margin-top:48px">
+    <a href="ongs.html" class="btn-section-outline">Ver todas as ONGs →</a>
+  </div>
+</section>
+
+<section class="section-cta-banner">
+  <h2 class="cta-banner-title">Pronto para transformar uma vida?</h2>
+  <p class="cta-banner-sub">Milhares de pets estão esperando por um lar cheio de amor. Comece agora — é gratuito.</p>
+  <div class="cta-banner-btns">
+    <a href="pets.html" class="btn-hero-primary">Ver pets disponíveis →</a>
+    <a href="register.html" class="btn-hero-outline">Criar conta grátis</a>
+  </div>
+</section>
+
+<footer class="footer">
+  <div class="footer-inner">
+    <div>
+      <div class="footer-logo">🐾 PetAdopt</div>
+      <p class="footer-desc">Conectando pets que precisam de um lar a famílias cheias de amor. 100% gratuito, 100% responsável.</p>
+    </div>
+    <div>
+      <div class="footer-col-title">Navegação</div>
+      <ul class="footer-links">
+        <li><a href="pets.html">Encontrar Pet</a></li>
+        <li><a href="ongs.html">ONGs Parceiras</a></li>
+        <li><a href="new-pet.html">Cadastrar Pet</a></li>
+        <li><a href="sobre.html">Sobre nós</a></li>
+      </ul>
+    </div>
+    <div>
+      <div class="footer-col-title">Conta</div>
+      <ul class="footer-links">
+        <li><a href="login.html">Entrar</a></li>
+        <li><a href="register.html">Criar conta</a></li>
+        <li><a href="dashboard.html">Meu painel</a></li>
+      </ul>
+    </div>
+  </div>
+  <div class="footer-bar">
+    <span>© 2025 PetAdopt. Feito com ❤️ para os animais.</span>
+    <span>🐾 Adote, não compre.</span>
+  </div>
+</footer>
+
+<script src="js/index.js"></script>
+<script>
+(function() {
+  var words = ['amor', 'alegria', 'família'];
+  var idx = 0;
+  var el = document.getElementById('hero-word');
+  if (!el) return;
+  el.style.transition = 'opacity 0.3s ease, transform 0.3s ease';
+  setInterval(function() {
+    el.style.opacity = '0';
+    el.style.transform = 'translateY(-10px)';
+    setTimeout(function() {
+      idx = (idx + 1) % words.length;
+      el.textContent = words[idx];
+      el.style.opacity = '1';
+      el.style.transform = 'translateY(0)';
+    }, 300);
+  }, 2200);
+})();
+
+(function() {
+  var targets = [
+    { id: 'cnt-pets',    end: 1247 },
+    { id: 'cnt-adopted', end: 843  },
+    { id: 'cnt-cities',  end: 92   }
+  ];
+  function animateCount(el, end) {
+    var start = 0, step = Math.ceil(end / 112);
+    var timer = setInterval(function() {
+      start += step;
+      if (start >= end) { start = end; clearInterval(timer); }
+      el.textContent = start.toLocaleString('pt-BR');
+    }, 16);
+  }
+  var obs = new IntersectionObserver(function(entries) {
+    entries.forEach(function(e) {
+      if (e.isIntersecting) {
+        targets.forEach(function(t) {
+          var el = document.getElementById(t.id);
+          if (el) animateCount(el, t.end);
+        });
+        obs.disconnect();
+      }
+    });
+  }, { threshold: 0.3 });
+  var s = document.querySelector('.hero-stats');
+  if (s) obs.observe(s);
+})();
+
+(function() {
+  var obs = new IntersectionObserver(function(entries) {
+    entries.forEach(function(e) {
+      if (e.isIntersecting) {
+        e.target.querySelectorAll('.impact-num[data-target]').forEach(function(el) {
+          var end = parseInt(el.dataset.target, 10), suffix = el.dataset.suffix || '';
+          var start = 0, step = Math.ceil(end / 100);
+          var timer = setInterval(function() {
+            start += step;
+            if (start >= end) { start = end; clearInterval(timer); }
+            el.textContent = start.toLocaleString('pt-BR') + suffix;
+          }, 16);
+        });
+        obs.unobserve(e.target);
+      }
+    });
+  }, { threshold: 0.3 });
+  var s = document.getElementById('impact');
+  if (s) obs.observe(s);
+})();
+
+(function() {
+  var obs = new IntersectionObserver(function(entries) {
+    entries.forEach(function(e) {
+      if (e.isIntersecting) { e.target.classList.add('visible'); obs.unobserve(e.target); }
+    });
+  }, { threshold: 0.12 });
+  document.querySelectorAll('.reveal').forEach(function(el) { obs.observe(el); });
+})();
+</script>
+</body>
+</html>

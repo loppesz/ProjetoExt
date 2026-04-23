@@ -1,0 +1,126 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>ONGs Parceiras — PetAdopt</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Fraunces:ital,opsz,wght@0,9..144,300..900;1,9..144,300..900&family=DM+Sans:wght@300;400;500;600;700&display=swap" rel="stylesheet">
+<link rel="stylesheet" href="css/petadopt.css">
+<link rel="stylesheet" href="css/ongs.css">
+</head>
+<body>
+
+<!-- TOAST -->
+<div id="toast" class="toast"></div>
+
+<!-- NAV -->
+<nav class="nav">
+  <div class="nav-i">
+    <a href="index.html" class="logo">🐾 PetAdopt</a>
+    <ul class="nav-links">
+      <li><a href="pets.html" class="nav-link">Encontrar Pet</a></li>
+      <li><a href="ongs.html" class="nav-link active">ONGs</a></li>
+      <li><a href="new-pet.html" class="nav-link">Cadastrar Pet</a></li>
+      <li><a href="sobre.html" class="nav-link">Sobre</a></li>
+    </ul>
+    <div class="nav-auth">
+      <a href="login.html" class="btn-nav-login">Entrar</a>
+      <a href="register.html" class="btn-nav-register">Criar conta</a>
+    </div>
+  </div>
+</nav>
+
+<!-- PAGE HEADER -->
+<header class="page-header">
+  <div class="page-header-inner">
+    <div class="page-eyebrow">🤝 Parceiros</div>
+    <h1 class="page-title">ONGs que fazem a diferença</h1>
+    <p class="page-subtitle">Conheça as organizações parceiras que trabalham todos os dias para resgatar, cuidar e encontrar lares para animais.</p>
+  </div>
+  <!-- Paw SVG overlay -->
+  <svg aria-hidden="true" style="position:absolute;bottom:-1px;right:40px;opacity:.06;width:220px;height:220px" viewBox="0 0 100 100" fill="white" xmlns="http://www.w3.org/2000/svg">
+    <ellipse cx="30" cy="20" rx="10" ry="14"/>
+    <ellipse cx="70" cy="20" rx="10" ry="14"/>
+    <ellipse cx="15" cy="45" rx="8" ry="11"/>
+    <ellipse cx="85" cy="45" rx="8" ry="11"/>
+    <ellipse cx="50" cy="68" rx="22" ry="26"/>
+  </svg>
+</header>
+
+<!-- METRICS STRIP -->
+<section class="metrics-strip">
+  <div class="metrics-inner">
+    <div class="metric-item reveal">
+      <span class="metric-icon">🏢</span>
+      <div class="metric-info">
+        <div class="metric-value" id="m-ongs">4</div>
+        <div class="metric-label">ONGs cadastradas</div>
+      </div>
+    </div>
+    <div class="metric-item reveal reveal-delay-1">
+      <span class="metric-icon">🐾</span>
+      <div class="metric-info">
+        <div class="metric-value" id="m-pets">—</div>
+        <div class="metric-label">Pets sob cuidado</div>
+      </div>
+    </div>
+    <div class="metric-item reveal reveal-delay-2">
+      <span class="metric-icon">🏠</span>
+      <div class="metric-info">
+        <div class="metric-value" id="m-adopted">—</div>
+        <div class="metric-label">Adoções realizadas</div>
+      </div>
+    </div>
+    <div class="metric-item reveal reveal-delay-3">
+      <span class="metric-icon">💛</span>
+      <div class="metric-info">
+        <div class="metric-value" id="m-donations">—</div>
+        <div class="metric-label">Doações recebidas</div>
+      </div>
+    </div>
+  </div>
+</section>
+
+<!-- ONGS GRID -->
+<main id="ongs-grid" aria-label="Lista de ONGs parceiras"></main>
+
+<!-- MODAL -->
+<div id="modal" class="modal-overlay" role="dialog" aria-modal="true" aria-labelledby="modal-title" onclick="closeModal(event)">
+  <div class="modal-box" onclick="event.stopPropagation()">
+    <div id="modal-content"></div>
+  </div>
+</div>
+
+<!-- FOOTER -->
+<footer class="footer">
+  <div class="footer-compact">
+    <div class="footer-logo">🐾 PetAdopt</div>
+    <span style="font-size:.88rem;color:rgba(255,255,255,0.5)">Conectando pets a lares cheios de amor.</span>
+  </div>
+  <div class="footer-bar">
+    <span>© 2025 PetAdopt. Feito com ❤️ para os animais.</span>
+    <span>🐾 Adote, não compre.</span>
+  </div>
+</footer>
+
+<script src="js/ongs.js"></script>
+<script>
+// ===== SCROLL REVEAL =====
+(function () {
+  var els = document.querySelectorAll('.reveal');
+  if (!els.length) return;
+  var observer = new IntersectionObserver(function (entries) {
+    entries.forEach(function (entry) {
+      if (entry.isIntersecting) {
+        entry.target.classList.add('visible');
+        observer.unobserve(entry.target);
+      }
+    });
+  }, { threshold: 0.12 });
+  els.forEach(function (el) { observer.observe(el); });
+})();
+</script>
+</body>
+</html>

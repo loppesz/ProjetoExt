@@ -1,0 +1,163 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Encontrar Pet — PetAdopt</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Fraunces:ital,opsz,wght@0,9..144,300..900;1,9..144,300..900&family=DM+Sans:wght@300;400;500;600;700&display=swap" rel="stylesheet">
+<link rel="stylesheet" href="css/petadopt.css">
+<link rel="stylesheet" href="css/pets.css">
+</head>
+<body>
+
+<!-- TOAST -->
+<div id="toast" class="toast"></div>
+
+<!-- NAV -->
+<nav class="nav">
+  <div class="nav-i">
+    <a href="index.html" class="logo">🐾 PetAdopt</a>
+    <ul class="nav-links">
+      <li><a href="pets.html" class="nav-link active">Encontrar Pet</a></li>
+      <li><a href="ongs.html" class="nav-link">ONGs</a></li>
+      <li><a href="new-pet.html" class="nav-link">Cadastrar Pet</a></li>
+      <li><a href="sobre.html" class="nav-link">Sobre</a></li>
+    </ul>
+    <div class="nav-auth">
+      <a href="login.html" class="btn-nav-login">Entrar</a>
+      <a href="register.html" class="btn-nav-register">Criar conta</a>
+    </div>
+  </div>
+</nav>
+
+<!-- PAGE HEADER -->
+<header class="page-header">
+  <div class="page-header-inner">
+    <div class="page-eyebrow">🔍 Busca de pets</div>
+    <h1 class="page-title">Encontre seu companheiro ideal</h1>
+    <p class="page-subtitle">Filtre por espécie, porte, cidade e muito mais para encontrar o pet perfeito para você.</p>
+  </div>
+</header>
+
+<!-- FILTER BAR -->
+<div class="filter-bar-wrap">
+  <div class="filter-bar reveal">
+    <div class="filter-fields">
+      <div class="filter-group flex-2">
+        <label class="filter-label" for="f-search">Buscar</label>
+        <input id="f-search" class="filter-input" type="text" placeholder="Nome ou raça…" autocomplete="off">
+      </div>
+      <div class="filter-group">
+        <label class="filter-label" for="f-species">Espécie</label>
+        <select id="f-species" class="filter-select">
+          <option value="">Todas</option>
+          <option value="dog">🐶 Cão</option>
+          <option value="cat">🐱 Gato</option>
+          <option value="bird">🐦 Pássaro</option>
+          <option value="rabbit">🐰 Coelho</option>
+        </select>
+      </div>
+      <div class="filter-group">
+        <label class="filter-label" for="f-size">Porte</label>
+        <select id="f-size" class="filter-select">
+          <option value="">Todos</option>
+          <option value="small">Pequeno</option>
+          <option value="medium">Médio</option>
+          <option value="large">Grande</option>
+        </select>
+      </div>
+      <div class="filter-group">
+        <label class="filter-label" for="f-city">Cidade</label>
+        <input id="f-city" class="filter-input" type="text" placeholder="Ex: São Paulo" autocomplete="off">
+      </div>
+      <div class="filter-group">
+        <label class="filter-label" for="f-state">Estado</label>
+        <select id="f-state" class="filter-select">
+          <option value="">Todos</option>
+          <option value="AC">AC</option>
+          <option value="AL">AL</option>
+          <option value="AM">AM</option>
+          <option value="BA">BA</option>
+          <option value="CE">CE</option>
+          <option value="DF">DF</option>
+          <option value="ES">ES</option>
+          <option value="GO">GO</option>
+          <option value="MA">MA</option>
+          <option value="MG">MG</option>
+          <option value="MS">MS</option>
+          <option value="MT">MT</option>
+          <option value="PA">PA</option>
+          <option value="PB">PB</option>
+          <option value="PE">PE</option>
+          <option value="PI">PI</option>
+          <option value="PR">PR</option>
+          <option value="RJ">RJ</option>
+          <option value="RN">RN</option>
+          <option value="RO">RO</option>
+          <option value="RR">RR</option>
+          <option value="RS">RS</option>
+          <option value="SC">SC</option>
+          <option value="SE">SE</option>
+          <option value="SP">SP</option>
+          <option value="TO">TO</option>
+        </select>
+      </div>
+      <div class="filter-actions">
+        <button class="btn-search" onclick="applyFilters()">Buscar</button>
+        <button class="btn-clear" onclick="clearFilters()">Limpar</button>
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- RESULTS BAR -->
+<div class="results-bar">
+  <span id="results-count" class="results-count">Carregando…</span>
+  <div class="sort-group">
+    <span class="sort-label">Ordenar</span>
+    <select id="sort" class="sort-select" onchange="applyFilters()">
+      <option value="">Padrão</option>
+      <option value="name">Nome (A–Z)</option>
+    </select>
+  </div>
+</div>
+
+<!-- PETS GRID -->
+<div class="pets-grid-wrap">
+  <div id="pets-grid"></div>
+  <div id="pagination"></div>
+</div>
+
+<!-- FOOTER -->
+<footer class="footer">
+  <div class="footer-compact">
+    <div class="footer-logo">🐾 PetAdopt</div>
+    <span style="font-size:.88rem;color:rgba(255,255,255,0.5)">Conectando pets a lares cheios de amor.</span>
+  </div>
+  <div class="footer-bar">
+    <span>© 2025 PetAdopt. Feito com ❤️ para os animais.</span>
+    <span>🐾 Adote, não compre.</span>
+  </div>
+</footer>
+
+<script src="js/pets.js"></script>
+<script>
+// ===== SCROLL REVEAL =====
+(function () {
+  var els = document.querySelectorAll('.reveal');
+  if (!els.length) return;
+  var observer = new IntersectionObserver(function (entries) {
+    entries.forEach(function (entry) {
+      if (entry.isIntersecting) {
+        entry.target.classList.add('visible');
+        observer.unobserve(entry.target);
+      }
+    });
+  }, { threshold: 0.12 });
+  els.forEach(function (el) { observer.observe(el); });
+})();
+</script>
+</body>
+</html>

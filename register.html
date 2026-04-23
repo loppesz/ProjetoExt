@@ -1,0 +1,139 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Criar conta — PetAdopt</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Fraunces:ital,opsz,wght@0,9..144,300..900;1,9..144,300..900&family=DM+Sans:wght@300;400;500;600;700&display=swap" rel="stylesheet">
+  <link rel="stylesheet" href="css/petadopt.css">
+<link rel="stylesheet" href="css/register.css">
+  
+</head>
+<body>
+
+  <!-- ── NAV ── -->
+  <nav class="nav">
+    <a href="index.html" class="logo">🐾 PetAdopt</a>
+    <a href="login.html" class="btn-nav-login">Já tenho conta</a>
+  </nav>
+
+  <!-- ── MAIN ── -->
+  <main class="page-wrap">
+    <div class="card">
+
+      <!-- PROGRESS -->
+      <div class="progress">
+        <div class="step-circle active" id="s1">1</div>
+        <div class="step-line" id="l1"></div>
+        <div class="step-circle" id="s2">2</div>
+        <div class="step-line" id="l2"></div>
+        <div class="step-circle" id="s3">✓</div>
+      </div>
+
+      <!-- ── STEP 1 ── -->
+      <div id="step1">
+        <h1 class="step-title">Criar conta grátis</h1>
+        <p class="step-sub">Passo 1 de 2 — Seus dados de acesso</p>
+
+        <div class="err-banner" id="err1"></div>
+
+        <div class="field">
+          <label for="name">Nome completo</label>
+          <input type="text" id="name" placeholder="Seu nome" autocomplete="name">
+        </div>
+
+        <div class="field">
+          <label for="email">E-mail</label>
+          <input type="email" id="email" placeholder="seu@email.com" autocomplete="email">
+        </div>
+
+        <div class="field">
+          <label for="password">Senha</label>
+          <input type="password" id="password" placeholder="Mínimo 6 caracteres"
+                 autocomplete="new-password"
+                 oninput="checkStrength(this.value)">
+          <div class="strength-wrap">
+            <div id="strength-bar"></div>
+          </div>
+        </div>
+
+        <div class="field">
+          <label for="confirm-pwd">Confirmar senha</label>
+          <input type="password" id="confirm-pwd" placeholder="Repita a senha" autocomplete="new-password">
+        </div>
+
+        <button class="btn-primary" onclick="nextStep()">Continuar →</button>
+
+        <p class="terms">
+          Ao criar sua conta você concorda com os
+          <a href="#">Termos de Uso</a> e a
+          <a href="#">Política de Privacidade</a>.
+        </p>
+      </div>
+
+      <!-- ── STEP 2 ── -->
+      <div id="step2" style="display:none">
+        <h1 class="step-title">Quase lá!</h1>
+        <p class="step-sub">Passo 2 de 2 — Localização e contato</p>
+
+        <div class="err-banner" id="err2"></div>
+
+        <div class="field">
+          <label for="phone">Telefone / WhatsApp</label>
+          <input type="tel" id="phone" placeholder="(00) 00000-0000" autocomplete="tel">
+        </div>
+
+        <div class="field-row">
+          <div class="field">
+            <label for="city">Cidade</label>
+            <input type="text" id="city" placeholder="Sua cidade" autocomplete="address-level2">
+          </div>
+          <div class="field">
+            <label for="state">Estado</label>
+            <select id="state">
+              <option value="">UF</option>
+              <option>AC</option><option>AL</option><option>AP</option><option>AM</option>
+              <option>BA</option><option>CE</option><option>DF</option><option>ES</option>
+              <option>GO</option><option>MA</option><option>MT</option><option>MS</option>
+              <option>MG</option><option>PA</option><option>PB</option><option>PR</option>
+              <option>PE</option><option>PI</option><option>RJ</option><option>RN</option>
+              <option>RS</option><option>RO</option><option>RR</option><option>SC</option>
+              <option>SP</option><option>SE</option><option>TO</option>
+            </select>
+          </div>
+        </div>
+
+        <div class="btn-row">
+          <button class="btn-outline" onclick="prevStep()">← Voltar</button>
+          <button class="btn-primary" id="submit-btn" onclick="submitForm()">Criar minha conta!</button>
+        </div>
+      </div>
+
+      <!-- ── STEP 3 / SUCCESS ── -->
+      <div id="step3" style="display:none">
+        <div class="success-view">
+          <span class="success-emoji">🎉</span>
+          <h1 class="step-title">Conta criada!</h1>
+          <p class="success-desc">
+            Bem-vindo(a) ao PetAdopt! Sua conta foi criada com sucesso.<br>
+            Agora você pode adotar, favoritar pets e acompanhar tudo pela sua área.
+          </p>
+          <a href="dashboard.html" class="btn-primary">Ir para minha área →</a>
+          <a href="pets.html" class="link-muted">Ver pets disponíveis →</a>
+        </div>
+      </div>
+
+    </div>
+  </main>
+
+  <!-- ── FOOTER ── -->
+  <footer>
+    <span class="footer-logo">🐾 PetAdopt</span>
+    &copy; 2025 PetAdopt — Todos os direitos reservados
+  </footer>
+
+  <script src="js/register.js"></script>
+</body>
+</html>

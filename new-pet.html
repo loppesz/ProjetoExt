@@ -1,0 +1,266 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Cadastrar Pet — PetAdopt</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Fraunces:ital,opsz,wght@0,9..144,300..900;1,9..144,300..900&family=DM+Sans:wght@300;400;500;600;700&display=swap" rel="stylesheet">
+<link rel="stylesheet" href="css/petadopt.css">
+<link rel="stylesheet" href="css/new-pet.css">
+</head>
+<body>
+
+<!-- ══════════════════════════════════════
+     NAV
+══════════════════════════════════════ -->
+<nav class="nav">
+  <div class="nav-i">
+    <a href="index.html" class="logo">🐾 PetAdopt</a>
+    <ul class="nav-links">
+      <li><a href="pets.html"    class="nav-link">Encontrar Pet</a></li>
+      <li><a href="ongs.html"    class="nav-link">ONGs</a></li>
+      <li><a href="new-pet.html" class="nav-link active">Cadastrar Pet</a></li>
+      <li><a href="sobre.html"   class="nav-link">Sobre</a></li>
+    </ul>
+    <div class="nav-auth">
+      <a href="login.html"    class="btn-nav-login">Entrar</a>
+      <a href="register.html" class="btn-nav-register">Criar conta</a>
+    </div>
+  </div>
+</nav>
+
+<!-- ══════════════════════════════════════
+     PAGE HEADER
+══════════════════════════════════════ -->
+<header class="page-header">
+  <div class="page-header-inner">
+    <p class="page-eyebrow">🐾 Cadastro de pet</p>
+    <h1 class="page-title">Cadastrar pet para adoção</h1>
+    <p class="page-subtitle">Preencha as informações do pet e ajude-o a encontrar um lar cheio de amor.</p>
+  </div>
+</header>
+
+<!-- ══════════════════════════════════════
+     MAIN
+══════════════════════════════════════ -->
+<main class="form-page">
+
+  <!-- Error banner -->
+  <div id="error-banner" role="alert"></div>
+
+  <!-- ── FORM WRAP ── -->
+  <div id="form-wrap">
+
+    <!-- 1. PHOTOS -->
+    <div class="form-card">
+      <h2 class="form-card-title">📷 Fotos do pet</h2>
+
+      <div id="photo-drop"
+           onclick="document.getElementById('photos-input').click()"
+           ondragover="event.preventDefault();this.classList.add('drag')"
+           ondragleave="this.classList.remove('drag')"
+           ondrop="handleDrop(event)">
+        <div class="drop-icon">🖼️</div>
+        <p class="drop-label">Clique ou arraste suas fotos aqui</p>
+        <p class="drop-hint">PNG, JPG ou WEBP · máx. 6 fotos · a primeira será a capa</p>
+      </div>
+
+      <input type="file" id="photos-input" multiple accept="image/*"
+             style="display:none" onchange="previewPhotos(this.files)">
+
+      <div id="photo-previews"></div>
+    </div>
+
+    <!-- 2. SPECIES -->
+    <div class="form-card">
+      <h2 class="form-card-title">Tipo de animal *</h2>
+
+      <div class="species-grid">
+        <div class="species-opt" onclick="selectSpecies('dog',this)">
+          <span class="species-emoji">🐶</span>
+          <span class="species-label">Cachorro</span>
+        </div>
+        <div class="species-opt" onclick="selectSpecies('cat',this)">
+          <span class="species-emoji">🐱</span>
+          <span class="species-label">Gato</span>
+        </div>
+        <div class="species-opt" onclick="selectSpecies('bird',this)">
+          <span class="species-emoji">🦜</span>
+          <span class="species-label">Pássaro</span>
+        </div>
+        <div class="species-opt" onclick="selectSpecies('rabbit',this)">
+          <span class="species-emoji">🐰</span>
+          <span class="species-label">Coelho</span>
+        </div>
+        <div class="species-opt" onclick="selectSpecies('other',this)">
+          <span class="species-emoji">🐾</span>
+          <span class="species-label">Outro</span>
+        </div>
+      </div>
+
+      <input type="hidden" id="species">
+    </div>
+
+    <!-- 3. BASIC INFO -->
+    <div class="form-card">
+      <h2 class="form-card-title">Informações básicas</h2>
+
+      <div class="form-row-2" style="margin-bottom:16px">
+        <div class="form-group">
+          <label class="form-label" for="name">Nome do pet *</label>
+          <input class="form-input" type="text" id="name" placeholder="Ex: Bolinha" maxlength="60">
+        </div>
+        <div class="form-group">
+          <label class="form-label" for="breed">Raça</label>
+          <input class="form-input" type="text" id="breed" placeholder="Ex: Labrador, SRD…" maxlength="60">
+        </div>
+      </div>
+
+      <div class="form-row-2" style="margin-bottom:16px">
+        <div class="form-group">
+          <label class="form-label" for="color">Cor / Pelagem</label>
+          <input class="form-input" type="text" id="color" placeholder="Ex: Caramelo, Preto e branco" maxlength="60">
+        </div>
+        <div class="form-group">
+          <label class="form-label" for="gender">Sexo</label>
+          <select class="form-select" id="gender">
+            <option value="">Não informado</option>
+            <option value="male">Macho</option>
+            <option value="female">Fêmea</option>
+          </select>
+        </div>
+      </div>
+
+      <div class="form-row-3">
+        <div class="form-group">
+          <label class="form-label" for="size">Porte *</label>
+          <select class="form-select" id="size">
+            <option value="">Selecione</option>
+            <option value="small">Pequeno</option>
+            <option value="medium">Médio</option>
+            <option value="large">Grande</option>
+            <option value="giant">Gigante</option>
+          </select>
+        </div>
+        <div class="form-group">
+          <label class="form-label" for="age-years">Anos</label>
+          <input class="form-input" type="number" id="age-years" min="0" max="30" placeholder="0">
+        </div>
+        <div class="form-group">
+          <label class="form-label" for="age-months">Meses</label>
+          <input class="form-input" type="number" id="age-months" min="0" max="11" placeholder="0">
+        </div>
+      </div>
+    </div>
+
+    <!-- 4. HEALTH -->
+    <div class="form-card">
+      <h2 class="form-card-title">Saúde 💉</h2>
+
+      <div class="checks-row">
+        <label class="form-check">
+          <input type="checkbox" id="vaccinated">
+          ✅ Vacinado
+        </label>
+        <label class="form-check">
+          <input type="checkbox" id="neutered">
+          ✅ Castrado
+        </label>
+        <label class="form-check">
+          <input type="checkbox" id="microchip">
+          📡 Microchip
+        </label>
+        <label class="form-check">
+          <input type="checkbox" id="dewormed">
+          🪱 Vermifugado
+        </label>
+      </div>
+    </div>
+
+    <!-- 5. LOCATION -->
+    <div class="form-card">
+      <h2 class="form-card-title">Localização 📍</h2>
+
+      <div class="form-row-2">
+        <div class="form-group">
+          <label class="form-label" for="city">Cidade *</label>
+          <input class="form-input" type="text" id="city" placeholder="Ex: São Paulo" maxlength="80">
+        </div>
+        <div class="form-group">
+          <label class="form-label" for="state">Estado *</label>
+          <select class="form-select" id="state">
+            <option value="">Selecione</option>
+            <option value="AC">AC — Acre</option>
+            <option value="AL">AL — Alagoas</option>
+            <option value="AP">AP — Amapá</option>
+            <option value="AM">AM — Amazonas</option>
+            <option value="BA">BA — Bahia</option>
+            <option value="CE">CE — Ceará</option>
+            <option value="DF">DF — Distrito Federal</option>
+            <option value="ES">ES — Espírito Santo</option>
+            <option value="GO">GO — Goiás</option>
+            <option value="MA">MA — Maranhão</option>
+            <option value="MT">MT — Mato Grosso</option>
+            <option value="MS">MS — Mato Grosso do Sul</option>
+            <option value="MG">MG — Minas Gerais</option>
+            <option value="PA">PA — Pará</option>
+            <option value="PB">PB — Paraíba</option>
+            <option value="PR">PR — Paraná</option>
+            <option value="PE">PE — Pernambuco</option>
+            <option value="PI">PI — Piauí</option>
+            <option value="RJ">RJ — Rio de Janeiro</option>
+            <option value="RN">RN — Rio Grande do Norte</option>
+            <option value="RS">RS — Rio Grande do Sul</option>
+            <option value="RO">RO — Rondônia</option>
+            <option value="RR">RR — Roraima</option>
+            <option value="SC">SC — Santa Catarina</option>
+            <option value="SP">SP — São Paulo</option>
+            <option value="SE">SE — Sergipe</option>
+            <option value="TO">TO — Tocantins</option>
+          </select>
+        </div>
+      </div>
+    </div>
+
+    <!-- 6. DESCRIPTION -->
+    <div class="form-card">
+      <h2 class="form-card-title">Descrição 📝</h2>
+
+      <label class="form-label" for="description">Conte um pouco sobre o pet</label>
+      <textarea class="form-textarea" id="description" rows="4" maxlength="800"
+                placeholder="Personalidade, hábitos, histórico, necessidades especiais…"
+                oninput="document.getElementById('char-count').textContent=this.value.length+'/800'"></textarea>
+      <div id="char-count">0/800</div>
+    </div>
+
+    <!-- SUBMIT -->
+    <button id="submit-btn" onclick="submitPet()">🐾 Cadastrar pet para adoção</button>
+
+  </div><!-- /#form-wrap -->
+
+  <!-- ── SUCCESS CARD ── -->
+  <div id="success-card">
+    <div class="success-emoji">🎉</div>
+    <h2 class="success-title">Pet cadastrado!</h2>
+    <p class="success-desc">Ótimo! O pet foi cadastrado com sucesso e já está disponível para adoção. Compartilhe para aumentar as chances de encontrar um lar.</p>
+    <div class="success-actions">
+      <a href="pet.html?id=1" class="btn-success-primary">Ver página do pet →</a>
+      <a href="#" class="btn-success-outline" onclick="resetForm();return false;">Cadastrar outro</a>
+    </div>
+  </div>
+
+</main>
+
+<!-- ══════════════════════════════════════
+     FOOTER
+══════════════════════════════════════ -->
+<footer class="footer">
+  <a href="index.html" class="footer-logo">🐾 PetAdopt</a>
+  <p style="margin:0">© 2025 PetAdopt · Feito com ❤️ para os animais</p>
+</footer>
+
+<script src="js/new-pet.js"></script>
+</body>
+</html>
