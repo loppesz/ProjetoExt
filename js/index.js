@@ -5,8 +5,8 @@ const MOCK_PETS = [
   {id:'4',name:'Mia',species:'cat',breed:'Persa',age:'8 meses',size:'Pequeno',city:'Curitiba',state:'PR',status:'available',photo:'https://images.unsplash.com/photo-1574158622682-e40e69881006?w=400&q=75',fav:false,vaccinated:true,neutered:false},
   {id:'5',name:'Rex',species:'dog',breed:'Pastor Alemão',age:'4 anos',size:'Grande',city:'Porto Alegre',state:'RS',status:'adopted',photo:'https://images.unsplash.com/photo-1589941013453-ec89f33b5e95?w=400&q=75',fav:false,vaccinated:true,neutered:true},
   {id:'6',name:'Nina',species:'dog',breed:'Poodle',age:'1 ano',size:'Pequeno',city:'São Paulo',state:'SP',status:'available',photo:'https://images.unsplash.com/photo-1548199973-03cce0bbc87b?w=400&q=75',fav:true,vaccinated:false,neutered:false},
-  {id:'7',name:'Pipo',species:'bird',breed:'Calopsita',age:'2 anos',size:'Pequeno',city:'Florianópolis',state:'SC',status:'available',photo:'https://images.unsplash.com/photo-1522926193341-e9ffd686c60f?w=400&q=75',fav:false},
-  {id:'8',name:'Coco',species:'rabbit',breed:'Angorá',age:'6 meses',size:'Pequeno',city:'Recife',state:'PE',status:'reserved',photo:'https://images.unsplash.com/photo-1585110396000-c9ffd4e4b308?w=400&q=75',fav:false},
+  {id:'7',name:'Mel',species:'cat',breed:'Maine Coon',age:'3 anos',size:'Pequeno',city:'Florianópolis',state:'SC',status:'available',photo:'https://images.unsplash.com/photo-1513245543132-31f507417b26?w=400&q=75',fav:false,vaccinated:true,neutered:true},
+  {id:'8',name:'Duque',species:'dog',breed:'Labrador',age:'2 anos',size:'Grande',city:'Recife',state:'PE',status:'available',photo:'https://images.unsplash.com/photo-1561037404-61cd46aa615b?w=400&q=75',fav:false,vaccinated:true,neutered:false},
 ];
 
 let currentSpecies = '';

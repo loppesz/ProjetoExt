@@ -7,7 +7,7 @@ const user = JSON.parse(localStorage.getItem('petadopt_user') || '{"name":"Maria
 let MY_PETS = [
   {id:'3', name:'Bob',   breed:'SRD (Vira-lata)', species:'dog', size:'medium', sizeLabel:'Médio',   city:'Belo Horizonte', state:'MG', status:'available', gender:'Macho',  color:'Caramelo', vaccinated:true,  neutered:true,  desc:'Bob foi resgatado da rua.', photo:'https://images.unsplash.com/photo-1587300003388-59208cc962cb?w=300&q=75', modStatus:'approved'},
   {id:'6', name:'Nina',  breed:'Poodle',           species:'dog', size:'small',  sizeLabel:'Pequeno', city:'São Paulo',       state:'SP', status:'available', gender:'Fêmea',  color:'Branco',   vaccinated:false, neutered:false, desc:'Nina é cheia de energia.', photo:'https://images.unsplash.com/photo-1548199973-03cce0bbc87b?w=300&q=75', modStatus:'approved'},
-  {id:'7', name:'Pipo',  breed:'Calopsita',         species:'bird',size:'small',  sizeLabel:'Pequeno', city:'Florianópolis',   state:'SC', status:'reserved',  gender:'Macho',  color:'Cinza',    vaccinated:false, neutered:false, desc:'Pipo fala algumas palavras.', photo:'https://images.unsplash.com/photo-1522926193341-e9ffd686c60f?w=300&q=75', modStatus:'pending'},
+  {id:'7', name:'Mel',   breed:'Maine Coon',        species:'cat', size:'small',  sizeLabel:'Pequeno', city:'Florianópolis',   state:'SC', status:'available', gender:'Fêmea',  color:'Cinza',    vaccinated:true,  neutered:true,  desc:'Mel é dócil e carinhosa.', photo:'https://images.unsplash.com/photo-1513245543132-31f507417b26?w=300&q=75', modStatus:'pending'},
 ];
 
 // Todos os pets da plataforma (para moderação)
@@ -18,8 +18,8 @@ let ALL_PLATFORM_PETS = [
   {id:'4', name:'Mia',     breed:'Persa',            city:'Curitiba',        state:'PR', status:'available', photo:'https://images.unsplash.com/photo-1574158622682-e40e69881006?w=300&q=75', modStatus:'pending',  owner:'Juliana Alves'},
   {id:'5', name:'Rex',     breed:'Pastor Alemão',    city:'Porto Alegre',    state:'RS', status:'adopted',   photo:'https://images.unsplash.com/photo-1589941013453-ec89f33b5e95?w=300&q=75', modStatus:'approved', owner:'Bruno Farias'},
   {id:'6', name:'Nina',    breed:'Poodle',           city:'São Paulo',       state:'SP', status:'available', photo:'https://images.unsplash.com/photo-1548199973-03cce0bbc87b?w=300&q=75', modStatus:'approved', owner:'Maria Silva'},
-  {id:'7', name:'Pipo',    breed:'Calopsita',        city:'Florianópolis',   state:'SC', status:'available', photo:'https://images.unsplash.com/photo-1522926193341-e9ffd686c60f?w=300&q=75', modStatus:'pending',  owner:'Maria Silva'},
-  {id:'8', name:'Coco',    breed:'Angorá',           city:'Recife',          state:'PE', status:'reserved',  photo:'https://images.unsplash.com/photo-1585110396000-c9ffd4e4b308?w=300&q=75', modStatus:'pending',  owner:'Beatriz Nunes'},
+  {id:'7', name:'Mel',     breed:'Maine Coon',        city:'Florianópolis',   state:'SC', status:'available', photo:'https://images.unsplash.com/photo-1513245543132-31f507417b26?w=300&q=75', modStatus:'pending',  owner:'Maria Silva'},
+  {id:'8', name:'Duque',   breed:'Labrador',          city:'Recife',          state:'PE', status:'available', photo:'https://images.unsplash.com/photo-1561037404-61cd46aa615b?w=300&q=75', modStatus:'pending',  owner:'Beatriz Nunes'},
   {id:'9', name:'Bolinha', breed:'Beagle',           city:'São Paulo',       state:'SP', status:'available', photo:'https://images.unsplash.com/photo-1505628346881-b72b27e84530?w=300&q=75', modStatus:'pending',  owner:'Carlos Souza'},
 ];
 
