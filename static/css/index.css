@@ -288,6 +288,9 @@
   padding: 0 28px;
 }
 .pet-card {
+  width: 100%;
+  display: flex;
+  flex-direction: column;
   background: #fff;
   border-radius: 18px;
   overflow: hidden;
@@ -297,8 +300,25 @@
   border: 1px solid #f0f4f8;
 }
 .pet-card:hover { transform: translateY(-6px); box-shadow: 0 12px 40px rgba(26,65,97,0.16); }
-.card-img { position: relative; height: 220px; overflow: hidden; }
-.card-img img { width: 100%; height: 100%; object-fit: cover; transition: transform .4s; }
+
+.card-img {
+  width: 100%;
+  display: flex;
+  flex-direction: column;
+  position: relative;
+  height: 220px;
+  overflow: hidden; 
+  }
+
+.card-img img {
+  display: block; 
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+  object-position: center;
+  transition: transform .4s;
+}
+
 .pet-card:hover .card-img img { transform: scale(1.05); }
 .card-badge { position: absolute; top: 12px; left: 12px; padding: 4px 12px; border-radius: 20px; font-size: .75rem; font-weight: 700; text-transform: uppercase; letter-spacing: .04em; }
 .badge-avail { background: #d1fae5; color: #065f46; }
@@ -309,7 +329,7 @@
 .card-body { padding: 18px 20px; }
 .card-name { font-family: var(--ff-display); font-size: 1.2rem; font-weight: 700; color: var(--navy); margin-bottom: 4px; }
 .card-breed { font-size: .85rem; color: #6b7280; margin-bottom: 10px; }
-.card-meta { display: flex; flex-wrap: wrap; gap: 6px; font-size: .78rem; color: #9ca3af; }
+.card-meta { display: flex; flex-wrap: wrap; gap: 6px; align-items: center; font-size: .78rem; color: #9ca3af; }
 .section-cta { text-align: center; margin-top: 48px; }
 .btn-section {
   display: inline-flex;
@@ -502,7 +522,7 @@
 }
 .ong-card:hover { transform: translateY(-6px); box-shadow: 0 16px 48px rgba(0,0,0,0.25); }
 .ong-img { height: 160px; overflow: hidden; }
-.ong-img img { width: 100%; height: 100%; object-fit: cover; transition: transform .4s; }
+.ong-img img { width: 100%; height: 100%; object-fit: cover; object-position: center; transition: transform .4s; }
 .ong-card:hover .ong-img img { transform: scale(1.06); }
 .ong-body { padding: 18px; }
 .ong-name { font-family: var(--ff-display); font-size: 1.05rem; font-weight: 700; color: var(--navy); margin-bottom: 4px; }

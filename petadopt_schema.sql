@@ -194,7 +194,7 @@ INSERT INTO ong (nome, descricao, cidade, estado, whatsapp, chave_pix, link_vaki
 
 -- Pets
 INSERT INTO pet (usuario_id, ong_id, nome, especie, raca, porte, sexo, idade_anos, idade_meses, cor, vacinado, castrado, descricao, cidade, estado, status, mod_status) VALUES
-  (2, NULL, 'Thor',  'dog', 'Golden Retriever', 'large',  'male',   2, 0, 'Dourado',            1, 1, 'Thor é carinhoso e brincalhão. Adora crianças.',          'São Paulo',      'SP', 'available', 'approved'),
+  (2, NULL, 'Tarzam',  'dog', 'SRD (Vira-lata)', 'small',  'male',   2, 0, 'Caramelo',            1, 1, 'Tarzam é carinhoso e brincalhão.',          'Rosário da Limeira',      'MG', 'available', 'approved'),
   (3, NULL, 'Luna',  'cat', 'Siamês',           'small',  'female', 1, 6, 'Creme com pontas',   1, 0, 'Luna é elegante e independente. Ideal para apartamento.', 'Rio de Janeiro', 'RJ', 'available', 'approved'),
   (2, NULL, 'Bob',   'dog', 'SRD (Vira-lata)',  'medium', 'male',   3, 0, 'Caramelo',           1, 1, 'Bob foi resgatado da rua. Muito dócil e obediente.',      'Belo Horizonte', 'MG', 'available', 'approved'),
   (4, NULL, 'Mia',   'cat', 'Persa',            'small',  'female', 0, 8, 'Branco',             1, 0, 'Mia é tranquila e adora colos.',                         'Curitiba',       'PR', 'available', 'approved'),
@@ -207,10 +207,10 @@ INSERT INTO pet (usuario_id, ong_id, nome, especie, raca, porte, sexo, idade_ano
 INSERT INTO foto_pet (pet_id, url, is_capa, ordem) VALUES
   (1, 'https://images.unsplash.com/photo-1552053831-71594a27632d?w=800', 1, 0),
   (1, 'https://images.unsplash.com/photo-1587300003388-59208cc962cb?w=800', 0, 1),
-  (2, 'https://images.unsplash.com/photo-1533738363-b7f9aef128ce?w=800', 1, 0),
+  (2, '/static/uploads/tarzam.jpg', 1, 0),
   (3, 'https://images.unsplash.com/photo-1587300003388-59208cc962cb?w=800', 1, 0),
   (4, 'https://images.unsplash.com/photo-1574158622682-e40e69881006?w=800', 1, 0),
-  (6, 'https://images.unsplash.com/photo-1548199973-03cce0bbc87b?w=800', 1, 0);
+  (6, 'https://images.unsplash.com/photo-1548199973-03cce0bbc87b?w=800', 1, 0)  ;
 
 -- Solicitações de adoção
 INSERT INTO solicitacao_adocao (pet_id, solicitante_id, mensagem, status) VALUES

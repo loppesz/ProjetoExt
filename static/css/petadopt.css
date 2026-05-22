@@ -87,7 +87,7 @@ button{font:inherit;cursor:pointer;border:none;background:none}
 .pet-card{background:#fff;border-radius:var(--r-lg);overflow:hidden;box-shadow:var(--sh-sm);transition:transform var(--ease),box-shadow var(--ease);cursor:pointer}
 .pet-card:hover{transform:translateY(-5px);box-shadow:var(--sh)}
 .card-img{position:relative;aspect-ratio:4/3;overflow:hidden}
-.card-img img{width:100%;height:100%;object-fit:cover;transition:transform .45s ease}
+.card-img img{width:100%;height:100%;object-fit:cover;object-position:center;transition:transform .45s ease}
 .pet-card:hover .card-img img{transform:scale(1.05)}
 .card-badge{position:absolute;top:12px;left:12px;padding:4px 12px;border-radius:var(--r-xl);font-size:.72rem;font-weight:700;text-transform:uppercase;letter-spacing:.05em;color:#fff}
 .badge-avail{background:var(--sage)}
@@ -99,7 +99,7 @@ button{font:inherit;cursor:pointer;border:none;background:none}
 .card-body{padding:18px 20px 22px}
 .card-name{font-family:var(--ff-display);font-size:1.15rem;font-weight:700;margin-bottom:3px}
 .card-breed{font-size:.86rem;color:var(--muted);margin-bottom:10px}
-.card-meta{display:flex;flex-wrap:wrap;gap:6px;font-size:.8rem;color:var(--bark-m)}
+.card-meta{display:flex;flex-wrap:wrap;gap:6px;align-items:center;font-size:.8rem;color:var(--bark-m)}
 .card-meta span{display:flex;align-items:center;gap:3px}
 
 /* HOW IT WORKS */
@@ -513,7 +513,7 @@ button{font:inherit;cursor:pointer;border:none;background:none}
 .pet-card{background:#fff;border-radius:var(--r-lg);overflow:hidden;box-shadow:var(--sh-sm);transition:transform var(--ease),box-shadow var(--ease);cursor:pointer}
 .pet-card:hover{transform:translateY(-4px);box-shadow:var(--sh)}
 .card-img{position:relative;aspect-ratio:4/3;overflow:hidden}
-.card-img img{width:100%;height:100%;object-fit:cover;transition:transform .45s ease}
+.card-img img{width:100%;height:100%;object-fit:cover;object-position:center;transition:transform .45s ease}
 .pet-card:hover .card-img img{transform:scale(1.05)}
 .card-badge{position:absolute;top:10px;left:10px;padding:4px 10px;border-radius:var(--r-xl);font-size:.7rem;font-weight:700;text-transform:uppercase;letter-spacing:.05em;color:#fff;background:var(--sage)}
 .card-body{padding:16px 18px 18px}
@@ -593,7 +593,7 @@ button{font:inherit;cursor:pointer;border:none;background:none}
 .pet-card{background:#fff;border-radius:var(--r-lg);overflow:hidden;box-shadow:var(--sh-sm);transition:transform var(--ease),box-shadow var(--ease);cursor:pointer}
 .pet-card:hover{transform:translateY(-5px);box-shadow:var(--sh)}
 .card-img{position:relative;aspect-ratio:4/3;overflow:hidden}
-.card-img img{width:100%;height:100%;object-fit:cover;transition:transform .45s ease}
+.card-img img{width:100%;height:100%;object-fit:cover;object-position:center;transition:transform .45s ease}
 .pet-card:hover .card-img img{transform:scale(1.05)}
 .card-badge{position:absolute;top:12px;left:12px;padding:4px 12px;border-radius:var(--r-xl);font-size:.72rem;font-weight:700;text-transform:uppercase;letter-spacing:.05em;color:#fff}
 .badge-avail{background:var(--sage)}.badge-adopted{background:var(--muted)}.badge-reserved{background:var(--gold)}
