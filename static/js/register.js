@@ -43,16 +43,43 @@ function prevStep(){
 }
 
 function submitForm(){
-  const btn=document.getElementById('submit-btn');
-  btn.disabled=true;btn.textContent='Criando conta...';
-  setTimeout(()=>{
-    const name=document.getElementById('name').value.trim();
-    const email=document.getElementById('email').value.trim();
-    localStorage.setItem('petadopt_user', JSON.stringify({name,email,role:'user'}));
+  const btn = document.getElementById('submit-btn');
+  btn.disabled = true;
+  btn.textContent = 'Criando conta...';
+
+  const data = {
+    name: document.getElementById('name').value.trim(),
+    email: document.getElementById('email').value.trim(),
+    password: document.getElementById('password').value,
+    confirm: document.getElementById('confirm-pwd').value,
+    phone: document.getElementById('phone').value.trim(),
+    city: document.getElementById('city').value.trim(),
+    state: document.getElementById('state').value,
+  };
+
+  fetch('/register', {
+    method: 'POST',
+    headers: {
+      'Content-Type': 'application/json'
+    },
+    body: JSON.stringify(data)
+  })
+  .then(async response => {
+    const body = await response.json();
+    if (!response.ok) {
+      showErr('err2', body.message || 'Não foi possível criar a conta.');
+      btn.disabled = false;
+      btn.textContent = 'Criar minha conta!';
+      return;
+    }
     document.getElementById('step2').style.display='none';
     document.getElementById('step3').style.display='block';
-    document.getElementById('login-link').style.display='none';
     document.getElementById('l2').classList.add('done');
     document.getElementById('s3').className='step-circle done';
-  }, 1400);
+  })
+  .catch(() => {
+    showErr('err2', 'Erro de conexão. Tente novamente.');
+    btn.disabled = false;
+    btn.textContent = 'Criar minha conta!';
+  });
 }
