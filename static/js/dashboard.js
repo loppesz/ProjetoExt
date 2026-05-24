@@ -34,7 +34,6 @@ function initDashboard() {
     sep.parentNode.insertBefore(adminLink, sep);
   }
 
-  updateStats();
   renderMyPets();
   renderAdoptions();
   renderReceived();
@@ -64,42 +63,66 @@ function updateStats() {
 
 // ── Meus Pets ─────────────────────────────────────────────────────────────────
 function renderMyPets() {
-  const el = document.getElementById('my-pets-list');
-  if (!MY_PETS.length) {
-    el.innerHTML = `<div class="empty"><div class="empty-icon">🐾</div><div class="empty-title">Nenhum pet cadastrado</div><p class="empty-desc">Cadastre seu primeiro pet para adoção!</p><a href="new-pet.html" class="btn btn-primary">Cadastrar pet</a></div>`;
-    return;
-  }
-  el.innerHTML = MY_PETS.map(p => `
-    <div class="item-card">
-      <img class="item-img" src="${p.photo}" alt="${p.name}" onclick="location.href='pet.html?id=${p.id}'" style="cursor:pointer">
-      <div class="item-info">
-        <div class="item-name">${p.name}</div>
-        <div class="item-meta">${p.breed} · 📍 ${p.city}/${p.state}</div>
-        <div style="display:flex;align-items:center;gap:10px;margin-top:8px;flex-wrap:wrap">
-          <select class="sort-select" style="padding:6px 10px;font-size:.82rem" onchange="changeStatus('${p.id}',this.value)">
-            <option value="available" ${p.status==='available'?'selected':''}>✅ Disponível</option>
-            <option value="reserved"  ${p.status==='reserved'?'selected':''}>⏳ Reservado</option>
-            <option value="adopted"   ${p.status==='adopted'?'selected':''}>🏠 Adotado</option>
-          </select>
-          <span class="status-pill ${p.modStatus==='approved'?'pill-avail':p.modStatus==='pending'?'pill-pending':'pill-rejected'}" style="margin-top:0">
-            ${p.modStatus==='approved'?'✅ Aprovado':p.modStatus==='pending'?'⏳ Pendente':'❌ Removido'}
-          </span>
-        </div>
-      </div>
-      <div class="item-actions" style="flex-direction:column">
-        <button class="btn btn-ghost btn-sm" onclick="openEditModal('${p.id}')">✏️ Editar</button>
-        <button class="btn btn-outline btn-sm btn-danger" onclick="openRemoveModal('${p.id}')">🗑️ Remover</button>
-      </div>
-    </div>`).join('');
+  // Busca os pets do usuário logado da API
+  fetch('/api/user/pets')
+    .then(r => r.json())
+    .then(data => {
+      MY_PETS = data.pets || [];
+      
+      const el = document.getElementById('my-pets-list');
+      if (!MY_PETS.length) {
+        el.innerHTML = `<div class="empty"><div class="empty-icon">🐾</div><div class="empty-title">Nenhum pet cadastrado</div><p class="empty-desc">Cadastre seu primeiro pet para adoção!</p><a href="new-pet.html" class="btn btn-primary">Cadastrar pet</a></div>`;
+        updateStats();
+        return;
+      }
+      el.innerHTML = MY_PETS.map(p => `
+        <div class="item-card">
+          <img class="item-img" src="${p.photo}" alt="${p.name}" onclick="location.href='pet.html?id=${p.id}'" style="cursor:pointer">
+          <div class="item-info">
+            <div class="item-name">${p.name}</div>
+            <div class="item-meta">${p.breed} · 📍 ${p.city}/${p.state}</div>
+            <div style="display:flex;align-items:center;gap:10px;margin-top:8px;flex-wrap:wrap">
+              <select class="sort-select" style="padding:6px 10px;font-size:.82rem" onchange="changeStatus('${p.id}',this.value)">
+                <option value="available" ${p.status==='available'?'selected':''}>✅ Disponível</option>
+                <option value="reserved"  ${p.status==='reserved'?'selected':''}>⏳ Reservado</option>
+                <option value="adopted"   ${p.status==='adopted'?'selected':''}>🏠 Adotado</option>
+              </select>
+              <span class="status-pill ${p.modStatus==='approved'?'pill-avail':p.modStatus==='pending'?'pill-pending':'pill-rejected'}" style="margin-top:0">
+                ${p.modStatus==='approved'?'✅ Aprovado':p.modStatus==='pending'?'⏳ Pendente':'❌ Removido'}
+              </span>
+            </div>
+          </div>
+          <div class="item-actions" style="flex-direction:column">
+            <button class="btn btn-ghost btn-sm" onclick="openEditModal('${p.id}')">✏️ Editar</button>
+            <button class="btn btn-outline btn-sm btn-danger" onclick="openRemoveModal('${p.id}')">🗑️ Remover</button>
+          </div>
+        </div>`).join('');
+      updateStats();
+    })
+    .catch(e => {
+      console.error('Erro ao carregar meus pets:', e);
+      MY_PETS = [];
+      updateStats();
+    });
 }
 
+
 function changeStatus(id, newStatus) {
-  const p = MY_PETS.find(x => x.id === id);
-  if (!p) return;
-  p.status = newStatus;
-  const labels = {available:'Disponível', reserved:'Reservado', adopted:'Adotado'};
-  showToast(`Status de ${p.name} alterado para "${labels[newStatus]}"`, 'success');
-  updateStats();
+  fetch(`/api/pets/${id}/status`, {
+    method: 'PATCH',
+    headers: { 'Content-Type': 'application/json' },
+    body: JSON.stringify({ status: newStatus })
+  })
+  .then(r => r.json())
+  .then(data => {
+    if (data.sucesso) {
+      showToast(`✅ ${data.mensagem}`, 'success');
+      renderMyPets();
+    } else {
+      showToast(`❌ ${data.erro}`, '');
+    }
+  })
+  .catch(e => showToast(`Erro: ${e}`, ''));
 }
 
 // ── Editar Pet ────────────────────────────────────────────────────────────────
@@ -142,7 +165,6 @@ function openEditModal(id) {
 }
 
 function saveEdit(id) {
-  const p = MY_PETS.find(x => x.id === id);
   const name  = document.getElementById('edit-name').value.trim();
   const city  = document.getElementById('edit-city').value.trim();
   const state = document.getElementById('edit-state').value.trim();
@@ -153,15 +175,40 @@ function saveEdit(id) {
     err.style.display = 'block';
     return;
   }
-  err.style.display = 'none';
-  p.name  = name;
-  p.breed = document.getElementById('edit-breed').value.trim();
-  p.city  = city;
-  p.state = state.toUpperCase();
-  p.desc  = document.getElementById('edit-desc').value.trim();
-  closeModal();
-  renderMyPets();
-  showToast(`${p.name} atualizado com sucesso! ✅`, 'success');
+  
+  console.log('DEBUG: Salvando pet', id, { name, city, state });
+  
+  fetch(`/api/pets/${id}`, {
+    method: 'PUT',
+    headers: { 'Content-Type': 'application/json' },
+    body: JSON.stringify({
+      name: name,
+      breed: document.getElementById('edit-breed').value.trim(),
+      city: city,
+      state: state.toUpperCase(),
+      description: document.getElementById('edit-desc').value.trim()
+    })
+  })
+  .then(r => {
+    console.log('DEBUG: Response status', r.status);
+    return r.json();
+  })
+  .then(data => {
+    console.log('DEBUG: Response data', data);
+    if (data.sucesso) {
+      closeModal();
+      showToast(`✅ ${data.mensagem}`, 'success');
+      renderMyPets();
+    } else {
+      err.textContent = `⚠️ ${data.erro}`;
+      err.style.display = 'block';
+    }
+  })
+  .catch(e => {
+    console.error('DEBUG: Erro na requisição', e);
+    err.textContent = `⚠️ Erro: ${e}`;
+    err.style.display = 'block';
+  });
 }
 
 // ── Remover Pet ───────────────────────────────────────────────────────────────
@@ -182,13 +229,30 @@ function openRemoveModal(id) {
 }
 
 function confirmRemove(id) {
-  const idx = MY_PETS.findIndex(x => x.id === id);
-  const name = MY_PETS[idx]?.name;
-  if (idx > -1) MY_PETS.splice(idx, 1);
-  closeModal();
-  renderMyPets();
-  updateStats();
-  showToast(`${name} removido da plataforma.`, '');
+  console.log('DEBUG: Removendo pet', id);
+  
+  fetch(`/api/pets/${id}`, {
+    method: 'DELETE',
+    headers: { 'Content-Type': 'application/json' }
+  })
+  .then(r => {
+    console.log('DEBUG: Response status', r.status);
+    return r.json();
+  })
+  .then(data => {
+    console.log('DEBUG: Response data', data);
+    if (data.sucesso) {
+      closeModal();
+      showToast(`✅ ${data.mensagem}`, 'success');
+      renderMyPets();
+    } else {
+      showToast(`❌ ${data.erro}`, '');
+    }
+  })
+  .catch(e => {
+    console.error('DEBUG: Erro na requisição', e);
+    showToast(`Erro: ${e}`, '');
+  });
 }
 
 // ── Adoções ───────────────────────────────────────────────────────────────────

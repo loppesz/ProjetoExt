@@ -342,6 +342,125 @@ def get_user():
         'role': current_user.role
     })
 
+# GET - Meus Pets (do usuário logado)
+@app.route('/api/user/pets', methods=['GET'])
+@login_required
+def get_my_pets():
+    try:
+        print(f"DEBUG: current_user.id = {current_user.id}, name = {current_user.name}")
+        pets = Pet.query.filter_by(usuario_id=current_user.id).all()
+        print(f"DEBUG: Encontrados {len(pets)} pets para o usuário {current_user.id}")
+        
+        size_labels = {
+            'small': 'Pequeno',
+            'medium': 'Médio',
+            'large': 'Grande',
+            'giant': 'Gigante'
+        }
+        
+        return jsonify({
+            'pets': [
+                {
+                    'id': p.id,
+                    'name': p.nome,
+                    'breed': p.raca,
+                    'species': p.especie,
+                    'size': p.porte,
+                    'sizeLabel': size_labels.get(p.porte, p.porte),
+                    'city': p.cidade,
+                    'state': p.estado,
+                    'photo': p.foto_capa,
+                    'status': p.status,
+                    'modStatus': p.mod_status
+                }
+                for p in pets
+            ]
+        }), 200
+    except Exception as e:
+        return jsonify({'erro': str(e)}), 500
+
+# PATCH - Atualizar status do pet
+@app.route('/api/pets/<int:pet_id>/status', methods=['PATCH'])
+@login_required
+def update_pet_status(pet_id):
+    try:
+        pet = Pet.query.get(pet_id)
+        if not pet:
+            return jsonify({'erro': 'Pet não encontrado'}), 404
+        
+        # Verificar se é o dono
+        if pet.usuario_id != current_user.id:
+            return jsonify({'erro': 'Você não pode modificar este pet'}), 403
+        
+        new_status = request.json.get('status')
+        if new_status not in ['available', 'reserved', 'adopted']:
+            return jsonify({'erro': 'Status inválido'}), 400
+        
+        pet.status = new_status
+        db.session.commit()
+        
+        return jsonify({'sucesso': True, 'mensagem': f'Status atualizado para {new_status}'}), 200
+    except Exception as e:
+        db.session.rollback()
+        return jsonify({'erro': str(e)}), 500
+
+# PUT - Editar pet
+@app.route('/api/pets/<int:pet_id>', methods=['PUT'])
+@login_required
+def update_pet(pet_id):
+    try:
+        pet = Pet.query.get(pet_id)
+        if not pet:
+            return jsonify({'erro': 'Pet não encontrado'}), 404
+        
+        # Verificar se é o dono
+        if pet.usuario_id != current_user.id:
+            return jsonify({'erro': 'Você não pode modificar este pet'}), 403
+        
+        # Atualizar campos
+        name = request.json.get('name', '').strip()
+        city = request.json.get('city', '').strip()
+        state = request.json.get('state', '').strip().upper()
+        
+        if not name or not city or not state:
+            return jsonify({'erro': 'Nome, cidade e estado são obrigatórios'}), 400
+        
+        pet.nome = name
+        pet.raca = request.json.get('breed', '').strip()
+        pet.cidade = city
+        pet.estado = state
+        pet.descricao = request.json.get('description', '')
+        
+        db.session.commit()
+        
+        return jsonify({'sucesso': True, 'mensagem': 'Pet atualizado com sucesso'}), 200
+    except Exception as e:
+        db.session.rollback()
+        print(f"Erro em update_pet: {e}")
+        return jsonify({'erro': str(e)}), 500
+
+# DELETE - Remover pet
+@app.route('/api/pets/<int:pet_id>', methods=['DELETE'])
+@login_required
+def delete_pet(pet_id):
+    try:
+        pet = Pet.query.get(pet_id)
+        if not pet:
+            return jsonify({'erro': 'Pet não encontrado'}), 404
+        
+        # Verificar se é o dono
+        if pet.usuario_id != current_user.id:
+            return jsonify({'erro': 'Você não pode remover este pet'}), 403
+        
+        pet_name = pet.nome
+        db.session.delete(pet)
+        db.session.commit()
+        
+        return jsonify({'sucesso': True, 'mensagem': f'{pet_name} foi removido'}), 200
+    except Exception as e:
+        db.session.rollback()
+        return jsonify({'erro': str(e)}), 500
+
 @app.route('/')
 def index():
     return render_template('index.html')
