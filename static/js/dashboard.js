@@ -1,67 +1,60 @@
 // ── Estado mock ──────────────────────────────────────────────────────────────
-const user = JSON.parse(localStorage.getItem('petadopt_user') || '{"name":"Maria Silva","email":"maria@email.com","role":"user"}');
+let user = JSON.parse(localStorage.getItem('petadopt_user') || '{"name":"Maria Silva","email":"maria@email.com","role":"user"}');
+
+// Carrega dados do usuário da API ao abrir a página
+fetch('/api/user')
+  .then(r => r.json())
+  .then(data => {
+    user = data;
+    localStorage.setItem('petadopt_user', JSON.stringify(user));
+    initDashboard();
+  })
+  .catch(e => {
+    console.error('Erro ao carregar usuário:', e);
+    initDashboard();
+  });
+
+function initDashboard() {
+  // Inicializa o dashboard com os dados do usuário
+  document.getElementById('sb-name').textContent = user.name;
+  document.getElementById('sb-email').textContent = user.email;
+  document.getElementById('greet-name').textContent = user.name.split(' ')[0];
+  document.getElementById('nav-user').textContent = 'Olá, ' + user.name.split(' ')[0];
+
+  if (user.role === 'admin') {
+    document.getElementById('sb-badge').textContent = '🛡️ Administrador';
+    document.getElementById('sb-badge').style.background = 'rgba(192,106,58,.12)';
+    document.getElementById('sb-badge').style.color = 'var(--terra)';
+    // Injeta aba de moderação na sidebar
+    const sep = document.querySelector('.sidebar-nav [style*="border-top"]');
+    const adminLink = document.createElement('div');
+    adminLink.className = 'sidebar-link';
+    adminLink.setAttribute('onclick', "showTab('moderation',this)");
+    adminLink.innerHTML = '<span class="icon">🛡️</span> Moderação';
+    sep.parentNode.insertBefore(adminLink, sep);
+  }
+
+  updateStats();
+  renderMyPets();
+  renderAdoptions();
+  renderReceived();
+  renderFavorites();
+  if (user.role === 'admin') renderModeration();
+}
 
 // Para testar como admin: abra o console e rode:
 // localStorage.setItem('petadopt_user', JSON.stringify({name:'Admin',email:'admin@petadopt.com',role:'admin'})); location.reload();
 
-let MY_PETS = [
-  {id:'3', name:'Bob',   breed:'SRD (Vira-lata)', species:'dog', size:'medium', sizeLabel:'Médio',   city:'Belo Horizonte', state:'MG', status:'available', gender:'Macho',  color:'Caramelo', vaccinated:true,  neutered:true,  desc:'Bob foi resgatado da rua.', photo:'https://images.unsplash.com/photo-1587300003388-59208cc962cb?w=300&q=75', modStatus:'approved'},
-  {id:'6', name:'Nina',  breed:'Poodle',           species:'dog', size:'small',  sizeLabel:'Pequeno', city:'São Paulo',       state:'SP', status:'available', gender:'Fêmea',  color:'Branco',   vaccinated:false, neutered:false, desc:'Nina é cheia de energia.', photo:'https://images.unsplash.com/photo-1548199973-03cce0bbc87b?w=300&q=75', modStatus:'approved'},
-  {id:'7', name:'Mel',   breed:'Maine Coon',        species:'cat', size:'small',  sizeLabel:'Pequeno', city:'Florianópolis',   state:'SC', status:'available', gender:'Fêmea',  color:'Cinza',    vaccinated:true,  neutered:true,  desc:'Mel é dócil e carinhosa.', photo:'https://images.unsplash.com/photo-1513245543132-31f507417b26?w=300&q=75', modStatus:'pending'},
-];
+let MY_PETS = [];
 
 // Todos os pets da plataforma (para moderação)
-let ALL_PLATFORM_PETS = [
-  {id:'1', name:'Thor',    breed:'Golden Retriever', city:'São Paulo',       state:'SP', status:'available', photo:'https://images.unsplash.com/photo-1552053831-71594a27632d?w=300&q=75', modStatus:'approved', owner:'Ana Costa'},
-  {id:'2', name:'Luna',    breed:'Siamês',           city:'Rio de Janeiro',  state:'RJ', status:'available', photo:'https://images.unsplash.com/photo-1533738363-b7f9aef128ce?w=300&q=75', modStatus:'approved', owner:'Carlos Lima'},
-  {id:'3', name:'Bob',     breed:'SRD',              city:'Belo Horizonte',  state:'MG', status:'available', photo:'https://images.unsplash.com/photo-1587300003388-59208cc962cb?w=300&q=75', modStatus:'approved', owner:'Maria Silva'},
-  {id:'4', name:'Mia',     breed:'Persa',            city:'Curitiba',        state:'PR', status:'available', photo:'https://images.unsplash.com/photo-1574158622682-e40e69881006?w=300&q=75', modStatus:'pending',  owner:'Juliana Alves'},
-  {id:'5', name:'Rex',     breed:'Pastor Alemão',    city:'Porto Alegre',    state:'RS', status:'adopted',   photo:'https://images.unsplash.com/photo-1589941013453-ec89f33b5e95?w=300&q=75', modStatus:'approved', owner:'Bruno Farias'},
-  {id:'6', name:'Nina',    breed:'Poodle',           city:'São Paulo',       state:'SP', status:'available', photo:'https://images.unsplash.com/photo-1548199973-03cce0bbc87b?w=300&q=75', modStatus:'approved', owner:'Maria Silva'},
-  {id:'7', name:'Mel',     breed:'Maine Coon',        city:'Florianópolis',   state:'SC', status:'available', photo:'https://images.unsplash.com/photo-1513245543132-31f507417b26?w=300&q=75', modStatus:'pending',  owner:'Maria Silva'},
-  {id:'8', name:'Duque',   breed:'Labrador',          city:'Recife',          state:'PE', status:'available', photo:'https://images.unsplash.com/photo-1561037404-61cd46aa615b?w=300&q=75', modStatus:'pending',  owner:'Beatriz Nunes'},
-  {id:'9', name:'Bolinha', breed:'Beagle',           city:'São Paulo',       state:'SP', status:'available', photo:'https://images.unsplash.com/photo-1505628346881-b72b27e84530?w=300&q=75', modStatus:'pending',  owner:'Carlos Souza'},
-];
+let ALL_PLATFORM_PETS = [];
 
-const MY_ADOPTIONS = [
-  {petName:'Luna', petBreed:'Siamês',          city:'Rio de Janeiro/RJ', status:'pending',  date:'há 2 dias',    photo:'https://images.unsplash.com/photo-1533738363-b7f9aef128ce?w=100&q=75', petId:'2'},
-  {petName:'Thor', petBreed:'Golden Retriever',city:'São Paulo/SP',      status:'approved', date:'há 2 semanas', photo:'https://images.unsplash.com/photo-1552053831-71594a27632d?w=100&q=75', petId:'1'},
-];
+const MY_ADOPTIONS = [];
 
-const RECEIVED_REQUESTS = [
-  {from:'João Santos', phone:'(11) 98888-1234', city:'São Paulo/SP', petName:'Bob', petId:'3', msg:'Olá! Tenho uma casa com quintal grande e adoro cães. Bob teria todo o espaço e amor que merece!', status:'pending'},
-];
+const RECEIVED_REQUESTS = [];
 
-const FAVORITES = [
-  {id:'2', name:'Luna', breed:'Siamês',  city:'RJ/RJ', photo:'https://images.unsplash.com/photo-1533738363-b7f9aef128ce?w=300&q=75', status:'available'},
-  {id:'6', name:'Nina', breed:'Poodle',  city:'SP/SP', photo:'https://images.unsplash.com/photo-1548199973-03cce0bbc87b?w=300&q=75', status:'available'},
-];
-
-// ── Init ──────────────────────────────────────────────────────────────────────
-document.getElementById('sb-name').textContent = user.name;
-document.getElementById('sb-email').textContent = user.email;
-document.getElementById('greet-name').textContent = user.name.split(' ')[0];
-document.getElementById('nav-user').textContent = 'Olá, ' + user.name.split(' ')[0];
-
-if (user.role === 'admin') {
-  document.getElementById('sb-badge').textContent = '🛡️ Administrador';
-  document.getElementById('sb-badge').style.background = 'rgba(192,106,58,.12)';
-  document.getElementById('sb-badge').style.color = 'var(--terra)';
-  // Injeta aba de moderação na sidebar
-  const sep = document.querySelector('.sidebar-nav [style*="border-top"]');
-  const adminLink = document.createElement('div');
-  adminLink.className = 'sidebar-link';
-  adminLink.setAttribute('onclick', "showTab('moderation',this)");
-  adminLink.innerHTML = '<span class="icon">🛡️</span> Moderação';
-  sep.parentNode.insertBefore(adminLink, sep);
-}
-
-updateStats();
-renderMyPets();
-renderAdoptions();
-renderReceived();
-renderFavorites();
-if (user.role === 'admin') renderModeration();
+const FAVORITES = [];
 
 // ── Stats ─────────────────────────────────────────────────────────────────────
 function updateStats() {
@@ -267,44 +260,99 @@ function renderFavorites() {
 
 // ── Moderação (admin) ─────────────────────────────────────────────────────────
 function renderModeration() {
-  const pending  = ALL_PLATFORM_PETS.filter(p => p.modStatus === 'pending').length;
-  const approved = ALL_PLATFORM_PETS.filter(p => p.modStatus === 'approved').length;
-  const removed  = ALL_PLATFORM_PETS.filter(p => p.modStatus === 'removed').length;
-  document.getElementById('mod-pending').textContent  = pending;
-  document.getElementById('mod-approved').textContent = approved;
-  document.getElementById('mod-removed').textContent  = removed;
-
-  document.getElementById('moderation-list').innerHTML = ALL_PLATFORM_PETS.map(p => `
-    <div class="item-card" id="mod-pet-${p.id}">
-      <img class="item-img" src="${p.photo}" alt="${p.name}" style="cursor:pointer" onclick="location.href='pet.html?id=${p.id}'">
-      <div class="item-info">
-        <div class="item-name">${p.name}</div>
-        <div class="item-meta">${p.breed} · 📍 ${p.city}/${p.state} · por ${p.owner}</div>
-        <span class="status-pill ${p.modStatus==='approved'?'pill-avail':p.modStatus==='pending'?'pill-pending':'pill-rejected'}">
-          ${p.modStatus==='approved'?'✅ Aprovado':p.modStatus==='pending'?'⏳ Pendente':'❌ Removido'}
-        </span>
-      </div>
-      <div class="item-actions" style="flex-direction:column">
-        ${p.modStatus !== 'approved' ? `<button class="btn btn-sage btn-sm" onclick="moderateApprove('${p.id}')">✅ Aprovar</button>` : ''}
-        ${p.modStatus !== 'removed'  ? `<button class="btn btn-outline btn-sm btn-danger" onclick="moderateRemove('${p.id}')">🗑️ Remover</button>` : ''}
-      </div>
-    </div>`).join('');
+  // Carrega todos os pets para contar status
+  fetch('/api/admin/pets/pending')
+    .then(r => r.json())
+    .then(data => {
+      const pets = data.pets || [];
+      
+      // Contar pets por status
+      const pending = pets.length;
+      
+      // Buscar contadores totais
+      fetch('/api/admin/pets/stats')
+        .then(r => r.json())
+        .then(stats => {
+          document.getElementById('mod-pending').textContent = stats.pending || pending;
+          document.getElementById('mod-approved').textContent = stats.approved || 0;
+          document.getElementById('mod-removed').textContent = stats.removed || 0;
+        })
+        .catch(e => {
+          // Se rota não existir, mostrar só o pending
+          document.getElementById('mod-pending').textContent = pending;
+          document.getElementById('mod-approved').textContent = '0';
+          document.getElementById('mod-removed').textContent = '0';
+        });
+      
+      const el = document.getElementById('moderation-list');
+      
+      if (!pets.length) {
+        el.innerHTML = `<div class="empty" style="grid-column:1/-1">
+          <div class="empty-icon">✅</div>
+          <div class="empty-title">Todos os pets foram aprovados!</div>
+          <p class="empty-desc">Não há pets pendentes de moderação.</p>
+        </div>`;
+        return;
+      }
+      
+      el.innerHTML = pets.map(p => `
+        <div class="item-card" id="mod-pet-${p.id}">
+          <img class="item-img" src="${p.photo}" alt="${p.name}" style="cursor:pointer">
+          <div class="item-info">
+            <div class="item-name">${p.name}</div>
+            <div class="item-meta">${p.breed} · 📍 ${p.city}/${p.state}</div>
+            <div class="item-meta">👤 ${p.owner}</div>
+            ${p.description ? `<p style="font-size:.87rem;color:var(--bark-m);margin-top:8px;line-height:1.6">${p.description}</p>` : ''}
+            <span class="status-pill pill-pending" style="margin-top:8px">⏳ Pendente de aprovação</span>
+          </div>
+          <div class="item-actions" style="flex-direction:column">
+            <button class="btn btn-sage btn-sm" onclick="moderateApprove(${p.id})">✅ Aprovar</button>
+            <button class="btn btn-outline btn-sm btn-danger" onclick="moderateRemove(${p.id})">🗑️ Remover</button>
+          </div>
+        </div>`).join('');
+    })
+    .catch(e => {
+      console.error('Erro ao carregar pets pendentes:', e);
+      document.getElementById('moderation-list').innerHTML = `<div class="empty"><div class="empty-icon">⚠️</div><div class="empty-title">Erro ao carregar</div></div>`;
+    });
 }
 
-function moderateApprove(id) {
-  const p = ALL_PLATFORM_PETS.find(x => x.id === id);
-  if (!p) return;
-  p.modStatus = 'approved';
-  renderModeration();
-  showToast(`${p.name} aprovado na plataforma. ✅`, 'success');
+function moderateApprove(petId) {
+  fetch(`/api/admin/pets/${petId}/approve`, {
+    method: 'POST',
+    headers: { 'Content-Type': 'application/json' }
+  })
+  .then(r => r.json())
+  .then(data => {
+    if (data.sucesso) {
+      document.getElementById(`mod-pet-${petId}`)?.remove();
+      showToast(`✅ ${data.mensagem}`, 'success');
+      renderModeration(); // Recarrega lista
+    } else {
+      showToast(`❌ ${data.erro}`, '');
+    }
+  })
+  .catch(e => showToast(`Erro: ${e}`, ''));
 }
 
-function moderateRemove(id) {
-  const p = ALL_PLATFORM_PETS.find(x => x.id === id);
-  if (!p) return;
-  p.modStatus = 'removed';
-  renderModeration();
-  showToast(`${p.name} removido da plataforma.`, '');
+function moderateRemove(petId) {
+  if (!confirm('Tem certeza que deseja remover este pet?')) return;
+  
+  fetch(`/api/admin/pets/${petId}/remove`, {
+    method: 'POST',
+    headers: { 'Content-Type': 'application/json' }
+  })
+  .then(r => r.json())
+  .then(data => {
+    if (data.sucesso) {
+      document.getElementById(`mod-pet-${petId}`)?.remove();
+      showToast(`${data.mensagem}`, 'success');
+      renderModeration(); // Recarrega lista
+    } else {
+      showToast(`❌ ${data.erro}`, '');
+    }
+  })
+  .catch(e => showToast(`Erro: ${e}`, ''));
 }
 
 // ── Tabs ──────────────────────────────────────────────────────────────────────
@@ -325,7 +373,7 @@ function closeModal(e) {
 // ── Auth ──────────────────────────────────────────────────────────────────────
 function logout() {
   localStorage.removeItem('petadopt_user');
-  location.href = 'index.html';
+  location.href = '/logout';
 }
 
 // ── Toast ─────────────────────────────────────────────────────────────────────

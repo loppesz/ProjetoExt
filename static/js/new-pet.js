@@ -61,13 +61,51 @@ function submitPet(){
   if(!city){showError('Digite a cidade.');return;}
   if(!state){showError('Selecione o estado.');return;}
 
+  const formData = new FormData();
+  formData.append('nome', name);
+  formData.append('especie', selectedSpecies);
+  formData.append('raca', document.getElementById('breed').value.trim());
+  formData.append('porte', size);
+  formData.append('sexo', document.getElementById('gender').value || 'unknown');
+  formData.append('idade_anos', document.getElementById('age-years').value || 0);
+  formData.append('idade_meses', document.getElementById('age-months').value || 0);
+  formData.append('cor', document.getElementById('color').value.trim());
+  formData.append('vacinado', document.getElementById('vaccinated').checked ? 1 : 0);
+  formData.append('castrado', document.getElementById('neutered').checked ? 1 : 0);
+  formData.append('descricao', document.getElementById('description').value.trim());
+  formData.append('cidade', city);
+  formData.append('estado', state);
+  
+  if(selectedFiles.length > 0){
+    formData.append('foto_capa', selectedFiles[0]);
+  }
+
   const btn=document.getElementById('submit-btn');
-  btn.disabled=true;btn.textContent='Cadastrando...';
-  setTimeout(()=>{
-    document.getElementById('form-wrap').style.display='none';
-    document.getElementById('success-card').classList.add('show');
-    window.scrollTo({top:0,behavior:'smooth'});
-  }, 1500);
+  btn.disabled=true;
+  btn.textContent='Cadastrando...';
+  
+  fetch('/api/pets', {
+    method: 'POST',
+    body: formData
+  })
+  .then(r => r.json())
+  .then(data => {
+    if(data.sucesso){
+      document.getElementById('form-wrap').style.display='none';
+      document.getElementById('success-card').classList.add('show');
+      document.querySelector('.btn-success-primary').href = `/pet/${data.pet_id}`;
+      window.scrollTo({top:0,behavior:'smooth'});
+    } else {
+      showError(data.erro || 'Erro ao cadastrar pet.');
+      btn.disabled=false;
+      btn.textContent='🐾 Cadastrar pet para adoção';
+    }
+  })
+  .catch(e => {
+    showError('Erro de conexão: ' + e);
+    btn.disabled=false;
+    btn.textContent='🐾 Cadastrar pet para adoção';
+  });
 }
 
 function resetForm(){

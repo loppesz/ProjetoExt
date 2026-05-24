@@ -1,6 +1,6 @@
 const MOCK_PETS = [
-  {id:'1',name:'Tarzam',species:'dog',breed:'SRD (Vira-lata)',age:'4 anos',size:'pequeno',sizeLabel:'Pequeno',city:'Rosário da Limeira',state:'MG',status:'available',photo:'/static/uploads/tarzam.jpg',fav:false},
-  {id:'2',name:'Luna',species:'cat',breed:'Siamês',age:'1 ano e 6 meses',size:'Pequeno',city:'Rio de Janeiro',state:'RJ',status:'available',photo:'https://images.unsplash.com/photo-1533738363-b7f9aef128ce?w=400&q=75',fav:true,vaccinated:true,neutered:false},
+  {id:'1',name:'Tarzam',species:'dog',breed:'SRD (Vira-lata)',age:'4 anos',size:'Pequeno',sizeLabel:'Pequeno',city:'Rosário da Limeira',state:'MG',status:'available',photo:'/static/uploads/tarzam.jpg',fav:false},
+  {id:'2',name:'Chiquinha',species:'cat',breed:'Cinza',age:'5 ano e 6 meses',size:'Médio',city:'Rosário da Limeira',state:'MG',status:'available',photo:'/static/uploads/chiquinha.jpg',fav:true,vaccinated:true,neutered:false},
   {id:'3',name:'Bob',species:'dog',breed:'SRD (Vira-lata)',age:'3 anos',size:'Médio',city:'Belo Horizonte',state:'MG',status:'available',photo:'https://images.unsplash.com/photo-1587300003388-59208cc962cb?w=400&q=75',fav:false,vaccinated:true,neutered:true},
   {id:'4',name:'Mia',species:'cat',breed:'Persa',age:'8 meses',size:'Pequeno',city:'Curitiba',state:'PR',status:'available',photo:'https://images.unsplash.com/photo-1574158622682-e40e69881006?w=400&q=75',fav:false,vaccinated:true,neutered:false},
   {id:'5',name:'Rex',species:'dog',breed:'Pastor Alemão',age:'4 anos',size:'Grande',city:'Porto Alegre',state:'RS',status:'adopted',photo:'https://images.unsplash.com/photo-1589941013453-ec89f33b5e95?w=400&q=75',fav:false,vaccinated:true,neutered:true},

@@ -1,17 +1,20 @@
-const ALL_PETS = [
-  {id:'1',name:'Tarzam',species:'dog',breed:'SRD (Vira-lata)',age:'4 anos',size:'pequeno',sizeLabel:'Pequeno',city:'Rosário da Limeira',state:'MG',status:'available',photo:'/static/uploads/tarzam.jpg',fav:false},
-  {id:'2',name:'Luna',species:'cat',breed:'Siamês',age:'1 ano e 6 meses',size:'small',sizeLabel:'Pequeno',city:'Rio de Janeiro',state:'RJ',status:'available',photo:'https://images.unsplash.com/photo-1533738363-b7f9aef128ce?w=400&q=75',fav:true},
-  {id:'3',name:'Bob',species:'dog',breed:'SRD (Vira-lata)',age:'3 anos',size:'medium',sizeLabel:'Médio',city:'Belo Horizonte',state:'MG',status:'available',photo:'https://images.unsplash.com/photo-1587300003388-59208cc962cb?w=400&q=75',fav:false},
-  {id:'4',name:'Mia',species:'cat',breed:'Persa',age:'8 meses',size:'small',sizeLabel:'Pequeno',city:'Curitiba',state:'PR',status:'available',photo:'https://images.unsplash.com/photo-1574158622682-e40e69881006?w=400&q=75',fav:false},
-  {id:'5',name:'Rex',species:'dog',breed:'Pastor Alemão',age:'4 anos',size:'large',sizeLabel:'Grande',city:'Porto Alegre',state:'RS',status:'adopted',photo:'https://images.unsplash.com/photo-1589941013453-ec89f33b5e95?w=400&q=75',fav:false},
-  {id:'6',name:'Nina',species:'dog',breed:'Poodle',age:'1 ano',size:'small',sizeLabel:'Pequeno',city:'São Paulo',state:'SP',status:'available',photo:'https://images.unsplash.com/photo-1548199973-03cce0bbc87b?w=400&q=75',fav:true},
-  {id:'7',name:'Mel',species:'cat',breed:'Maine Coon',age:'3 anos',size:'small',sizeLabel:'Pequeno',city:'Florianópolis',state:'SC',status:'available',photo:'https://images.unsplash.com/photo-1513245543132-31f507417b26?w=400&q=75',fav:false},
-  {id:'8',name:'Duque',species:'dog',breed:'Labrador',age:'2 anos',size:'large',sizeLabel:'Grande',city:'Recife',state:'PE',status:'available',photo:'https://images.unsplash.com/photo-1561037404-61cd46aa615b?w=400&q=75',fav:false},
-  {id:'9',name:'Bolinha',species:'dog',breed:'Beagle',age:'2 anos',size:'medium',sizeLabel:'Médio',city:'São Paulo',state:'SP',status:'available',photo:'https://images.unsplash.com/photo-1505628346881-b72b27e84530?w=400&q=75',fav:false},
-  {id:'10',name:'Mel',species:'cat',breed:'Maine Coon',age:'3 anos',size:'large',sizeLabel:'Grande',city:'Rio de Janeiro',state:'RJ',status:'available',photo:'https://images.unsplash.com/photo-1513245543132-31f507417b26?w=400&q=75',fav:false},
-  {id:'11',name:'Duke',species:'dog',breed:'Labrador',age:'5 anos',size:'large',sizeLabel:'Grande',city:'Porto Alegre',state:'RS',status:'available',photo:'https://images.unsplash.com/photo-1561037404-61cd46aa615b?w=400&q=75',fav:false},
-  {id:'12',name:'Lily',species:'cat',breed:'Ragdoll',age:'1 ano',size:'medium',sizeLabel:'Médio',city:'Curitiba',state:'PR',status:'available',photo:'https://images.unsplash.com/photo-1596854407944-bf87f6fdd49e?w=400&q=75',fav:false},
-];
+let ALL_PETS = [];
+
+function loadPets() {
+  fetch("/api/pets")
+    .then((r) => r.json())
+    .then((data) => {
+      ALL_PETS = data.pets;
+      render(); // Renderiza com os dados do banco
+    })
+    .catch((e) => {
+      console.error("Erro ao carregar pets:", e);
+      // Se der erro, mantém vazio
+    });
+}
+
+// Chama quando a página carrega
+document.addEventListener("DOMContentLoaded", loadPets);
 
 const PAGE_SIZE = 9;
 let page = 1;
@@ -26,7 +29,30 @@ function getFilters(){
   };
 }
 
-function applyFilters(){ page=1; render(); }
+function applyFilters() {
+  page = 1;
+  loadPetsWithFilters(); // Nova função
+}
+
+function loadPetsWithFilters() {
+  const f = getFilters();
+
+  // Monta URL com query strings
+  let url = "/api/pets?";
+  if (f.search) url += `search=${encodeURIComponent(f.search)}&`;
+  if (f.species) url += `especie=${f.species}&`;
+  if (f.size) url += `porte=${f.size}&`;
+  if (f.city) url += `cidade=${encodeURIComponent(f.city)}&`;
+  if (f.state) url += `estado=${f.state}&`;
+
+  fetch(url)
+    .then((r) => r.json())
+    .then((data) => {
+      ALL_PETS = data.pets;
+      render();
+    });
+}
+
 function clearFilters(){
   ['f-search','f-city'].forEach(id=>document.getElementById(id).value='');
   ['f-species','f-size','f-state'].forEach(id=>document.getElementById(id).value='');
