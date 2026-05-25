@@ -80,42 +80,21 @@ function submitPet(){
     formData.append('foto_capa', selectedFiles[0]);
   }
 
-  const btn=document.getElementById('submit-btn');
-  btn.disabled=true;
-  btn.textContent='Cadastrando...';
-  
   fetch('/api/pets', {
     method: 'POST',
     body: formData
   })
-  .then(r => r.json())
+  .then(response => response.json())
   .then(data => {
-    if(data.sucesso){
-      document.getElementById('form-wrap').style.display='none';
-      document.getElementById('success-card').classList.add('show');
-      document.querySelector('.btn-success-primary').href = `/pet/${data.pet_id}`;
-      window.scrollTo({top:0,behavior:'smooth'});
+    if (data.sucesso) {
+      // Redireciona para o dashboard em caso de sucesso
+      window.location.href = '/dashboard';
     } else {
-      showError(data.erro || 'Erro ao cadastrar pet.');
-      btn.disabled=false;
-      btn.textContent='🐾 Cadastrar pet para adoção';
+      showError(data.erro || 'Erro ao cadastrar o pet.');
     }
   })
-  .catch(e => {
-    showError('Erro de conexão: ' + e);
-    btn.disabled=false;
-    btn.textContent='🐾 Cadastrar pet para adoção';
+  .catch(err => {
+    showError('Erro de conexão com o servidor. Tente novamente.');
+    console.error('Erro:', err);
   });
-}
-
-function resetForm(){
-  selectedFiles=[];selectedSpecies='';
-  document.getElementById('success-card').classList.remove('show');
-  document.getElementById('form-wrap').style.display='block';
-  document.getElementById('photo-previews').innerHTML='';
-  document.querySelectorAll('.form-input,.form-textarea').forEach(el=>el.value='');
-  document.querySelectorAll('.form-check input').forEach(el=>el.checked=false);
-  document.querySelectorAll('.species-opt').forEach(el=>el.classList.remove('selected'));
-  document.getElementById('submit-btn').disabled=false;
-  document.getElementById('submit-btn').textContent='🐾 Cadastrar pet para adoção';
 }

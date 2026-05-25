@@ -1,49 +1,35 @@
-const MOCK_ONGS = [
-  {
-    id:'1', name:'Patinhas do Bem', city:'São Paulo', state:'SP',
-    desc:'Resgatamos e reabilitamos cães e gatos em situação de rua desde 2015. Já realizamos mais de 300 adoções responsáveis.',
-    descFull:'A Patinhas do Bem atua há mais de 9 anos no resgate, reabilitação e adoção responsável de animais em situação de vulnerabilidade na Grande São Paulo. Contamos com uma rede de lares temporários e parceiros veterinários que garantem o bem-estar de cada animal até encontrar um lar definitivo.',
-    whatsapp:'5511999990001', pets:12, adopted:320, donations:4800,
-    photo:'https://images.unsplash.com/photo-1601758124096-7093b3fef44d?w=600&q=80',
-    pix:'patinhasdob@gmail.com', vakinha:'https://www.vakinha.com.br'
-  },
-  {
-    id:'2', name:'Lar dos Bichos', city:'Rio de Janeiro', state:'RJ',
-    desc:'ONG dedicada ao resgate de animais abandonados no Rio de Janeiro. Atuamos com castração, vacinação e adoção.',
-    descFull:'O Lar dos Bichos é uma organização sem fins lucrativos que atua no Rio de Janeiro há 7 anos. Nosso trabalho inclui resgate de emergência, cuidados veterinários, castração e vacinação subsidiada, além de um programa de adoção responsável com acompanhamento pós-adoção.',
-    whatsapp:'5521999990002', pets:8, adopted:185, donations:3200,
-    photo:'https://images.unsplash.com/photo-1587300003388-59208cc962cb?w=600&q=80',
-    pix:'lardosbichos@gmail.com', vakinha:'https://www.vakinha.com.br'
-  },
-  {
-    id:'3', name:'Amigos de Patas', city:'Belo Horizonte', state:'MG',
-    desc:'Cuidamos de animais especiais — idosos, com deficiência e vítimas de maus-tratos. Cada vida importa para nós.',
-    descFull:'A Amigos de Patas se especializa no cuidado de animais com necessidades especiais: idosos, com deficiências físicas ou sequelas de maus-tratos. Acreditamos que todo animal merece uma segunda chance, independente de sua condição. Trabalhamos com adoção consciente e educação sobre guarda responsável.',
-    whatsapp:'5531999990003', pets:15, adopted:210, donations:5600,
-    photo:'https://images.unsplash.com/photo-1548199973-03cce0bbc87b?w=600&q=80',
-    pix:'amigospatinhas@gmail.com', vakinha:'https://www.vakinha.com.br'
-  },
-  {
-    id:'4', name:'Refúgio Animal Sul', city:'Porto Alegre', state:'RS',
-    desc:'Atuamos no sul do Brasil com foco em animais de grande porte. Temos um abrigo com capacidade para 50 animais.',
-    descFull:'O Refúgio Animal Sul é o maior abrigo de animais do Rio Grande do Sul, com capacidade para 50 animais. Focamos especialmente em cães de grande porte, que têm mais dificuldade de adoção. Nosso abrigo conta com área verde, veterinário residente e equipe de voluntários dedicados.',
-    whatsapp:'5551999990004', pets:22, adopted:140, donations:2900,
-    photo:'https://images.unsplash.com/photo-1552053831-71594a27632d?w=600&q=80',
-    pix:'refugioanimalsul@gmail.com', vakinha:'https://www.vakinha.com.br'
-  },
-];
+let ALL_ONGS = [];
 
-// Métricas dinâmicas
-const totalPets = MOCK_ONGS.reduce((s,o)=>s+o.pets,0);
-const totalAdopted = MOCK_ONGS.reduce((s,o)=>s+o.adopted,0);
-const totalDonations = MOCK_ONGS.reduce((s,o)=>s+o.donations,0);
-document.getElementById('m-pets').textContent = totalPets;
-document.getElementById('m-adopted').textContent = totalAdopted + '+';
-document.getElementById('m-donations').textContent = 'R$ ' + totalDonations.toLocaleString('pt-BR');
+document.addEventListener('DOMContentLoaded', () => {
+  fetch('/api/ongs')
+    .then(r => r.json())
+    .then(data => {
+      ALL_ONGS = data.ongs || [];
+      updateOngMetrics();
+      renderOngs();
+    })
+    .catch(e => console.error('Erro ao carregar ONGs', e));
+});
+
+function updateOngMetrics() {
+  const totalPets = ALL_ONGS.reduce((s,o)=>s+o.pets,0);
+  const totalAdopted = ALL_ONGS.reduce((s,o)=>s+o.adopted,0);
+  const totalDonations = ALL_ONGS.reduce((s,o)=>s+o.donations,0);
+  
+  const mPets = document.getElementById('m-pets');
+  if(mPets) mPets.textContent = totalPets;
+  
+  const mAdopted = document.getElementById('m-adopted');
+  if(mAdopted) mAdopted.textContent = totalAdopted + '+';
+  
+  const mDonations = document.getElementById('m-donations');
+  if(mDonations) mDonations.textContent = 'R$ ' + totalDonations.toLocaleString('pt-BR');
+}
 
 function renderOngs() {
   const grid = document.getElementById('ongs-grid');
-  grid.innerHTML = MOCK_ONGS.map(o => `
+  if (!grid) return;
+  grid.innerHTML = ALL_ONGS.map(o => `
     <article class="pet-card" style="cursor:pointer" onclick="openOngModal('${o.id}')">
       <div class="card-img">
         <img src="${o.photo}" alt="${o.name}" loading="lazy">
@@ -66,7 +52,7 @@ function renderOngs() {
 }
 
 function openOngModal(id) {
-  const o = MOCK_ONGS.find(x => x.id === id);
+  const o = ALL_ONGS.find(x => x.id === id);
   if (!o) return;
   document.getElementById('modal-content').innerHTML = `
     <div style="display:flex;align-items:center;gap:14px;margin-bottom:20px">
@@ -102,7 +88,7 @@ function openOngModal(id) {
 }
 
 function openDonateModal(id) {
-  const o = MOCK_ONGS.find(x => x.id === id);
+  const o = ALL_ONGS.find(x => x.id === id);
   if (!o) return;
   let selectedValue = 25;
   document.getElementById('modal-content').innerHTML = `
@@ -162,7 +148,7 @@ function getSelectedValue() {
 }
 
 function proceedPix(id) {
-  const o = MOCK_ONGS.find(x => x.id === id);
+  const o = ALL_ONGS.find(x => x.id === id);
   const val = getSelectedValue();
   if (!val) {
     document.getElementById('val-error').style.display = 'block';

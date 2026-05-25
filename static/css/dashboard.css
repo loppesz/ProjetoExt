@@ -10,7 +10,8 @@
 
 .nav {
   background: var(--navy) !important;
-  border-bottom: 1px solid rgba(255,255,255,0.08) !important;
+  border-bottom: 1px solid rgba(0,0,0,0.15) !important;
+  box-shadow: 0 -2px 0 0 var(--navy) !important; /* Cobre o gap de 1px do navegador */
   backdrop-filter: none !important;
 }
 .logo { color: var(--white) !important; }
@@ -39,6 +40,8 @@
 
 
 body {
+  margin: 0;
+  padding: 0;
   background: #f4f7fb;
   font-family: 'DM Sans', sans-serif;
 }

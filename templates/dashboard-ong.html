@@ -1,0 +1,90 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+  <meta charset="UTF-8">
+  <title>Painel da ONG - PetAdopt</title>
+  <link rel="stylesheet" href="/static/css/petadopt.css">
+  <link rel="stylesheet" href="/static/css/dashboard.css">
+</head>
+<body>
+  <nav class="nav">
+    <div class="nav-i">
+      <a href="/" class="logo">🐾 PetAdopt</a>
+      <ul class="nav-links">
+        <li><a href="/pets" class="nav-link">Encontrar Pet</a></li>
+        <li><a href="/ongs" class="nav-link">ONGs</a></li>
+      </ul>
+      <div class="nav-auth">
+        <span class="nav-link" style="font-weight: 700; color: var(--terra);">Painel Institucional</span>
+        <a href="#" onclick="localStorage.removeItem('petadopt_user'); window.location.href='/logout'" class="nav-link">Sair</a>
+      </div>
+    </div>
+  </nav>
+
+  <div class="dashboard-wrap">
+    <aside class="sidebar">
+      <div class="user-card">
+        <div class="user-avatar user-avatar-ong">🏢</div>
+        <div class="user-name">{{ ong.nome }}</div>
+        <span class="user-badge user-badge-ong">ONG Parceira</span>
+      </div>
+      <nav class="sidebar-nav">
+        <div class="sidebar-link active" onclick="showTab('resumo', this)"><span class="icon">📊</span> Resumo</div>
+        <div class="sidebar-link" onclick="showTab('pets', this)"><span class="icon">🐾</span> Meus Pets</div>
+        <div class="sidebar-link" onclick="showTab('solicitacoes', this)"><span class="icon">💌</span> Solicitações</div>
+        <div class="sidebar-link" onclick="showTab('perfil', this)"><span class="icon">⚙️</span> Perfil da ONG</div>
+        <div class="sidebar-divider"></div>
+        <div class="sidebar-link sidebar-link-danger" onclick="localStorage.removeItem('petadopt_user'); window.location.href='/logout'">
+          <span class="icon">🚪</span> Sair da conta
+        </div>
+      </nav>
+    </aside>
+
+    <main class="content">
+      <!-- TAB: Resumo -->
+      <div id="tab-resumo" class="tab-panel active">
+        <div class="panel-header">
+          <div class="panel-title">Resumo Geral</div>
+        </div>
+        <div class="stats-grid">
+          <div class="stat-card">
+            <div class="stat-value" id="total-pets">0</div>
+            <div class="stat-label">Pets Cadastrados</div>
+          </div>
+          <div class="stat-card gold">
+            <div class="stat-value" id="total-solicitacoes">0</div>
+            <div class="stat-label">Solicitações Pendentes</div>
+          </div>
+        </div>
+      </div>
+
+      <!-- TAB: Meus Pets -->
+      <div id="tab-pets" class="tab-panel">
+        <div class="panel-header">
+          <div class="panel-title">Meus Pets</div>
+          <a href="/new-pet" class="btn btn-primary btn-sm">+ Novo pet</a>
+        </div>
+        <div id="lista-pets"></div>
+      </div>
+
+      <!-- TAB: Solicitações -->
+      <div id="tab-solicitacoes" class="tab-panel">
+        <div class="panel-header">
+          <div class="panel-title">Solicitações de Adoção</div>
+        </div>
+        <div id="lista-solicitacoes"></div>
+      </div>
+
+      <!-- TAB: Perfil -->
+      <div id="tab-perfil" class="tab-panel">
+        <div class="panel-header">
+          <div class="panel-title">Perfil Institucional</div>
+        </div>
+        <div class="empty"><div class="empty-icon">⚙️</div><div class="empty-title">Em breve</div><p class="empty-desc">A edição do perfil da ONG estará disponível nas próximas atualizações.</p></div>
+      </div>
+    </main>
+  </div>
+  <script> const USER_ROLE = "{{ current_user.role }}"; </script>
+  <script src="/static/js/dashboard-ong.js"></script>
+</body>
+</html>

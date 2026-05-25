@@ -1,7 +1,4 @@
 from flask import Flask, render_template, request, redirect, url_for, flash, jsonify
-from flask_wtf import FlaskForm
-from wtforms import StringField, PasswordField, SubmitField
-from wtforms.validators import DataRequired, Email, Length
 from flask_sqlalchemy import SQLAlchemy
 from flask_login import LoginManager, UserMixin, login_user, logout_user, login_required, current_user
 from werkzeug.security import generate_password_hash, check_password_hash
@@ -36,6 +33,9 @@ class Usuario(UserMixin, db.Model):
     email = db.Column(db.String(120), unique=True, nullable=False)
     senha_hash = db.Column(db.String(256), nullable=False)
     role = db.Column(db.String(20), nullable=False, default='user')
+    telefone = db.Column(db.String(20), nullable=True)
+    cidade = db.Column(db.String(100), nullable=True)
+    estado = db.Column(db.String(2), nullable=True)
 
     def set_senha(self, senha):
         self.senha_hash = generate_password_hash(senha)
@@ -50,6 +50,37 @@ class Usuario(UserMixin, db.Model):
     def check_password(self, senha):
         return self.check_senha(senha)
     
+## Tabela de ONGs
+class Ong(db.Model):
+    __tablename__ = 'ong'
+    id = db.Column(db.Integer, primary_key=True)
+    usuario_id = db.Column(db.Integer, db.ForeignKey('usuario.id'), nullable=True)
+    nome = db.Column(db.String(120), nullable=False)
+    descricao = db.Column(db.String(255), nullable=True)
+    descricao_completa = db.Column(db.Text, nullable=True)
+    cidade = db.Column(db.String(100), nullable=True)
+    estado = db.Column(db.String(2), nullable=True)
+    whatsapp = db.Column(db.String(20), nullable=True)
+    chave_pix = db.Column(db.String(120), nullable=True)
+    link_vakinha = db.Column(db.String(255), nullable=True)
+    foto_url = db.Column(db.String(255), nullable=True)
+    status = db.Column(db.String(20), default='pending')  # pending, approved, rejected
+    pets_count = db.Column(db.Integer, default=0)
+    adopted_count = db.Column(db.Integer, default=0)
+    donations_count = db.Column(db.Float, default=0.0)
+
+## Tabela de Solicitações de Adoção
+class SolicitacaoAdocao(db.Model):
+    __tablename__ = 'solicitacao_adocao'
+    id = db.Column(db.Integer, primary_key=True)
+    pet_id = db.Column(db.Integer, db.ForeignKey('pet.id'), nullable=False)
+    solicitante_id = db.Column(db.Integer, db.ForeignKey('usuario.id'), nullable=False)
+    mensagem = db.Column(db.Text, nullable=True)
+    status = db.Column(db.String(20), default='pending') # pending, approved, rejected, cancelled
+    criado_em = db.Column(db.DateTime, default=db.func.now())
+    pet = db.relationship('Pet', backref='solicitacoes')
+    solicitante = db.relationship('Usuario', backref='solicitacoes_feitas')
+
 ## Tabela de pets
 class Pet(db.Model):
     __tablename__ = 'pet'
@@ -206,6 +237,29 @@ def listar_pets():
         ]
     })
 
+## ROTA QUE RETORNA AS ONGS
+@app.route('/api/ongs', methods=['GET'])
+def listar_ongs():
+    ongs = Ong.query.filter_by(status='approved').all()
+    return jsonify({
+        'ongs': [
+            {
+                'id': str(o.id),
+                'name': o.nome,
+                'city': o.cidade,
+                'state': o.estado,
+                'desc': o.descricao,
+                'descFull': o.descricao_completa,
+                'whatsapp': o.whatsapp,
+                'pets': o.pets_count,
+                'adopted': o.adopted_count,
+                'donations': o.donations_count,
+                'photo': o.foto_url,
+                'pix': o.chave_pix,
+                'vakinha': o.link_vakinha
+            } for o in ongs
+        ]
+    })
 
 ## ═════════════════════════════════════════════════════════════════════════════
 ## ROTAS DE MODERAÇÃO (ADMIN)
@@ -231,11 +285,15 @@ def stats_pets():
         pending = Pet.query.filter_by(mod_status='pending').count()
         approved = Pet.query.filter_by(mod_status='approved').count()
         removed = Pet.query.filter_by(mod_status='removed').count()
+        total_pets = Pet.query.count()
+        total_ongs = Ong.query.count()
         
         return jsonify({
             'pending': pending,
             'approved': approved,
-            'removed': removed
+            'removed': removed,
+            'total_pets': total_pets,
+            'total_ongs': total_ongs
         }), 200
     except Exception as e:
         return jsonify({'erro': str(e)}), 500
@@ -326,6 +384,77 @@ def remover_pet(pet_id):
         db.session.rollback()
         return jsonify({'erro': str(e)}), 500
 
+
+# GET - Listar ONGs pendentes
+@app.route('/api/admin/ongs/pending', methods=['GET'])
+@login_required
+@admin_required
+def listar_ongs_pendentes():
+    try:
+        ongs = Ong.query.filter_by(status='pending').all()
+        return jsonify({
+            'ongs': [{
+                'id': o.id,
+                'name': o.nome,
+                'city': o.cidade,
+                'state': o.estado,
+                'desc': o.descricao,
+                'whatsapp': o.whatsapp,
+                'photo': o.foto_url
+            } for o in ongs]
+        })
+    except Exception as e:
+        return jsonify({'erro': str(e)}), 500
+
+# POST - Aprovar ONG
+@app.route('/api/admin/ongs/<int:ong_id>/approve', methods=['POST'])
+@login_required
+@admin_required
+def aprovar_ong(ong_id):
+    ong = Ong.query.get_or_404(ong_id)
+    ong.status = 'approved'
+    db.session.commit()
+    return jsonify({'sucesso': True, 'mensagem': f'ONG "{ong.nome}" foi aprovada!'})
+
+# POST - Recusar ONG
+@app.route('/api/admin/ongs/<int:ong_id>/reject', methods=['POST'])
+@login_required
+@admin_required
+def recusar_ong(ong_id):
+    ong = Ong.query.get_or_404(ong_id)
+    ong.status = 'rejected'
+    db.session.commit()
+    return jsonify({'sucesso': True, 'mensagem': f'ONG "{ong.nome}" foi recusada.'})
+
+# POST - Criar Nova ONG (Apenas Admin)
+@app.route('/api/ongs', methods=['POST'])
+@login_required
+@admin_required
+def criar_ong():
+    try:
+        data = request.get_json()
+        nome = data.get('nome')
+        cidade = data.get('cidade')
+        estado = data.get('estado')
+        
+        if not nome or not cidade or not estado:
+            return jsonify({'erro': 'Nome, cidade e estado são obrigatórios'}), 400
+            
+        nova_ong = Ong(
+            nome=nome,
+            cidade=cidade,
+            estado=estado,
+            descricao=data.get('descricao', ''),
+            whatsapp=data.get('whatsapp', ''),
+            chave_pix=data.get('chave_pix', ''),
+            foto_url=data.get('foto_url') or 'https://images.unsplash.com/photo-1601758124096-7093b3fef44d?w=600&q=80'
+        )
+        db.session.add(nova_ong)
+        db.session.commit()
+        return jsonify({'sucesso': True, 'mensagem': f'ONG {nome} cadastrada!'}), 201
+    except Exception as e:
+        db.session.rollback()
+        return jsonify({'erro': str(e)}), 500
 
 @login_manager.user_loader
 def load_user(user_id):
@@ -465,25 +594,90 @@ def delete_pet(pet_id):
 def index():
     return render_template('index.html')
 
-class LoginForm(FlaskForm):
-    email = StringField('E-mail', validators=[DataRequired(), Email()])
-    senha = PasswordField('Senha', validators=[DataRequired(), Length(min=6)])
-    submit = SubmitField('Entrar')
-
-
 @app.route('/login', methods=['GET', 'POST'])
 def login():
-    form = LoginForm()
-    if form.validate_on_submit():
-        usuario = Usuario.query.filter_by(email=form.email.data).first()
-        if usuario and usuario.check_senha(form.senha.data):
-            login_user(usuario)
+    if current_user.is_authenticated:
+        return redirect(url_for('index'))
+        
+    if request.method == 'POST':
+        if request.is_json:
+            data = request.get_json()
+            email = data.get('email')
+            senha = data.get('password')
+        else:
+            email = request.form.get('email')
+            senha = request.form.get('password')
+            
+        usuario = Usuario.query.filter_by(email=email).first()
+        if usuario and usuario.check_senha(senha):
+            login_user(usuario) # Cria a sessão oficial do Flask
+            if request.is_json:
+                return jsonify({
+                    'message': 'Login realizado com sucesso!', 
+                    'role': usuario.role,
+                    'name': usuario.name,
+                    'email': usuario.email
+                }), 200
             return redirect(url_for('dashboard'))
+            
+        if request.is_json:
+            return jsonify({'message': 'E-mail ou senha inválidos.'}), 401
         flash('E-mail ou senha Inválidos.', 'erro')
-    return render_template('login.html', form=form, titulo='Login')
+        
+    return render_template('login.html', titulo='Login')
 
-@app.route('/register')
+@app.route('/register', methods=['GET', 'POST'])
 def register():
+    if current_user.is_authenticated:
+        return redirect(url_for('index'))
+        
+    if request.method == 'POST':
+        try:
+            data = request.get_json()
+            nome = data.get('name')
+            email = data.get('email')
+            senha = data.get('password')
+            
+            # Validações básicas
+            if not nome or not email or not senha:
+                return jsonify({'message': 'Preencha todos os campos obrigatórios.'}), 400
+                
+            # Verifica se o email já existe no banco
+            if Usuario.query.filter_by(email=email).first():
+                return jsonify({'message': 'Este e-mail já está em uso.'}), 400
+                
+            # Cria um novo usuário com os dados do JSON
+            novo_usuario = Usuario(
+                name=nome,
+                email=email,
+                telefone=data.get('phone'),
+                cidade=data.get('city'),
+                estado=data.get('state'),
+                role=data.get('role', 'user')
+            )
+            novo_usuario.set_senha(senha)
+            db.session.add(novo_usuario)
+            db.session.flush() # Gerar ID do usuário antes do commit
+            
+            if novo_usuario.role == 'ong':
+                nova_ong = Ong(
+                    usuario_id=novo_usuario.id,
+                    nome=data.get('ong_nome') or nome,
+                    cidade=data.get('city'),
+                    estado=data.get('state'),
+                    whatsapp=data.get('phone', '')
+                )
+                db.session.add(nova_ong)
+                
+            db.session.commit()
+            login_user(novo_usuario) # Faz o login automático logo após criar a conta
+            
+            return jsonify({'message': 'Conta criada com sucesso!'}), 201
+            
+        except Exception as e:
+            db.session.rollback()
+            return jsonify({'message': f'Erro ao criar conta: {str(e)}'}), 500
+            
     return render_template('register.html')
 
 @app.route('/pets')
@@ -502,10 +696,77 @@ def new_pet():
 def ongs():
     return render_template('ongs.html')
 
+@app.route('/ong/<int:ong_id>')
+def ong_perfil(ong_id):
+    ong = Ong.query.get_or_404(ong_id)
+    pets = Pet.query.filter_by(usuario_id=ong.usuario_id, status='available', mod_status='approved').all() if ong.usuario_id else []
+    return render_template('ong-perfil.html', ong=ong, pets=pets)
+
 @app.route('/dashboard')
 @login_required
 def dashboard():
+    if current_user.role == 'ong':
+        return redirect(url_for('dashboard_ong'))
     return render_template('dashboard.html')
+
+@app.route('/dashboard-ong')
+@login_required
+def dashboard_ong():
+    if current_user.role != 'ong':
+        return redirect(url_for('index'))
+        
+    ong = Ong.query.filter_by(usuario_id=current_user.id).first()
+    if not ong or ong.status != 'approved':
+        status = ong.status if ong else 'pending'
+        return render_template('ong-pendente.html', status=status)
+        
+    return render_template('dashboard-ong.html', ong=ong)
+
+@app.route('/api/ong/meus-pets', methods=['GET'])
+@login_required
+def api_ong_meus_pets():
+    if current_user.role != 'ong':
+        return jsonify({'erro': 'Acesso negado'}), 403
+    pets = Pet.query.filter_by(usuario_id=current_user.id).all()
+    return jsonify({'pets': [{'id': p.id, 'name': p.nome, 'status': p.status} for p in pets]})
+
+@app.route('/api/ong/solicitacoes', methods=['GET'])
+@login_required
+def api_ong_solicitacoes():
+    if current_user.role != 'ong':
+        return jsonify({'erro': 'Acesso negado'}), 403
+    pets = Pet.query.filter_by(usuario_id=current_user.id).all()
+    pet_ids = [p.id for p in pets]
+    solicitacoes = SolicitacaoAdocao.query.filter(SolicitacaoAdocao.pet_id.in_(pet_ids)).all()
+    return jsonify({'solicitacoes': [{
+        'id': s.id, 'petName': s.pet.nome, 'solicitanteName': s.solicitante.name,
+        'mensagem': s.mensagem, 'status': s.status
+    } for s in solicitacoes]})
+
+@app.route('/api/ong/pet/<int:pet_id>/marcar-adotado', methods=['POST'])
+@login_required
+def api_ong_marcar_adotado(pet_id):
+    if current_user.role != 'ong':
+        return jsonify({'erro': 'Acesso negado'}), 403
+    pet = Pet.query.get(pet_id)
+    if not pet or pet.usuario_id != current_user.id:
+        return jsonify({'erro': 'Pet não encontrado'}), 404
+    pet.status = 'adopted'
+    db.session.commit()
+    return jsonify({'sucesso': True})
+
+@app.route('/api/ong/solicitacao/<int:req_id>/status', methods=['POST'])
+@login_required
+def api_ong_solicitacao_status(req_id):
+    if current_user.role != 'ong':
+        return jsonify({'erro': 'Acesso negado'}), 403
+    solicitacao = SolicitacaoAdocao.query.get(req_id)
+    if not solicitacao or solicitacao.pet.usuario_id != current_user.id:
+        return jsonify({'erro': 'Solicitação não encontrada'}), 404
+    data = request.get_json()
+    solicitacao.status = data.get('status', solicitacao.status)
+    db.session.commit()
+    return jsonify({'sucesso': True})
 
 @app.route('/logout')
 @login_required
@@ -516,6 +777,15 @@ def logout():
 @app.route('/sobre')
 def sobre():
     return render_template('sobre.html')
+
+@app.after_request
+def add_header(response):
+    # Força o navegador a sempre recarregar o HTML para atualizar o status de login
+    if 'text/html' in response.headers.get('Content-Type', ''):
+        response.headers['Cache-Control'] = 'no-store, no-cache, must-revalidate, max-age=0'
+        response.headers['Pragma'] = 'no-cache'
+        response.headers['Expires'] = '-1'
+    return response
 
 if __name__ == '__main__':
     app.run(debug=True)

@@ -24,8 +24,21 @@
       <li><a href="/sobre" class="nav-link">Sobre</a></li>
     </ul>
     <div class="nav-auth">
-      <a href="/login" class="btn-nav-login">Entrar</a>
-      <a href="/register" class="btn-nav-register">Criar conta</a>
+      {% if current_user.is_authenticated %}
+        <a href="/dashboard" class="nav-link" style="font-weight: 700; color: var(--terra);">
+          {% if current_user.role == 'ong' %}
+            Painel ONG
+          {% elif current_user.role == 'admin' %}
+            Painel Admin
+          {% else %}
+            Olá, {{ current_user.name.split(' ')[0] }}
+          {% endif %}
+        </a>
+        <a href="#" onclick="localStorage.removeItem('petadopt_user'); window.location.href='/logout'" class="nav-link">Sair</a>
+      {% else %}
+        <a href="/login" class="btn-nav-login">Entrar</a>
+        <a href="/register" class="btn-nav-register">Criar conta</a>
+      {% endif %}
     </div>
   </div>
 </nav>
@@ -104,9 +117,9 @@
 
 <section class="section-impact" id="impact">
   <svg class="wave-top" viewBox="0 0 1440 60" preserveAspectRatio="none" xmlns="http://www.w3.org/2000/svg"><path d="M0,60 C360,0 1080,0 1440,60 L1440,0 L0,0 Z" fill="#ffffff"/></svg>
-  <div class="section-header reveal" style="position:relative;z-index:1;padding:0 28px">
-    <h2 class="section-title" style="color:#fff">Nosso impacto em números</h2>
-    <p class="section-sub" style="color:rgba(255,255,255,0.65)">Cada número representa uma vida transformada.</p>
+  <div class="section-header reveal relative-header">
+    <h2 class="section-title text-white">Nosso impacto em números</h2>
+    <p class="section-sub text-white-muted">Cada número representa uma vida transformada.</p>
   </div>
   <div class="impact-grid">
     <div class="impact-item reveal reveal-delay-1">
@@ -187,49 +200,12 @@
 </section>
 
 <section class="section-ongs">
-  <div class="section-header reveal" style="position:relative;z-index:1;padding:0 28px">
+  <div class="section-header reveal relative-header">
     <h2 class="section-title">ONGs que fazem a diferença 🤝</h2>
     <p class="section-sub">Parceiros comprometidos com o bem-estar animal em todo o Brasil.</p>
   </div>
-  <div class="ongs-grid">
-    <div class="ong-card reveal reveal-delay-1">
-      <div class="ong-img"><img src="https://images.unsplash.com/photo-1601758124096-7093b3fef44d?w=600&q=80" alt="Patinhas do Bem" loading="lazy"></div>
-      <div class="ong-body">
-        <div class="ong-name">Patinhas do Bem</div>
-        <div class="ong-city">📍 São Paulo, SP</div>
-        <div class="ong-stats"><span>🐾 12 pets</span><span>🏠 320 adoções</span></div>
-        <a href="/ongs" class="btn-ong">Conhecer ONG</a>
-      </div>
-    </div>
-    <div class="ong-card reveal reveal-delay-2">
-      <div class="ong-img"><img src="https://images.unsplash.com/photo-1587300003388-59208cc962cb?w=600&q=80" alt="Lar dos Bichos" loading="lazy"></div>
-      <div class="ong-body">
-        <div class="ong-name">Lar dos Bichos</div>
-        <div class="ong-city">📍 Rio de Janeiro, RJ</div>
-        <div class="ong-stats"><span>🐾 8 pets</span><span>🏠 185 adoções</span></div>
-        <a href="/ongs" class="btn-ong">Conhecer ONG</a>
-      </div>
-    </div>
-    <div class="ong-card reveal reveal-delay-3">
-      <div class="ong-img"><img src="https://images.unsplash.com/photo-1548199973-03cce0bbc87b?w=600&q=80" alt="Amigos de Patas" loading="lazy"></div>
-      <div class="ong-body">
-        <div class="ong-name">Amigos de Patas</div>
-        <div class="ong-city">📍 Belo Horizonte, MG</div>
-        <div class="ong-stats"><span>🐾 15 pets</span><span>🏠 210 adoções</span></div>
-        <a href="/ongs" class="btn-ong">Conhecer ONG</a>
-      </div>
-    </div>
-    <div class="ong-card reveal reveal-delay-4">
-      <div class="ong-img"><img src="https://images.unsplash.com/photo-1552053831-71594a27632d?w=600&q=80" alt="Refugio Animal Sul" loading="lazy"></div>
-      <div class="ong-body">
-        <div class="ong-name">Refúgio Animal Sul</div>
-        <div class="ong-city">📍 Porto Alegre, RS</div>
-        <div class="ong-stats"><span>🐾 22 pets</span><span>🏠 140 adoções</span></div>
-        <a href="/ongs" class="btn-ong">Conhecer ONG</a>
-      </div>
-    </div>
-  </div>
-  <div class="section-cta reveal" style="position:relative;z-index:1;margin-top:48px">
+  <div class="ongs-grid" id="home-ongs-grid"></div>
+  <div class="section-cta reveal relative-cta">
     <a href="/ongs" class="btn-section-outline">Ver todas as ONGs →</a>
   </div>
 </section>
