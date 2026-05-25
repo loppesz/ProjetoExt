@@ -830,6 +830,38 @@ footer{background:var(--bark);color:rgba(255,255,255,.7);padding:36px 0 24px}
 .page-title{font-family:var(--ff-display);font-size:2rem;font-weight:700;margin-bottom:6px}
 .page-sub{color:var(--muted)}
 
+/* COMPONENTES DE ONG E AUXILIARES (REFATORADOS) */
+.ong-profile-header-inner { max-width: 1200px; display: flex; gap: 32px; align-items: center; flex-wrap: wrap; }
+.ong-profile-avatar { width: 160px; height: 160px; border-radius: 50%; object-fit: cover; box-shadow: var(--sh); flex-shrink: 0; background: #fff; padding: 4px; }
+.ong-profile-info { flex: 1; min-width: 300px; }
+.ong-profile-meta { margin-bottom: 12px; display: flex; gap: 16px; font-weight: 600; }
+.ong-profile-desc { color: var(--bark-m); font-size: 0.95rem; max-width: 680px; margin-bottom: 20px; line-height: 1.6; }
+.ong-profile-actions { display: flex; gap: 12px; flex-wrap: wrap; }
+.ong-profile-main { max-width: 1200px; margin: 0 auto; padding: 60px 28px 80px; }
+.ong-profile-title { font-size: 1.8rem; margin-bottom: 30px; }
+
+.pending-main { flex: 1; display: flex; align-items: center; justify-content: center; min-height: 80vh; padding: 20px; }
+.pending-card { text-align: center; padding: 52px 36px; max-width: 500px; margin: 0 auto; }
+.pending-icon { font-size: 4rem; margin-bottom: 16px; }
+.pending-title { margin-bottom: 12px; }
+.pending-desc { color: var(--muted); line-height: 1.7; margin-bottom: 32px; }
+.pending-actions { display: flex; gap: 12px; justify-content: center; flex-wrap: wrap; }
+.pending-btn { display: inline-block; width: auto; }
+
+.relative-header { position: relative; z-index: 1; padding: 0 28px; }
+.text-white { color: #fff !important; }
+.text-white-muted { color: rgba(255, 255, 255, 0.65) !important; }
+.relative-cta { position: relative; z-index: 1; margin-top: 48px; }
+.req-avatar { width: 52px; height: 52px; border-radius: 50%; background: var(--blush); display: flex; align-items: center; justify-content: center; font-size: 1.4rem; flex-shrink: 0; }
+.req-quote { font-size: .87rem; color: var(--bark-m); margin-top: 8px; font-style: italic; line-height: 1.6; background: var(--cream-d); padding: 10px 14px; border-radius: var(--r-sm); border-left: 3px solid var(--sand); }
+.item-desc-text { font-size: .87rem; color: var(--bark-m); margin-top: 8px; line-height: 1.6; }
+
+.flex-column { flex-direction: column !important; }
+.d-none { display: none !important; }
+.mb-0 { margin-bottom: 0 !important; }
+.mb-16 { margin-bottom: 16px; }
+.mt-10 { margin-top: 10px; }
+
 @media(max-width:640px){
   .modal{padding:24px 20px}
 }

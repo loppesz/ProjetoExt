@@ -1,0 +1,65 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+  <meta charset="UTF-8">
+  <title>{{ ong.nome }} - PetAdopt</title>
+  <link rel="stylesheet" href="/static/css/petadopt.css">
+</head>
+<body>
+  <nav class="nav">
+    <div class="nav-i">
+      <a href="/" class="logo">🐾 PetAdopt</a>
+      <a href="/pets" class="btn btn-outline btn-sm">Ver todos os pets</a>
+    </div>
+  </nav>
+
+  <header class="page-header">
+    <div class="page-header-inner ong-profile-header-inner">
+      <img src="{{ ong.foto_url or 'https://images.unsplash.com/photo-1601758124096-7093b3fef44d?w=600' }}" alt="{{ ong.nome }}" class="ong-profile-avatar">
+      <div class="ong-profile-info">
+        <h1 class="page-title">{{ ong.nome }}</h1>
+        <p class="page-subtitle ong-profile-meta">
+          <span>📍 {{ ong.cidade }} / {{ ong.estado }}</span>
+          <span>🐕 {{ pets|length }} Pets aguardando adoção</span>
+        </p>
+        <p class="ong-profile-desc">{{ ong.descricao_completa or ong.descricao }}</p>
+        <div class="ong-profile-actions">
+          {% if ong.whatsapp %}
+          <a href="https://wa.me/{{ ong.whatsapp|replace(' ', '')|replace('-','')|replace('(','')|replace(')','') }}" target="_blank" class="btn btn-whatsapp">💬 WhatsApp</a>
+          {% endif %}
+          {% if ong.link_vakinha %}
+          <a href="{{ ong.link_vakinha }}" target="_blank" class="btn btn-primary">❤️ Doar via Vakinha</a>
+          {% endif %}
+          {% if ong.chave_pix %}
+          <span class="btn btn-outline" onclick="alert('Chave PIX da ONG: {{ ong.chave_pix }}')">💠 Copiar Chave PIX</span>
+          {% endif %}
+        </div>
+      </div>
+    </div>
+  </header>
+
+  <main class="ong-profile-main">
+    <h2 class="page-title ong-profile-title">Pets disponíveis para adoção</h2>
+    {% if pets %}
+    <div class="pets-grid">
+      {% for p in pets %}
+      <div class="pet-card" onclick="location.href='/pet/{{ p.id }}'">
+        <div class="card-img"><img src="{{ p.foto_capa }}" alt="{{ p.nome }}"></div>
+        <div class="card-body">
+          <div class="card-name">{{ p.nome }}</div>
+          <div class="card-breed">{{ p.raca }}</div>
+          <div class="card-meta"><span>📍 {{ p.cidade }}/{{ p.estado }}</span></div>
+        </div>
+      </div>
+      {% endfor %}
+    </div>
+    {% else %}
+    <div class="empty">
+      <div class="empty-icon">🐕</div>
+      <div class="empty-title">Nenhum pet disponível no momento.</div>
+      <p class="empty-desc">Todos os pets desta ONG já encontraram uma família ou novos pets ainda estão sendo cadastrados.</p>
+    </div>
+    {% endif %}
+  </main>
+</body>
+</html>

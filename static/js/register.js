@@ -55,6 +55,8 @@ function submitForm(){
     phone: document.getElementById('phone').value.trim(),
     city: document.getElementById('city').value.trim(),
     state: document.getElementById('state').value,
+    role: document.getElementById('user-role') ? document.getElementById('user-role').value : 'user',
+    ong_nome: document.getElementById('ong-nome') ? document.getElementById('ong-nome').value.trim() : ''
   };
 
   fetch('/register', {
@@ -72,10 +74,23 @@ function submitForm(){
       btn.textContent = 'Criar minha conta!';
       return;
     }
-    document.getElementById('step2').style.display='none';
-    document.getElementById('step3').style.display='block';
-    document.getElementById('l2').classList.add('done');
-    document.getElementById('s3').className='step-circle done';
+
+    // Salvar no localStorage para os scripts de interface estática reconhecerem o usuário
+    localStorage.setItem('petadopt_user', JSON.stringify({
+      name: data.name,
+      email: data.email,
+      role: data.role
+    }));
+
+    // Após cadastro bem sucedido: redirecionar pra /dashboard-ong se ONG, senão comportamento atual
+    if (data.role === 'ong') {
+      window.location.href = '/dashboard-ong';
+    } else {
+      document.getElementById('step2').style.display='none';
+      document.getElementById('step3').style.display='block';
+      document.getElementById('l2').classList.add('done');
+      document.getElementById('s3').className='step-circle done';
+    }
   })
   .catch(() => {
     showErr('err2', 'Erro de conexão. Tente novamente.');

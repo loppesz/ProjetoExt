@@ -19,26 +19,67 @@ function initDashboard() {
   document.getElementById('sb-name').textContent = user.name;
   document.getElementById('sb-email').textContent = user.email;
   document.getElementById('greet-name').textContent = user.name.split(' ')[0];
-  document.getElementById('nav-user').textContent = 'Olá, ' + user.name.split(' ')[0];
+  
+  const navUser = document.getElementById('nav-user');
+  if (navUser) navUser.textContent = 'Olá, ' + user.name.split(' ')[0];
 
   if (user.role === 'admin') {
     document.getElementById('sb-badge').textContent = '🛡️ Administrador';
     document.getElementById('sb-badge').style.background = 'rgba(192,106,58,.12)';
     document.getElementById('sb-badge').style.color = 'var(--terra)';
-    // Injeta aba de moderação na sidebar
-    const sep = document.querySelector('.sidebar-nav [style*="border-top"]');
-    const adminLink = document.createElement('div');
-    adminLink.className = 'sidebar-link';
-    adminLink.setAttribute('onclick', "showTab('moderation',this)");
-    adminLink.innerHTML = '<span class="icon">🛡️</span> Moderação';
-    sep.parentNode.insertBefore(adminLink, sep);
+    
+    // Exibe aba de moderação na sidebar
+    const modNav = document.getElementById('nav-moderation');
+    if(modNav) modNav.style.display = 'flex';
+    
+    const ongNav = document.getElementById('nav-ongs');
+    if(ongNav) ongNav.style.display = 'flex';
+    
+    const pendingOngNav = document.getElementById('nav-pending-ongs');
+    if(pendingOngNav) pendingOngNav.style.display = 'flex';
+
+    // Altera as ações rápidas da aba "Resumo" para focar na administração
+    const quickActions = document.querySelector('.quick-actions');
+    if (quickActions) {
+        quickActions.innerHTML = `
+          <button class="btn btn-primary" onclick="showTab('moderation', document.getElementById('nav-moderation'))">🛡️ Avaliar Pets Pendentes</button>
+          <a href="/pets" class="btn btn-outline">🔍 Ver site público</a>
+        `;
+    }
+
+    // Adapta as estatísticas da aba de resumo para o Admin
+    const labels = document.querySelectorAll('#tab-overview .stat-label');
+    if (labels.length >= 3) {
+      labels[0].textContent = 'Total de Pets';
+      labels[1].textContent = 'ONGs Cadastradas';
+      labels[2].textContent = 'Pets Pendentes';
+      
+      // Busca os números reais no backend
+      fetch('/api/admin/pets/stats')
+        .then(r => r.json())
+        .then(stats => {
+          document.getElementById('stat-mypets').textContent = stats.total_pets || 0;
+          document.getElementById('stat-adoptions').textContent = stats.total_ongs || 0;
+          document.getElementById('stat-received').textContent = stats.pending || 0;
+        });
+    }
+
+    // Esconde as abas de usuário comum do menu lateral
+    ['my-pets', 'adoptions', 'received', 'favorites'].forEach(tab => {
+      const link = document.querySelector(`[onclick*="showTab('${tab}'"]`);
+      if (link) link.classList.add('d-none');
+    });
   }
 
   renderMyPets();
   renderAdoptions();
   renderReceived();
   renderFavorites();
-  if (user.role === 'admin') renderModeration();
+  if (user.role === 'admin') {
+    renderModeration();
+    renderAdminOngs();
+    renderPendingOngs();
+  }
 }
 
 // Para testar como admin: abra o console e rode:
@@ -417,6 +458,141 @@ function moderateRemove(petId) {
     }
   })
   .catch(e => showToast(`Erro: ${e}`, ''));
+}
+
+// ── Gerenciar ONGs (admin) ───────────────────────────────────────────────────
+function renderAdminOngs() {
+  fetch('/api/ongs')
+    .then(r => r.json())
+    .then(data => {
+      const ongs = data.ongs || [];
+      const el = document.getElementById('admin-ongs-list');
+      if (!ongs.length) {
+        el.innerHTML = `<div class="empty"><div class="empty-icon">🏢</div><div class="empty-title">Nenhuma ONG cadastrada</div></div>`;
+        return;
+      }
+      el.innerHTML = ongs.map(o => `
+        <div class="item-card">
+          <img class="item-img" src="${o.photo}" alt="${o.name}">
+          <div class="item-info">
+            <div class="item-name">${o.name}</div>
+            <div class="item-meta">📍 ${o.city}/${o.state} · 📞 ${o.whatsapp}</div>
+          </div>
+        </div>`).join('');
+    });
+}
+
+function openNewOngModal() {
+  document.getElementById('modal-content').innerHTML = `
+    <div class="modal-title">🏢 Cadastrar Nova ONG</div>
+    <p class="modal-sub">Preencha os dados básicos da ONG parceira</p>
+    <div id="ong-error" style="display:none;background:#fff0f0;color:#c0392b;padding:10px;border-radius:var(--r-sm);margin-bottom:14px;font-size:.9rem"></div>
+    <div style="display:grid;grid-template-columns:1fr 1fr;gap:10px;margin-bottom:10px">
+      <input id="ong-nome" class="form-input" placeholder="Nome da ONG *">
+      <input id="ong-whatsapp" class="form-input" placeholder="WhatsApp">
+    </div>
+    <div style="display:grid;grid-template-columns:1fr 1fr;gap:10px;margin-bottom:10px">
+      <input id="ong-city" class="form-input" placeholder="Cidade *">
+      <input id="ong-state" class="form-input" placeholder="UF *" maxlength="2">
+    </div>
+    <input id="ong-pix" class="form-input" style="margin-bottom:10px;width:100%" placeholder="Chave PIX para doações">
+    <textarea id="ong-desc" class="form-textarea" style="min-height:80px;margin-bottom:14px;width:100%" placeholder="Descrição curta da ONG *"></textarea>
+    <div style="display:flex;gap:10px">
+      <button class="btn btn-primary" style="flex:1" onclick="saveNewOng()">Cadastrar ONG</button>
+      <button class="btn btn-ghost" onclick="closeModal()">Cancelar</button>
+    </div>
+  `;
+  document.getElementById('modal').classList.add('open');
+}
+
+function saveNewOng() {
+  const nome = document.getElementById('ong-nome').value.trim();
+  const cidade = document.getElementById('ong-city').value.trim();
+  const estado = document.getElementById('ong-state').value.trim().toUpperCase();
+  const err = document.getElementById('ong-error');
+  
+  if(!nome || !cidade || !estado) {
+    err.textContent = '⚠️ Preencha Nome, Cidade e Estado.';
+    err.style.display = 'block';
+    return;
+  }
+  
+  fetch('/api/ongs', {
+    method: 'POST',
+    headers: {'Content-Type': 'application/json'},
+    body: JSON.stringify({
+      nome, cidade, estado,
+      whatsapp: document.getElementById('ong-whatsapp').value.trim(),
+      chave_pix: document.getElementById('ong-pix').value.trim(),
+      descricao: document.getElementById('ong-desc').value.trim()
+    })
+  })
+  .then(r => r.json())
+  .then(data => {
+    if(data.sucesso) {
+      closeModal();
+      showToast(data.mensagem, 'success');
+      renderAdminOngs();
+    } else {
+      err.textContent = data.erro; err.style.display = 'block';
+    }
+  });
+}
+
+// ── ONGs Pendentes (admin) ───────────────────────────────────────────────────
+function renderPendingOngs() {
+  fetch('/api/admin/ongs/pending')
+    .then(r => r.json())
+    .then(data => {
+      const ongs = data.ongs || [];
+      const el = document.getElementById('pending-ongs-list');
+      if (!el) return;
+      if (!ongs.length) {
+        el.innerHTML = `<div class="empty"><div class="empty-icon">🏢</div><div class="empty-title">Nenhuma ONG pendente</div></div>`;
+        return;
+      }
+      el.innerHTML = ongs.map(o => `
+        <div class="item-card" id="mod-ong-${o.id}">
+          <img class="item-img" src="${o.photo || 'https://images.unsplash.com/photo-1601758124096-7093b3fef44d?w=600&q=80'}" alt="${o.name}">
+          <div class="item-info">
+            <div class="item-name">${o.name}</div>
+            <div class="item-meta">📍 ${o.city}/${o.state} · 📞 ${o.whatsapp}</div>
+            ${o.desc ? `<p class="item-desc-text">${o.desc}</p>` : ''}
+            <span class="status-pill pill-pending mt-10">⏳ Pendente de aprovação</span>
+          </div>
+          <div class="item-actions flex-column">
+            <button class="btn btn-sage btn-sm" onclick="moderateOngApprove(${o.id})">✅ Aprovar</button>
+            <button class="btn btn-outline btn-sm btn-danger" onclick="moderateOngReject(${o.id})">❌ Recusar</button>
+          </div>
+        </div>`).join('');
+    });
+}
+
+function moderateOngApprove(id) {
+  fetch(`/api/admin/ongs/${id}/approve`, { method: 'POST' })
+    .then(r => r.json())
+    .then(data => { 
+      if(data.sucesso){ 
+        document.getElementById(`mod-ong-${id}`)?.remove();
+        showToast(data.mensagem, 'success'); 
+        renderPendingOngs(); 
+        renderAdminOngs(); 
+      } else { showToast(data.erro, ''); }
+    });
+}
+
+function moderateOngReject(id) {
+  if (!confirm('Tem certeza que deseja recusar e ocultar esta ONG?')) return;
+  fetch(`/api/admin/ongs/${id}/reject`, { method: 'POST' })
+    .then(r => r.json())
+    .then(data => { 
+      if(data.sucesso){ 
+        document.getElementById(`mod-ong-${id}`)?.remove();
+        showToast(data.mensagem, 'success'); 
+        renderPendingOngs(); 
+        renderAdminOngs();
+      } else { showToast(data.erro, ''); }
+    });
 }
 
 // ── Tabs ──────────────────────────────────────────────────────────────────────

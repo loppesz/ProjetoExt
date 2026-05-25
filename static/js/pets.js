@@ -67,32 +67,36 @@ document.getElementById('f-city').addEventListener('input',()=>{clearTimeout(sea
 function filtered(){
   const f = getFilters();
   let list = [...ALL_PETS];
-  if(f.search) list = list.filter(p=>p.name.toLowerCase().includes(f.search)||p.breed.toLowerCase().includes(f.search));
+  if(f.search) list = list.filter(p=>(p.name||'').toLowerCase().includes(f.search)||(p.breed||'').toLowerCase().includes(f.search));
   if(f.species) list = list.filter(p=>p.species===f.species);
   if(f.size) list = list.filter(p=>p.size===f.size);
-  if(f.city) list = list.filter(p=>p.city.toLowerCase().includes(f.city));
+  if(f.city) list = list.filter(p=>(p.city||'').toLowerCase().includes(f.city));
   if(f.state) list = list.filter(p=>p.state===f.state);
-  const sort = document.getElementById('sort').value;
-  if(sort==='name') list.sort((a,b)=>a.name.localeCompare(b.name));
+  
+  const sortEl = document.getElementById('sort');
+  if(sortEl && sortEl.value === 'name') {
+    list.sort((a,b)=>(a.name||'').localeCompare(b.name||''));
+  }
   return list;
 }
 
 function petCard(p){
   const bLabel = p.status==='available'?'Disponível':p.status==='adopted'?'Adotado':'Reservado';
   const bClass = p.status==='available'?'badge-avail':p.status==='adopted'?'badge-adopted':'badge-reserved';
+  const petSize = p.sizeLabel || p.size || 'Médio';
   return `
-  <article class="pet-card" onclick="location.href='pet.html?id=${p.id}'">
+  <article class="pet-card" onclick="location.href='/pet/${p.id}'">
     <div class="card-img">
-      <img src="${p.photo}" alt="${p.name}" loading="lazy">
+      <img src="${p.photo || 'https://images.unsplash.com/photo-1548199973-03cce0bbc87b?w=600'}" alt="${p.name}" loading="lazy">
       <span class="card-badge ${bClass}">${bLabel}</span>
       <button class="fav-btn ${p.fav?'active':''}" onclick="event.stopPropagation();toggleFav('${p.id}',this)">${p.fav?'❤️':'🤍'}</button>
     </div>
     <div class="card-body">
       <div class="card-name">${p.name}</div>
-      <div class="card-breed">${p.breed}</div>
+      <div class="card-breed">${p.breed || 'Sem raça definida'}</div>
       <div class="card-meta">
         <span>⏱ ${p.age}</span>
-        <span>·</span><span>📏 ${p.sizeLabel}</span>
+        <span>·</span><span>📏 ${petSize}</span>
         <span>·</span><span>📍 ${p.city}/${p.state}</span>
       </div>
     </div>

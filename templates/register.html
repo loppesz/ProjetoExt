@@ -40,6 +40,21 @@
         <div class="err-banner" id="err1"></div>
 
         <div class="field">
+          <label for="user-role">Tipo de Conta</label>
+          <select id="user-role" name="role" onchange="toggleOngFields()">
+            <option value="user">Pessoa Física / Adotante</option>
+            <option value="ong">ONG / Protetor Independente</option>
+          </select>
+        </div>
+
+        <div id="ong-fields" class="ong-fields-wrap">
+          <div class="field mb-0">
+            <label for="ong-nome">Nome da ONG / Projeto</label>
+            <input type="text" id="ong-nome" name="ong_nome" placeholder="Ex: Patinhas do Bem">
+          </div>
+        </div>
+
+        <div class="field">
           <label for="name">Nome completo</label>
           <input type="text" id="name" name="name" placeholder="Seu nome" autocomplete="name">
         </div>
@@ -135,5 +150,12 @@
   </footer>
 
   <script src="/static/js/register.js"></script>
+  <script>
+    function toggleOngFields() {
+      const role = document.getElementById('user-role').value;
+      const ongFields = document.getElementById('ong-fields');
+      ongFields.style.display = role === 'ong' ? 'block' : 'none';
+    }
+  </script>
 </body>
 </html>

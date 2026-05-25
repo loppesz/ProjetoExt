@@ -1,33 +1,38 @@
-const ALL_PETS = [
-  {id:'1',name:'Tarzam',species:'dog',breed:'SRD (Vira-lata)',age:'4 anos',size:'pequeno',sizeLabel:'Pequeno',city:'Rosário da Limeira',state:'MG',status:'available',photo:'/static/uploads/tarzam.jpg',fav:false},
-  {id:'2',name:'Chiquinha',species:'cat',breed:'Cinza',age:'5 ano e 6 meses',size:'Médio',city:'Rosário da Limeira',state:'MG',status:'available',photo:'/static/uploads/chiquinha.jpg',fav:true,vaccinated:true,neutered:false},
-  {id:'3',name:'Bob',species:'dog',breed:'SRD (Vira-lata)',age:'3 anos',ageN:3,months:0,size:'Médio',city:'Belo Horizonte',state:'MG',status:'available',gender:'Macho',color:'Caramelo',vaccinated:true,neutered:true,whatsapp:'5531999990003',desc:'Bob foi resgatado da rua e está completamente recuperado. É um cachorro muito dócil, obediente e que aprende comandos rápido. Adora passear e brincar. Vai se dar bem em casa ou apartamento com quintal.',photos:['https://images.unsplash.com/photo-1587300003388-59208cc962cb?w=800&q=80'],owner:'Pedro Souza',ownerCity:'Belo Horizonte/MG'},
-  {id:'4',name:'Mia',species:'cat',breed:'Persa',age:'8 meses',ageN:0,months:8,size:'Pequeno',city:'Curitiba',state:'PR',status:'available',gender:'Fêmea',color:'Branco',vaccinated:true,neutered:false,whatsapp:'5541999990004',desc:'Mia é uma persa filhote cheia de amor para dar. Muito tranquila, adora colos e dormir no canto do sofá. Ideal para quem busca um companheiro calmo e carinhoso. Vacinada e vermifugada.',photos:['https://images.unsplash.com/photo-1574158622682-e40e69881006?w=800&q=80'],owner:'Juliana Alves',ownerCity:'Curitiba/PR'},
-  {id:'5',name:'Rex',species:'dog',breed:'Pastor Alemão',age:'4 anos',ageN:4,months:0,size:'Grande',city:'Porto Alegre',state:'RS',status:'adopted',gender:'Macho',color:'Preto e marrom',vaccinated:true,neutered:true,whatsapp:'5551999990005',desc:'Rex foi adotado com sucesso! É um Pastor Alemão inteligente, fiel e protetor. Precisava de espaço e já encontrou seu lar ideal.',photos:['https://images.unsplash.com/photo-1589941013453-ec89f33b5e95?w=800&q=80'],owner:'Bruno Farias',ownerCity:'Porto Alegre/RS'},
-  {id:'6',name:'Nina',species:'dog',breed:'Poodle',age:'1 ano',ageN:1,months:0,size:'Pequeno',city:'São Paulo',state:'SP',status:'available',gender:'Fêmea',color:'Branco',vaccinated:false,neutered:false,whatsapp:'5511999990006',desc:'Nina é uma poodle cheia de energia, alegria e personalidade! Adora brincar e fazer graças. Ideal para famílias ativas que amam um cachorro animado. Ainda não vacinada, mas saudável.',photos:['https://images.unsplash.com/photo-1548199973-03cce0bbc87b?w=800&q=80'],owner:'Fernanda Rocha',ownerCity:'São Paulo/SP'},
-  {id:'7',name:'Mel',species:'cat',breed:'Maine Coon',age:'3 anos',ageN:3,months:0,size:'Pequeno',city:'Florianópolis',state:'SC',status:'available',gender:'Fêmea',color:'Cinza rajado',vaccinated:true,neutered:true,whatsapp:'5548999990007',desc:'Mel é uma Maine Coon dócil e carinhosa. Adora colo e convive bem com crianças e outros gatos. Vacinada, castrada e muito saudável.',photos:['https://images.unsplash.com/photo-1513245543132-31f507417b26?w=800&q=80'],owner:'Mateus Santos',ownerCity:'Florianópolis/SC'},
-  {id:'8',name:'Duque',species:'dog',breed:'Labrador',age:'2 anos',ageN:2,months:0,size:'Grande',city:'Recife',state:'PE',status:'available',gender:'Macho',color:'Caramelo',vaccinated:true,neutered:false,whatsapp:'5581999990008',desc:'Duque é um Labrador jovem, cheio de energia e muito brincalhão. Adora água, passeios longos e se dá bem com toda a família. Vacinado e saudável.',photos:['https://images.unsplash.com/photo-1561037404-61cd46aa615b?w=800&q=80'],owner:'Beatriz Nunes',ownerCity:'Recife/PE'},
-];
+let ALL_PETS = [];
 
 function getPetId(){
+  const match = location.pathname.match(/\/pet\/(\d+)/);
+  if (match) return parseInt(match[1]);
   const p = new URLSearchParams(location.search).get('id');
-  return p || '1';
+  return p ? parseInt(p) : 1;
 }
 
 let currentPet = null;
 let favState = false;
 
+document.addEventListener('DOMContentLoaded', () => {
+  fetch('/api/pets')
+    .then(r => r.json())
+    .then(data => {
+      ALL_PETS = data.pets || [];
+      render();
+    })
+    .catch(err => console.error('Erro ao carregar pets:', err));
+});
+
 function render(){
   const id = getPetId();
   const pet = ALL_PETS.find(p=>p.id===id) || ALL_PETS[0];
+  if(!pet) return;
+  
   currentPet = pet;
   document.title = `${pet.name} — PetAdopt`;
-  document.getElementById('bc-name').textContent = pet.name;
+  if(document.getElementById('bc-name')) document.getElementById('bc-name').textContent = pet.name;
 
   const statusMap = {available:{label:'Disponível',cls:'chip-avail'},adopted:{label:'Adotado',cls:'chip-adopted'},reserved:{label:'Reservado',cls:'chip-reserved'}};
   const s = statusMap[pet.status];
 
-  const photos = pet.photos;
+  const photos = [pet.photo || 'https://images.unsplash.com/photo-1548199973-03cce0bbc87b?w=800'];
   const mainPhoto = photos[0];
 
   const thumbsHtml = photos.length > 1 ? `<div class="gallery-thumbs">
@@ -39,15 +44,12 @@ function render(){
       ${pet.species==='dog'?'<span class="tag">🐶 Cachorro</span>':'<span class="tag">🐱 Gato</span>'}
       ${pet.breed?`<span class="tag">🏷️ ${pet.breed}</span>`:''}
       <span class="tag">⏱ ${pet.age}</span>
-      <span class="tag">📏 ${pet.size}</span>
-      <span class="tag">${pet.gender==='Macho'?'♂️':'♀️'} ${pet.gender}</span>
+      <span class="tag">📏 ${pet.sizeLabel || pet.size || 'Médio'}</span>
       ${pet.color?`<span class="tag">🎨 ${pet.color}</span>`:''}
-      ${pet.vaccinated?'<span class="tag tag-green">✅ Vacinado</span>':'<span class="tag">💉 Não vacinado</span>'}
-      ${pet.neutered?'<span class="tag tag-green">✅ Castrado</span>':''}
     </div>`;
 
-  const waMsg = encodeURIComponent(`Olá! Vi o ${pet.name} no PetAdopt e tenho interesse em adotar. Podemos conversar?`);
-  const waLink = `https://wa.me/${pet.whatsapp}?text=${waMsg}`;
+  const waMsg = encodeURIComponent(`Olá! Vi o ${pet.name} no PetAdopt e tenho interesse em adoção.`);
+  const waLink = `https://wa.me/5511999999999?text=${waMsg}`;
 
   const adoptHtml = pet.status==='available'
     ? `<div class="adopt-title">Pronto para um novo lar 🏠</div>
@@ -59,9 +61,9 @@ function render(){
        </div>`
     : pet.status==='adopted'
       ? `<div class="adopted-box">✅ ${pet.name} já foi adotado!<br><span style="font-size:.85rem;font-weight:400">Mas há outros pets esperando por você.</span></div>
-         <div style="margin-top:12px"><a href="pets.html" class="btn btn-primary btn-full">Ver outros pets →</a></div>`
+         <div style="margin-top:12px"><a href="/pets" class="btn btn-primary btn-full">Ver outros pets →</a></div>`
       : `<div class="adopted-box" style="background:#fff8e1;color:#b8860b">⏳ ${pet.name} está reservado.<br><span style="font-size:.85rem;font-weight:400">Outro adotante está em processo. Aguarde ou veja outros pets.</span></div>
-         <div style="margin-top:12px"><a href="pets.html" class="btn btn-outline btn-full">Ver outros pets</a></div>`;
+         <div style="margin-top:12px"><a href="/pets" class="btn btn-outline btn-full">Ver outros pets</a></div>`;
 
   document.getElementById('detail-content').innerHTML = `
     <div class="gallery">
@@ -73,13 +75,13 @@ function render(){
       <h1 class="pet-name">${pet.name}</h1>
       <div class="pet-location">📍 ${pet.city}, ${pet.state}</div>
       ${tagsHtml}
-      <div class="pet-desc">${pet.desc}</div>
+      <div class="pet-desc">${pet.description || 'Um pet adorável à procura de um lar.'}</div>
       <div class="adopt-box">
         <div class="owner-row">
           <div class="owner-avatar">🧑</div>
           <div>
-            <div class="owner-name">${pet.owner}</div>
-            <div class="owner-sub">📍 ${pet.ownerCity} · Responsável pelo pet</div>
+            <div class="owner-name">Tutor Parceiro</div>
+            <div class="owner-sub">📍 ${pet.city}/${pet.state} · Responsável pelo pet</div>
           </div>
         </div>
         ${adoptHtml}
@@ -98,9 +100,9 @@ function setPhoto(url, thumb){
 function renderSimilar(pet){
   const similar = ALL_PETS.filter(p=>p.id!==pet.id && p.status!=='adopted').slice(0,3);
   document.getElementById('similar-grid').innerHTML = similar.map(p=>`
-    <article class="pet-card" onclick="location.href='pet.html?id=${p.id}'">
+    <article class="pet-card" onclick="location.href='/pet/${p.id}'">
       <div class="card-img">
-        <img src="${p.photos[0]}" alt="${p.name}" loading="lazy">
+        <img src="${p.photo || 'https://images.unsplash.com/photo-1548199973-03cce0bbc87b?w=800'}" alt="${p.name}" loading="lazy">
         <span class="card-badge">${p.status==='available'?'Disponível':'Reservado'}</span>
       </div>
       <div class="card-body">
@@ -131,7 +133,7 @@ function confirmAdopt(){
     <div class="success-modal">
       <div class="success-icon">🎉</div>
       <div class="success-title">Solicitação enviada!</div>
-      <p class="success-sub">Sua mensagem foi enviada para ${currentPet.owner}. Aguarde o retorno — você receberá uma notificação quando a solicitação for analisada.</p>
+      <p class="success-sub">Sua mensagem foi enviada ao responsável. Aguarde o retorno — você receberá uma notificação quando a solicitação for analisada.</p>
       <button class="btn btn-primary" onclick="closeModal()">Entendido!</button>
     </div>`;
 }
@@ -162,5 +164,3 @@ window.openAdoptModal = openAdoptModal;
 window.confirmAdopt = confirmAdopt;
 window.toggleFav = toggleFav;
 window.closeModal = closeModal;
-
-render();

@@ -15,7 +15,23 @@
 <!-- NAV -->
 <nav class="nav">
   <a href="/" class="nav-logo">🐾 PetAdopt</a>
-  <a href="/register" class="btn-nav-register">Criar conta grátis</a>
+  <div class="nav-auth">
+    {% if current_user.is_authenticated %}
+      <a href="/dashboard" class="nav-link" style="font-weight: 700; color: var(--terra);">
+        {% if current_user.role == 'ong' %}
+          Painel ONG
+        {% elif current_user.role == 'admin' %}
+          Painel Admin
+        {% else %}
+          Olá, {{ current_user.name.split(' ')[0] }}
+        {% endif %}
+      </a>
+      <a href="#" onclick="localStorage.removeItem('petadopt_user'); window.location.href='/logout'" class="nav-link">Sair</a>
+    {% else %}
+      <a href="/login" class="nav-link">Entrar</a>
+      <a href="/register" class="btn-nav-register">Criar conta grátis</a>
+    {% endif %}
+  </div>
 </nav>
 
 <!-- SPLIT LAYOUT -->
@@ -75,32 +91,20 @@
       {% endwith %}
 
       <form method="POST" class="auth-form">
-        {{ form.hidden_tag() }}
-
-        <div>
-          {{ form.email.label }}<br />
-          {{ form.email(class_='form-input') }}
-          {% for error in form.email.errors %}
-            <span style="color: red;">[{{ error }}]</span>
-          {% endfor %}
+        <div class="form-group">
+          <label for="email" class="form-label">E-mail</label>
+          <input type="email" id="email" name="email" class="form-input" placeholder="seu@email.com" required>
         </div>
 
-        <br />
-
-        <div>
-          {{ form.senha.label }}<br />
+        <div class="form-group">
+          <label for="password" class="form-label">Senha</label>
           <div class="pwd-wrap">
-            {{ form.senha(class_='form-input', id='senha') }}
+            <input type="password" id="password" name="password" class="form-input" placeholder="Sua senha" required>
             <button type="button" class="pwd-toggle" id="pwd-icon" onclick="togglePwd()" aria-label="Mostrar ou ocultar senha">👁️</button>
           </div>
-          {% for error in form.senha.errors %}
-            <span style="color: red;">[{{ error }}]</span>
-          {% endfor %}
         </div>
 
-        <br />
-
-        {{ form.submit(class_='btn-login') }}
+        <button type="submit" id="login-btn" class="btn-login">Entrar</button>
       </form>
 
       <!-- Divider -->
@@ -122,6 +126,6 @@
   </div>
 </footer>
 
-<script src="/static/js/login.js"></script>
+<script src="/static/js/login.js?v=2.0"></script>
 </body>
 </html>
