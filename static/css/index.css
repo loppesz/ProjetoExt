@@ -44,7 +44,7 @@
 
 
 .hero {
-  min-height: 100vh;
+  min-height: auto;
   background: linear-gradient(135deg, #0d1b2a 0%, #1a4161 50%, #1e4f78 100%);
   display: flex;
   align-items: center;
@@ -60,8 +60,8 @@
 }
 .hero-inner {
   max-width: 1200px;
-  margin: 0 auto;
-  padding: 80px 28px;
+  margin: -4.5rem auto 0;
+  padding: 0 28px 0;
   display: grid;
   grid-template-columns: 1fr 1fr;
   gap: 60px;
@@ -172,6 +172,9 @@
   display: flex;
   align-items: center;
   justify-content: center;
+  margin-top: 0;
+  margin-bottom: -12rem; /* Remove o fundo azul extra na parte de baixo */
+  transform: translateY(-12rem); /* Força visualmente o cachorro para cima */
 }
 .hero-img-wrap {
   width: 420px;

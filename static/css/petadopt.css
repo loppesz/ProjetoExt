@@ -203,7 +203,6 @@ button{font:inherit;cursor:pointer;border:none;background:none}
 .sidebar-link .badge{margin-left:auto;background:var(--terra);color:#fff;font-size:.7rem;font-weight:700;padding:2px 8px;border-radius:var(--r-xl)}
 
 /* MAIN CONTENT */
-.content{}
 .tab-panel{display:none}.tab-panel.active{display:block}
 
 /* STATS */
