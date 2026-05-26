@@ -472,6 +472,18 @@ body {
   box-shadow: 0 24px 80px rgba(13,27,42,0.25);
   transform: translateY(20px) scale(.97);
   transition: transform .25s;
+  max-height: 90vh;
+  overflow-y: auto;
+}
+.modal-box::-webkit-scrollbar {
+  width: 8px;
+}
+.modal-box::-webkit-scrollbar-track {
+  background: transparent;
+}
+.modal-box::-webkit-scrollbar-thumb {
+  background: #cbd5e1;
+  border-radius: 4px;
 }
 .modal-overlay.open .modal-box {
   transform: translateY(0) scale(1);
@@ -563,4 +575,42 @@ body {
   .item-card { flex-wrap: wrap; }
   .item-actions { flex-direction: row !important; width: 100%; }
   .mini-pets-grid { grid-template-columns: repeat(2, 1fr); }
+}
+
+/* =========================================
+   FORMULÁRIOS (Inputs, Labels, Textareas)
+========================================= */
+.form-label {
+  display: block;
+  font-size: .78rem;
+  font-weight: 700;
+  color: #6b7280;
+  margin-bottom: 6px;
+  text-transform: uppercase;
+  letter-spacing: .03em;
+}
+
+.form-input, .form-textarea {
+  width: 100%;
+  padding: 12px 14px;
+  border: 2px solid #e5e7eb;
+  border-radius: 10px;
+  font-size: .95rem;
+  font-family: 'DM Sans', sans-serif;
+  background: #f9fafb;
+  color: #1f2937;
+  transition: border-color .2s, box-shadow .2s;
+  box-sizing: border-box;
+}
+
+.form-input:focus, .form-textarea:focus {
+  border-color: var(--navy);
+  background: #fff;
+  outline: none;
+  box-shadow: 0 0 0 3px rgba(26,65,97,0.1);
+}
+
+.form-textarea {
+  resize: vertical;
+  min-height: 80px;
 }

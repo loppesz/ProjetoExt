@@ -79,11 +79,14 @@ function openOngModal(id) {
         <div style="font-size:.78rem;color:var(--muted)">Doações</div>
       </div>
     </div>
-    <div style="display:flex;gap:10px;flex-wrap:wrap">
+    <div style="display:flex;gap:10px;flex-wrap:wrap;margin-bottom:10px">
+      <a href="/ong/${o.id}" class="btn btn-outline" style="flex:1;text-align:center;text-decoration:none;">🐾 Ver Perfil e Pets</a>
       <button class="btn btn-primary" style="flex:1" onclick="closeModal();openDonateModal('${o.id}')">💚 Fazer doação</button>
-      <a href="https://wa.me/${o.whatsapp}" target="_blank" class="btn btn-ghost" style="flex:1;text-align:center">💬 Falar no WhatsApp</a>
     </div>
-    <button class="btn btn-ghost btn-full" style="margin-top:10px" onclick="closeModal()">Fechar</button>`;
+    <div style="display:flex;gap:10px;flex-wrap:wrap">
+      <a href="https://wa.me/${o.whatsapp}" target="_blank" class="btn btn-ghost" style="flex:1;text-align:center;text-decoration:none;">💬 Falar no WhatsApp</a>
+      <button class="btn btn-ghost" style="flex:1" onclick="closeModal()">Fechar</button>
+    </div>`;
   document.getElementById('modal').classList.add('open');
 }
 

@@ -22,8 +22,18 @@ document.addEventListener('DOMContentLoaded', () => {
 
 function render(){
   const id = getPetId();
-  const pet = ALL_PETS.find(p=>p.id===id) || ALL_PETS[0];
-  if(!pet) return;
+  const pet = ALL_PETS.find(p=>p.id===id);
+  
+  if(!pet) {
+    document.getElementById('detail-content').innerHTML = `
+      <div style="text-align:center; padding: 60px 20px;">
+        <div style="font-size: 3rem; margin-bottom: 15px;">🐾</div>
+        <h2 style="font-family: var(--ff-display); color: var(--bark); margin-bottom: 10px;">Pet não encontrado</h2>
+        <p style="color: var(--bark-m); margin-bottom: 20px;">Este pet pode ter sido removido ou está indisponível.</p>
+        <a href="/pets" class="btn btn-primary">Ver outros pets disponíveis</a>
+      </div>`;
+    return;
+  }
   
   currentPet = pet;
   document.title = `${pet.name} — PetAdopt`;
@@ -51,7 +61,8 @@ function render(){
   const waMsg = encodeURIComponent(`Olá! Vi o ${pet.name} no PetAdopt e tenho interesse em adoção.`);
   const waLink = `https://wa.me/5511999999999?text=${waMsg}`;
 
-  let isAuth = typeof IS_LOGGED_IN !== 'undefined' && IS_LOGGED_IN;
+  const authMeta = document.querySelector('meta[name="user-auth"]');
+  let isAuth = authMeta ? authMeta.content === 'true' : false;
   
   let adoptHtml = '';
   if (pet.status === 'available') {
@@ -94,7 +105,7 @@ function render(){
         <div class="owner-row">
           <div class="owner-avatar">🧑</div>
           <div>
-            <div class="owner-name">Tutor Parceiro</div>
+            <div class="owner-name">${pet.ownerName || 'Tutor Parceiro'}</div>
             <div class="owner-sub">📍 ${pet.city}/${pet.state} · Responsável pelo pet</div>
           </div>
         </div>
@@ -143,13 +154,37 @@ function openAdoptModal(){
 function confirmAdopt(){
   const msg = document.getElementById('adopt-msg').value.trim();
   if(!msg){showToast('Por favor, escreva uma mensagem!',''); return;}
-  document.getElementById('modal-content').innerHTML = `
-    <div class="success-modal">
-      <div class="success-icon">🎉</div>
-      <div class="success-title">Solicitação enviada!</div>
-      <p class="success-sub">Sua mensagem foi enviada ao responsável. Aguarde o retorno — você receberá uma notificação quando a solicitação for analisada.</p>
-      <button class="btn btn-primary" onclick="closeModal()">Entendido!</button>
-    </div>`;
+
+  const btn = document.querySelector('#modal-content .btn-primary');
+  btn.disabled = true;
+  btn.textContent = 'Enviando...';
+
+  fetch(`/api/pets/${currentPet.id}/solicitar`, {
+    method: 'POST',
+    headers: {'Content-Type': 'application/json'},
+    body: JSON.stringify({ mensagem: msg })
+  })
+  .then(r => r.json())
+  .then(data => {
+    if(data.sucesso) {
+      document.getElementById('modal-content').innerHTML = `
+        <div class="success-modal">
+          <div class="success-icon">🎉</div>
+          <div class="success-title">Solicitação enviada!</div>
+          <p class="success-sub">Sua mensagem foi enviada ao responsável. Aguarde o retorno — você receberá uma notificação quando a solicitação for analisada.</p>
+          <button class="btn btn-primary" onclick="closeModal()">Entendido!</button>
+        </div>`;
+    } else {
+      showToast(data.erro || 'Erro ao enviar solicitação.', '');
+      btn.disabled = false;
+      btn.textContent = 'Enviar solicitação';
+    }
+  })
+  .catch(err => {
+    showToast('Erro de conexão.', '');
+    btn.disabled = false;
+    btn.textContent = 'Enviar solicitação';
+  });
 }
 
 function toggleFav(){

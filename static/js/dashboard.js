@@ -90,10 +90,6 @@ let MY_PETS = [];
 // Todos os pets da plataforma (para moderação)
 let ALL_PLATFORM_PETS = [];
 
-const MY_ADOPTIONS = [];
-
-const RECEIVED_REQUESTS = [];
-
 const FAVORITES = [];
 
 // ── Stats ─────────────────────────────────────────────────────────────────────
@@ -112,13 +108,13 @@ function renderMyPets() {
       
       const el = document.getElementById('my-pets-list');
       if (!MY_PETS.length) {
-        el.innerHTML = `<div class="empty"><div class="empty-icon">🐾</div><div class="empty-title">Nenhum pet cadastrado</div><p class="empty-desc">Cadastre seu primeiro pet para adoção!</p><a href="new-pet.html" class="btn btn-primary">Cadastrar pet</a></div>`;
+        el.innerHTML = `<div class="empty"><div class="empty-icon">🐾</div><div class="empty-title">Nenhum pet cadastrado</div><p class="empty-desc">Cadastre seu primeiro pet para adoção!</p><a href="/new-pet" class="btn btn-primary">Cadastrar pet</a></div>`;
         updateStats();
         return;
       }
       el.innerHTML = MY_PETS.map(p => `
         <div class="item-card">
-          <img class="item-img" src="${p.photo}" alt="${p.name}" onclick="location.href='pet.html?id=${p.id}'" style="cursor:pointer">
+          <img class="item-img" src="${p.photo}" alt="${p.name}" onclick="location.href='/pet/${p.id}'" style="cursor:pointer">
           <div class="item-info">
             <div class="item-name">${p.name}</div>
             <div class="item-meta">${p.breed} · 📍 ${p.city}/${p.state}</div>
@@ -176,27 +172,27 @@ function openEditModal(id) {
     <div id="edit-error" style="display:none;background:#fff0f0;border:1.5px solid #fca5a5;border-radius:var(--r-sm);padding:10px 14px;margin-bottom:14px;color:#c0392b;font-size:.88rem"></div>
     <div style="display:grid;grid-template-columns:1fr 1fr;gap:14px;margin-bottom:14px">
       <div>
-        <label style="display:block;font-size:.78rem;font-weight:700;color:var(--bark-m);margin-bottom:5px;text-transform:uppercase;letter-spacing:.03em">Nome <span style="color:var(--terra)">*</span></label>
-        <input id="edit-name" class="form-input" value="${p.name}" style="width:100%;padding:11px 14px;border:2px solid var(--sand);border-radius:var(--r-sm);font-size:.93rem;font-family:var(--ff-body);background:var(--cream);color:var(--bark);transition:border-color var(--ease)">
+            <label class="form-label">Nome <span style="color:var(--terra)">*</span></label>
+            <input id="edit-name" class="form-input" value="${p.name}">
       </div>
       <div>
-        <label style="display:block;font-size:.78rem;font-weight:700;color:var(--bark-m);margin-bottom:5px;text-transform:uppercase;letter-spacing:.03em">Raça</label>
-        <input id="edit-breed" class="form-input" value="${p.breed}" style="width:100%;padding:11px 14px;border:2px solid var(--sand);border-radius:var(--r-sm);font-size:.93rem;font-family:var(--ff-body);background:var(--cream);color:var(--bark);transition:border-color var(--ease)">
+            <label class="form-label">Raça</label>
+            <input id="edit-breed" class="form-input" value="${p.breed}">
       </div>
     </div>
     <div style="display:grid;grid-template-columns:1fr 1fr;gap:14px;margin-bottom:14px">
       <div>
-        <label style="display:block;font-size:.78rem;font-weight:700;color:var(--bark-m);margin-bottom:5px;text-transform:uppercase;letter-spacing:.03em">Cidade <span style="color:var(--terra)">*</span></label>
-        <input id="edit-city" class="form-input" value="${p.city}" style="width:100%;padding:11px 14px;border:2px solid var(--sand);border-radius:var(--r-sm);font-size:.93rem;font-family:var(--ff-body);background:var(--cream);color:var(--bark);transition:border-color var(--ease)">
+            <label class="form-label">Cidade <span style="color:var(--terra)">*</span></label>
+            <input id="edit-city" class="form-input" value="${p.city}">
       </div>
       <div>
-        <label style="display:block;font-size:.78rem;font-weight:700;color:var(--bark-m);margin-bottom:5px;text-transform:uppercase;letter-spacing:.03em">Estado <span style="color:var(--terra)">*</span></label>
-        <input id="edit-state" class="form-input" value="${p.state}" maxlength="2" style="width:100%;padding:11px 14px;border:2px solid var(--sand);border-radius:var(--r-sm);font-size:.93rem;font-family:var(--ff-body);background:var(--cream);color:var(--bark);transition:border-color var(--ease)">
+            <label class="form-label">Estado <span style="color:var(--terra)">*</span></label>
+            <input id="edit-state" class="form-input" value="${p.state}" maxlength="2">
       </div>
     </div>
     <div style="margin-bottom:18px">
-      <label style="display:block;font-size:.78rem;font-weight:700;color:var(--bark-m);margin-bottom:5px;text-transform:uppercase;letter-spacing:.03em">Descrição</label>
-      <textarea id="edit-desc" rows="3" style="width:100%;padding:11px 14px;border:2px solid var(--sand);border-radius:var(--r-sm);font-size:.93rem;font-family:var(--ff-body);background:var(--cream);color:var(--bark);resize:vertical;transition:border-color var(--ease)">${p.desc}</textarea>
+          <label class="form-label">Descrição</label>
+          <textarea id="edit-desc" class="form-textarea" rows="3">${p.desc}</textarea>
     </div>
     <div style="display:flex;gap:10px">
       <button class="btn btn-primary" style="flex:1" onclick="saveEdit('${p.id}')">💾 Salvar alterações</button>
@@ -298,62 +294,101 @@ function confirmRemove(id) {
 
 // ── Adoções ───────────────────────────────────────────────────────────────────
 function renderAdoptions() {
-  document.getElementById('adoptions-list').innerHTML = MY_ADOPTIONS.map(a => `
-    <div class="item-card">
-      <img class="item-img" src="${a.photo}" alt="${a.petName}">
-      <div class="item-info">
-        <div class="item-name">${a.petName}</div>
-        <div class="item-meta">${a.petBreed} · 📍 ${a.city} · ${a.date}</div>
-        <div class="status-pill ${a.status==='pending'?'pill-pending':a.status==='approved'?'pill-approved':'pill-rejected'}">
-          ${a.status==='pending'?'⏳ Aguardando':a.status==='approved'?'✅ Aprovado':'❌ Recusado'}
-        </div>
-      </div>
-      <div class="item-actions">
-        <a href="pet.html?id=${a.petId}" class="btn btn-ghost btn-sm">Ver pet</a>
-        ${a.status==='pending'?`<button class="btn btn-outline btn-sm btn-danger" onclick="showToast('Solicitação cancelada.','')">Cancelar</button>`:''}
-      </div>
-    </div>`).join('');
+  fetch('/api/user/adocoes')
+    .then(r => r.json())
+    .then(data => {
+      const adocoes = data.adocoes || [];
+      const el = document.getElementById('adoptions-list');
+      
+      if(document.getElementById('stat-adoptions')) {
+        document.getElementById('stat-adoptions').textContent = adocoes.length;
+      }
+
+      if (!adocoes.length) {
+        el.innerHTML = `<div class="empty"><div class="empty-icon">💌</div><div class="empty-title">Nenhuma solicitação enviada</div><p class="empty-desc">Você ainda não enviou nenhum pedido de adoção.</p><a href="/pets" class="btn btn-primary">Encontrar um pet</a></div>`;
+        return;
+      }
+      el.innerHTML = adocoes.map(a => `
+        <div class="item-card">
+          <img class="item-img" src="${a.photo}" alt="${a.petName}">
+          <div class="item-info">
+            <div class="item-name">${a.petName}</div>
+            <div class="item-meta">${a.petBreed} · 📍 ${a.city} · ${a.date}</div>
+            <div class="status-pill ${a.status==='pending'?'pill-pending':a.status==='approved'?'pill-approved':'pill-rejected'}" style="margin-top: 6px;">
+              ${a.status==='pending'?'⏳ Aguardando':a.status==='approved'?'✅ Aprovado':'❌ Recusado'}
+            </div>
+          </div>
+          <div class="item-actions" style="flex-direction:column">
+            <a href="/pet/${a.petId}" class="btn btn-outline btn-sm">👁️ Ver pet</a>
+            ${a.status==='pending'?`<button class="btn btn-outline btn-sm btn-danger" onclick="cancelRequest(${a.id})">🗑️ Cancelar</button>`:''}
+          </div>
+        </div>`).join('');
+    });
+}
+
+function cancelRequest(id) {
+  if(!confirm('Deseja realmente cancelar sua solicitação de adoção?')) return;
+  fetch(`/api/user/solicitacao/${id}/cancel`, { method: 'POST' })
+    .then(() => {
+      showToast('Solicitação cancelada.', '');
+      renderAdoptions();
+    });
 }
 
 // ── Pedidos Recebidos ─────────────────────────────────────────────────────────
 function renderReceived() {
-  document.getElementById('received-list').innerHTML = RECEIVED_REQUESTS.map((r,i) => `
-    <div class="item-card" id="req-${i}">
-      <div style="width:52px;height:52px;border-radius:50%;background:var(--blush);display:flex;align-items:center;justify-content:center;font-size:1.4rem;flex-shrink:0">🧑</div>
-      <div class="item-info">
-        <div class="item-name">${r.from}</div>
-        <div class="item-meta">Quer adotar: <strong>${r.petName}</strong> · Enviado recentemente</div>
-        <div style="font-size:.87rem;color:var(--bark-m);margin-top:8px;font-style:italic;line-height:1.6;background:var(--cream-d);padding:10px 14px;border-radius:var(--r-sm);border-left:3px solid var(--sand)">"${r.msg}"</div>
-        <div style="display:flex;gap:8px;margin-top:10px;flex-wrap:wrap">
-          <span style="font-size:.82rem;color:var(--muted)">📞 ${r.phone}</span>
-          <span style="font-size:.82rem;color:var(--muted)">·</span>
-          <span style="font-size:.82rem;color:var(--muted)">📍 ${r.city}</span>
-        </div>
-      </div>
-      <div class="item-actions" style="flex-direction:column">
-        ${r.status==='pending'?`
-          <button class="btn btn-sage btn-sm" onclick="approveRequest(${i})">✅ Aprovar</button>
-          <button class="btn btn-outline btn-sm btn-danger" onclick="rejectRequest(${i})">❌ Recusar</button>
-        `:`<span class="status-pill ${r.status==='approved'?'pill-approved':'pill-rejected'}">${r.status==='approved'?'✅ Aprovado':'❌ Recusado'}</span>`}
-      </div>
-    </div>`).join('');
+  fetch('/api/user/solicitacoes')
+    .then(r => r.json())
+    .then(data => {
+      const recebidas = data.solicitacoes || [];
+      const el = document.getElementById('received-list');
+      
+      const pendentes = recebidas.filter(s => s.status === 'pending').length;
+      if(document.getElementById('stat-received')) document.getElementById('stat-received').textContent = pendentes;
+      
+      if (!recebidas.length) {
+        el.innerHTML = `<div class="empty"><div class="empty-icon">📥</div><div class="empty-title">Nenhum pedido recebido</div><p class="empty-desc">Quando alguém quiser adotar seus pets, os pedidos aparecerão aqui.</p></div>`;
+        return;
+      }
+      el.innerHTML = recebidas.map(r => `
+        <div class="item-card" id="req-${r.id}">
+          <div style="width:52px;height:52px;border-radius:50%;background:var(--blush);display:flex;align-items:center;justify-content:center;font-size:1.4rem;flex-shrink:0">🧑</div>
+          <div class="item-info">
+            <div class="item-name">${r.from}</div>
+            <div class="item-meta">Quer adotar: <strong>${r.petName}</strong></div>
+            <div style="font-size:.87rem;color:var(--bark-m);margin-top:8px;font-style:italic;line-height:1.6;background:var(--cream-d);padding:10px 14px;border-radius:var(--r-sm);border-left:3px solid var(--sand)">"${r.msg}"</div>
+            <div style="display:flex;gap:8px;margin-top:10px;flex-wrap:wrap">
+              <span style="font-size:.82rem;color:var(--muted)">📞 ${r.phone}</span>
+              <span style="font-size:.82rem;color:var(--muted)">·</span>
+              <span style="font-size:.82rem;color:var(--muted)">📍 ${r.city}</span>
+            </div>
+          </div>
+          <div class="item-actions" style="flex-direction:column">
+            ${r.status==='pending'?`
+              <button class="btn btn-sage btn-sm" onclick="respondRequest(${r.id}, 'approved')">✅ Aprovar</button>
+              <button class="btn btn-outline btn-sm btn-danger" onclick="respondRequest(${r.id}, 'rejected')">❌ Recusar</button>
+            `:`<span class="status-pill ${r.status==='approved'?'pill-approved':'pill-rejected'}">${r.status==='approved'?'✅ Aprovado':'❌ Recusado'}</span>`}
+          </div>
+        </div>`).join('');
+    });
 }
 
-function approveRequest(i) {
-  RECEIVED_REQUESTS[i].status = 'approved';
-  renderReceived();
-  showToast('✅ Adoção aprovada! O solicitante foi notificado.', 'success');
-}
-function rejectRequest(i) {
-  RECEIVED_REQUESTS[i].status = 'rejected';
-  renderReceived();
-  showToast('Solicitação recusada.', '');
+function respondRequest(id, status) {
+  // Reaproveitando a rota que já existia para as ONGs
+  fetch(`/api/ong/solicitacao/${id}/status`, {
+    method: 'POST',
+    headers: {'Content-Type': 'application/json'},
+    body: JSON.stringify({status})
+  }).then(() => {
+    showToast(status === 'approved' ? '✅ Adoção aprovada! O solicitante foi notificado.' : 'Solicitação recusada.', status === 'approved' ? 'success' : '');
+    renderReceived();
+  });
 }
 
 // ── Favoritos ─────────────────────────────────────────────────────────────────
 function renderFavorites() {
   document.getElementById('favorites-list').innerHTML = FAVORITES.map(p => `
-    <div class="mini-pet-card" onclick="location.href='pet.html?id=${p.id}'">
+    <div class="mini-pet-card" onclick="location.href='/pet/${p.id}'">
       <div class="mini-card-img"><img src="${p.photo}" alt="${p.name}"></div>
       <div class="mini-card-body">
         <div class="mini-card-name">${p.name}</div>
@@ -486,17 +521,35 @@ function openNewOngModal() {
   document.getElementById('modal-content').innerHTML = `
     <div class="modal-title">🏢 Cadastrar Nova ONG</div>
     <p class="modal-sub">Preencha os dados básicos da ONG parceira</p>
-    <div id="ong-error" style="display:none;background:#fff0f0;color:#c0392b;padding:10px;border-radius:var(--r-sm);margin-bottom:14px;font-size:.9rem"></div>
-    <div style="display:grid;grid-template-columns:1fr 1fr;gap:10px;margin-bottom:10px">
-      <input id="ong-nome" class="form-input" placeholder="Nome da ONG *">
-      <input id="ong-whatsapp" class="form-input" placeholder="WhatsApp">
+    <div id="ong-error" style="display:none;background:#fff0f0;border:1.5px solid #fca5a5;border-radius:var(--r-sm);padding:10px 14px;margin-bottom:14px;color:#c0392b;font-size:.88rem"></div>
+    <div style="display:grid;grid-template-columns:1fr 1fr;gap:14px;margin-bottom:14px">
+      <div>
+        <label class="form-label">Nome da ONG <span style="color:var(--terra)">*</span></label>
+        <input id="ong-nome" class="form-input">
+      </div>
+      <div>
+        <label class="form-label">WhatsApp</label>
+        <input id="ong-whatsapp" class="form-input">
+      </div>
     </div>
-    <div style="display:grid;grid-template-columns:1fr 1fr;gap:10px;margin-bottom:10px">
-      <input id="ong-city" class="form-input" placeholder="Cidade *">
-      <input id="ong-state" class="form-input" placeholder="UF *" maxlength="2">
+    <div style="display:grid;grid-template-columns:1fr 1fr;gap:14px;margin-bottom:14px">
+      <div>
+        <label class="form-label">Cidade <span style="color:var(--terra)">*</span></label>
+        <input id="ong-city" class="form-input">
+      </div>
+      <div>
+        <label class="form-label">Estado <span style="color:var(--terra)">*</span></label>
+        <input id="ong-state" class="form-input" maxlength="2">
+      </div>
     </div>
-    <input id="ong-pix" class="form-input" style="margin-bottom:10px;width:100%" placeholder="Chave PIX para doações">
-    <textarea id="ong-desc" class="form-textarea" style="min-height:80px;margin-bottom:14px;width:100%" placeholder="Descrição curta da ONG *"></textarea>
+    <div style="margin-bottom:14px">
+      <label class="form-label">Chave PIX</label>
+      <input id="ong-pix" class="form-input">
+    </div>
+    <div style="margin-bottom:18px">
+      <label class="form-label">Descrição Curta <span style="color:var(--terra)">*</span></label>
+      <textarea id="ong-desc" class="form-textarea" rows="3"></textarea>
+    </div>
     <div style="display:flex;gap:10px">
       <button class="btn btn-primary" style="flex:1" onclick="saveNewOng()">Cadastrar ONG</button>
       <button class="btn btn-ghost" onclick="closeModal()">Cancelar</button>
