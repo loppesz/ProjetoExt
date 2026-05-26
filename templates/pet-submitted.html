@@ -1,0 +1,49 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Pet enviado para aprovacao - PetAdopt</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Fraunces:opsz,wght@9..144,600;9..144,700&family=DM+Sans:wght@400;500;600;700&display=swap" rel="stylesheet">
+<link rel="stylesheet" href="/static/css/pet-submitted.css">
+</head>
+<body>
+  <main class="submitted-page">
+    <section class="submitted-panel" aria-labelledby="submitted-title">
+      <a href="/" class="brand">PetAdopt</a>
+
+      <div class="approval-scene" aria-hidden="true">
+        <div class="paper">
+          <span></span>
+          <span></span>
+          <span></span>
+        </div>
+        <div class="stamp">OK</div>
+        <div class="paw-dot paw-a"></div>
+        <div class="paw-dot paw-b"></div>
+        <div class="paw-dot paw-c"></div>
+      </div>
+
+      <p class="eyebrow">Cadastro recebido</p>
+      <h1 id="submitted-title">Seu pet foi enviado para analise</h1>
+      <p class="submitted-copy">
+        {% if pet %}
+          O cadastro de {{ pet.nome }} agora esta aguardando aprovacao do administrador.
+        {% else %}
+          O cadastro do pet agora esta aguardando aprovacao do administrador.
+        {% endif %}
+        Assim que for aprovado, ele aparece na busca publica de pets.
+      </p>
+
+      <div class="submitted-actions">
+        <a class="btn-primary" href="/pets">Encontrar um pet</a>
+        <a class="btn-secondary" href="/new-pet">Cadastrar outro pet</a>
+      </div>
+
+      <a class="dashboard-link" href="/dashboard">Ir para meu painel</a>
+    </section>
+  </main>
+</body>
+</html>

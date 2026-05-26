@@ -140,7 +140,7 @@ function renderPagination(cur, total){
 function goPage(p){page=p;render();window.scrollTo({top:0,behavior:'smooth'});}
 
 function toggleFav(id,btn){
-  const p=ALL_PETS.find(x=>x.id===id);if(!p)return;
+  const p=ALL_PETS.find(x=>x.id==id);if(!p)return;
   p.fav=!p.fav;
   btn.classList.toggle('active',p.fav);
   btn.textContent=p.fav?'❤️':'🤍';

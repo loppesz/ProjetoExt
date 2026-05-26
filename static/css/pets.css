@@ -317,6 +317,11 @@
   box-shadow: 0 2px 8px rgba(0,0,0,0.12);
 }
 .fav-btn:hover { transform: scale(1.15); background: #fff; }
+.fav-btn.active {
+  color: #dc2626;
+  background: #fff;
+  box-shadow: 0 4px 14px rgba(220,38,38,0.22);
+}
 .card-body { padding: 18px 20px 22px; }
 .card-name {
   font-family: var(--ff-display);

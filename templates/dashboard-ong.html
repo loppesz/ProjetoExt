@@ -80,6 +80,24 @@
         <div class="panel-header">
           <div class="panel-title">Perfil Institucional</div>
         </div>
+        <div class="quick-card">
+          <div id="ong-profile-error" class="form-alert"></div>
+          <div class="profile-form-grid">
+            <label>Nome da ONG<input id="ong-profile-name" class="form-input"></label>
+            <label>WhatsApp<input id="ong-profile-whatsapp" class="form-input"></label>
+            <label>Cidade<input id="ong-profile-city" class="form-input"></label>
+            <label>UF<input id="ong-profile-state" class="form-input" maxlength="2"></label>
+            <label>Foto / logo URL<input id="ong-profile-photo" class="form-input"></label>
+            <label>Link Vakinha<input id="ong-profile-vakinha" class="form-input"></label>
+          </div>
+          <label class="profile-form-full">Chave PIX<input id="ong-profile-pix" class="form-input"></label>
+          <label class="profile-form-full">Descrição curta<textarea id="ong-profile-desc" class="form-input" rows="3"></textarea></label>
+          <label class="profile-form-full">Descrição completa<textarea id="ong-profile-desc-full" class="form-input" rows="5"></textarea></label>
+          <div class="quick-actions">
+            <button class="btn btn-primary" onclick="saveOngProfile()">Salvar perfil</button>
+            <a href="/ong/{{ ong.id }}" class="btn btn-outline">Ver perfil público</a>
+          </div>
+        </div>
         <div class="empty"><div class="empty-icon">⚙️</div><div class="empty-title">Em breve</div><p class="empty-desc">A edição do perfil da ONG estará disponível nas próximas atualizações.</p></div>
       </div>
     </main>

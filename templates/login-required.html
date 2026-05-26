@@ -1,0 +1,48 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Login necessario - PetAdopt</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Fraunces:opsz,wght@9..144,600;9..144,700&family=DM+Sans:wght@400;500;600;700&display=swap" rel="stylesheet">
+<link rel="stylesheet" href="/static/css/login-required.css">
+</head>
+<body>
+  <main class="gate-page">
+    <section class="gate-panel" aria-labelledby="gate-title">
+      <a href="/" class="brand">PetAdopt</a>
+
+      <div class="pet-scene" aria-hidden="true">
+        <div class="sun"></div>
+        <div class="paw paw-1"></div>
+        <div class="paw paw-2"></div>
+        <div class="paw paw-3"></div>
+        <div class="pet-face">
+          <span class="ear ear-left"></span>
+          <span class="ear ear-right"></span>
+          <span class="eye eye-left"></span>
+          <span class="eye eye-right"></span>
+          <span class="nose"></span>
+          <span class="smile"></span>
+        </div>
+      </div>
+
+      <p class="eyebrow">Area protegida</p>
+      <h1 id="gate-title">Entre para continuar</h1>
+      <p class="gate-copy">
+        Para cadastrar um pet ou ver mais detalhes dos animais encontrados,
+        voce precisa estar logado na sua conta.
+      </p>
+
+      <div class="gate-actions">
+        <a class="btn-primary" href="{{ url_for('login', next=next_url) }}">Entrar agora</a>
+        <a class="btn-secondary" href="{{ url_for('register') }}">Criar conta</a>
+      </div>
+
+      <a class="back-link" href="/pets">Voltar para a busca de pets</a>
+    </section>
+  </main>
+</body>
+</html>

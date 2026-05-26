@@ -25,6 +25,18 @@ login_manager = LoginManager(app)
 login_manager.login_view = 'login'
 login_manager.login_message = 'Faça login para continuar...'
 
+@login_manager.unauthorized_handler
+def unauthorized():
+    if request.path.startswith('/api/'):
+        return jsonify({'erro': 'Faça login para continuar.', 'login_required': True}), 401
+    return redirect(url_for('login_required_page', next=request.full_path.rstrip('?')))
+
+def safe_next_url(default='index'):
+    next_url = request.args.get('next') or request.form.get('next')
+    if next_url and next_url.startswith('/') and not next_url.startswith('//'):
+        return next_url
+    return url_for(default)
+
 ## Tabela de Usuários
 class Usuario(UserMixin, db.Model):
     __tablename__ = 'usuario'
@@ -104,6 +116,69 @@ class Pet(db.Model):
     mod_status = db.Column(db.String(20), default='pending')  # pending, approved, removed
     foto_capa = db.Column(db.String(255), nullable=True)
     criado_em = db.Column(db.DateTime, default=db.func.now())
+
+class SiteImpactConfig(db.Model):
+    __tablename__ = 'site_impact_config'
+    id = db.Column(db.Integer, primary_key=True)
+    pets_offset = db.Column(db.Integer, default=0)
+    adoptions_offset = db.Column(db.Integer, default=0)
+    cities_offset = db.Column(db.Integer, default=0)
+    show_trust = db.Column(db.Boolean, default=True)
+
+def get_site_impact_config():
+    db.create_all()
+    config = SiteImpactConfig.query.get(1)
+    if not config:
+        config = SiteImpactConfig(
+            id=1,
+            pets_offset=0,
+            adoptions_offset=0,
+            cities_offset=0,
+            show_trust=True
+        )
+        db.session.add(config)
+        db.session.commit()
+    return config
+
+def build_site_impact_payload():
+    config = get_site_impact_config()
+    pets_base = Pet.query.filter_by(mod_status='approved').count()
+    adoptions_base = Pet.query.filter_by(status='adopted', mod_status='approved').count()
+    cities_base = db.session.query(Pet.cidade, Pet.estado).filter_by(mod_status='approved').distinct().count()
+
+    pets_total = max(0, pets_base + (config.pets_offset or 0))
+    adoptions_total = max(0, adoptions_base + (config.adoptions_offset or 0))
+    cities_total = max(0, cities_base + (config.cities_offset or 0))
+
+    highlights = [
+        {'icon': '🐾', 'label': f'{pets_total} pets cadastrados'},
+        {'icon': '🏠', 'label': f'{adoptions_total} adoções realizadas'},
+        {'icon': '❤️', 'label': f'{cities_total} cidades atendidas'}
+    ]
+    if config.show_trust:
+        highlights.append({'icon': '⭐', 'label': 'Plataforma confiável'})
+
+    return {
+        'base': {
+            'pets': pets_base,
+            'adoptions': adoptions_base,
+            'cities': cities_base
+        },
+        'offsets': {
+            'pets': config.pets_offset or 0,
+            'adoptions': config.adoptions_offset or 0,
+            'cities': config.cities_offset or 0
+        },
+        'totals': {
+            'pets': pets_total,
+            'adoptions': adoptions_total,
+            'cities': cities_total
+        },
+        'flags': {
+            'show_trust': bool(config.show_trust)
+        },
+        'highlights': highlights
+    }
 
 ### Metodo que cria pet
 @app.route('/api/pets', methods=['POST'])
@@ -265,6 +340,10 @@ def listar_ongs():
 ## ROTAS DE MODERAÇÃO (ADMIN)
 ## ═════════════════════════════════════════════════════════════════════════════
 
+@app.route('/api/site-impact', methods=['GET'])
+def site_impact():
+    return jsonify(build_site_impact_payload())
+
 from functools import wraps
 
 # Decorator para verificar se é admin
@@ -277,6 +356,26 @@ def admin_required(f):
     return decorated_function
 
 # GET - Estatísticas de moderação
+@app.route('/api/admin/site-impact', methods=['GET', 'PUT'])
+@login_required
+@admin_required
+def admin_site_impact():
+    config = get_site_impact_config()
+    if request.method == 'GET':
+        return jsonify(build_site_impact_payload())
+
+    data = request.get_json() or {}
+    offsets = data.get('offsets', {})
+    flags = data.get('flags', {})
+
+    config.pets_offset = int(offsets.get('pets', config.pets_offset or 0))
+    config.adoptions_offset = int(offsets.get('adoptions', config.adoptions_offset or 0))
+    config.cities_offset = int(offsets.get('cities', config.cities_offset or 0))
+    config.show_trust = bool(flags.get('show_trust', config.show_trust))
+    db.session.commit()
+
+    return jsonify({'sucesso': True, 'impact': build_site_impact_payload()})
+
 @app.route('/api/admin/pets/stats', methods=['GET'])
 @login_required
 @admin_required
@@ -357,6 +456,39 @@ def aprovar_pet(pet_id):
             'mensagem': f'Pet "{pet.nome}" foi aprovado!'
         }), 200
     
+    except Exception as e:
+        db.session.rollback()
+        return jsonify({'erro': str(e)}), 500
+
+@app.route('/api/admin/pets/<int:pet_id>', methods=['PUT'])
+@login_required
+@admin_required
+def admin_update_pet(pet_id):
+    try:
+        pet = Pet.query.get(pet_id)
+        if not pet:
+            return jsonify({'erro': 'Pet não encontrado'}), 404
+
+        data = request.get_json() or {}
+        nome = data.get('name', '').strip()
+        especie = data.get('species', '').strip()
+        porte = data.get('size', '').strip()
+        cidade = data.get('city', '').strip()
+        estado = data.get('state', '').strip().upper()
+
+        if not nome or especie not in ['dog', 'cat', 'other'] or not porte or not cidade or not estado:
+            return jsonify({'erro': 'Nome, espécie, porte, cidade e estado são obrigatórios.'}), 400
+
+        pet.nome = nome
+        pet.especie = especie
+        pet.raca = data.get('breed', '').strip()
+        pet.porte = porte
+        pet.cidade = cidade
+        pet.estado = estado[:2]
+        pet.descricao = data.get('description', '').strip()
+        db.session.commit()
+
+        return jsonify({'sucesso': True, 'mensagem': f'Pet "{pet.nome}" atualizado.'}), 200
     except Exception as e:
         db.session.rollback()
         return jsonify({'erro': str(e)}), 500
@@ -596,14 +728,19 @@ def index():
 
 @app.route('/login', methods=['GET', 'POST'])
 def login():
+    next_url = safe_next_url()
+    has_next = bool(request.args.get('next') or request.form.get('next'))
     if current_user.is_authenticated:
-        return redirect(url_for('index'))
+        return redirect(next_url)
         
     if request.method == 'POST':
         if request.is_json:
             data = request.get_json()
             email = data.get('email')
             senha = data.get('password')
+            posted_next = data.get('next') or ''
+            has_next = has_next or bool(posted_next)
+            next_url = posted_next if posted_next.startswith('/') and not posted_next.startswith('//') else next_url
         else:
             email = request.form.get('email')
             senha = request.form.get('password')
@@ -616,9 +753,10 @@ def login():
                     'message': 'Login realizado com sucesso!', 
                     'role': usuario.role,
                     'name': usuario.name,
-                    'email': usuario.email
+                    'email': usuario.email,
+                    'next': next_url if has_next else ''
                 }), 200
-            return redirect(url_for('dashboard'))
+            return redirect(next_url)
             
         if request.is_json:
             return jsonify({'message': 'E-mail ou senha inválidos.'}), 401
@@ -680,17 +818,33 @@ def register():
             
     return render_template('register.html')
 
+@app.route('/login-required')
+def login_required_page():
+    next_url = safe_next_url()
+    return render_template('login-required.html', next_url=next_url)
+
 @app.route('/pets')
 def pets():
     return render_template('pets.html')
 
 @app.route('/pet/<int:pet_id>')
+@login_required
 def pet(pet_id):
     return render_template('pet.html', pet_id=pet_id)
 
 @app.route('/new-pet')
+@login_required
 def new_pet():
     return render_template('new-pet.html')
+
+@app.route('/pet-submitted')
+@login_required
+def pet_submitted():
+    pet_id = request.args.get('pet_id', type=int)
+    pet = Pet.query.get(pet_id) if pet_id else None
+    if pet and pet.usuario_id != current_user.id and current_user.role != 'admin':
+        pet = None
+    return render_template('pet-submitted.html', pet=pet)
 
 @app.route('/ongs')
 def ongs():
@@ -728,7 +882,69 @@ def api_ong_meus_pets():
     if current_user.role != 'ong':
         return jsonify({'erro': 'Acesso negado'}), 403
     pets = Pet.query.filter_by(usuario_id=current_user.id).all()
-    return jsonify({'pets': [{'id': p.id, 'name': p.nome, 'status': p.status} for p in pets]})
+    size_labels = {
+        'small': 'Pequeno',
+        'medium': 'Médio',
+        'large': 'Grande',
+        'giant': 'Gigante'
+    }
+    return jsonify({'pets': [{
+        'id': p.id,
+        'name': p.nome,
+        'breed': p.raca,
+        'status': p.status,
+        'modStatus': p.mod_status,
+        'city': p.cidade,
+        'state': p.estado,
+        'photo': p.foto_capa,
+        'sizeLabel': size_labels.get(p.porte, p.porte)
+    } for p in pets]})
+
+@app.route('/api/ong/profile', methods=['GET', 'PUT'])
+@login_required
+def api_ong_profile():
+    if current_user.role != 'ong':
+        return jsonify({'erro': 'Acesso negado'}), 403
+
+    ong = Ong.query.filter_by(usuario_id=current_user.id).first()
+    if not ong:
+        return jsonify({'erro': 'ONG não encontrada'}), 404
+
+    if request.method == 'GET':
+        return jsonify({
+            'id': ong.id,
+            'name': ong.nome,
+            'desc': ong.descricao or '',
+            'descFull': ong.descricao_completa or '',
+            'city': ong.cidade or '',
+            'state': ong.estado or '',
+            'whatsapp': ong.whatsapp or '',
+            'pix': ong.chave_pix or '',
+            'vakinha': ong.link_vakinha or '',
+            'photo': ong.foto_url or '',
+            'status': ong.status
+        })
+
+    data = request.get_json() or {}
+    nome = data.get('name', '').strip()
+    cidade = data.get('city', '').strip()
+    estado = data.get('state', '').strip().upper()
+
+    if not nome or not cidade or not estado:
+        return jsonify({'erro': 'Nome, cidade e estado são obrigatórios.'}), 400
+
+    ong.nome = nome
+    ong.descricao = data.get('desc', '').strip()
+    ong.descricao_completa = data.get('descFull', '').strip()
+    ong.cidade = cidade
+    ong.estado = estado[:2]
+    ong.whatsapp = data.get('whatsapp', '').strip()
+    ong.chave_pix = data.get('pix', '').strip()
+    ong.link_vakinha = data.get('vakinha', '').strip()
+    ong.foto_url = data.get('photo', '').strip()
+    db.session.commit()
+
+    return jsonify({'sucesso': True, 'mensagem': 'Perfil da ONG atualizado.'})
 
 @app.route('/api/ong/solicitacoes', methods=['GET'])
 @login_required
@@ -740,6 +956,10 @@ def api_ong_solicitacoes():
     solicitacoes = SolicitacaoAdocao.query.filter(SolicitacaoAdocao.pet_id.in_(pet_ids)).all()
     return jsonify({'solicitacoes': [{
         'id': s.id, 'petName': s.pet.nome, 'solicitanteName': s.solicitante.name,
+        'email': s.solicitante.email,
+        'telefone': s.solicitante.telefone,
+        'cidade': s.solicitante.cidade,
+        'estado': s.solicitante.estado,
         'mensagem': s.mensagem, 'status': s.status
     } for s in solicitacoes]})
 
@@ -764,9 +984,49 @@ def api_ong_solicitacao_status(req_id):
     if not solicitacao or solicitacao.pet.usuario_id != current_user.id:
         return jsonify({'erro': 'Solicitação não encontrada'}), 404
     data = request.get_json()
-    solicitacao.status = data.get('status', solicitacao.status)
+    novo_status = data.get('status', solicitacao.status)
+    if novo_status not in ['approved', 'rejected', 'pending']:
+        return jsonify({'erro': 'Status inválido'}), 400
+    solicitacao.status = novo_status
+    if novo_status == 'approved':
+        solicitacao.pet.status = 'reserved'
     db.session.commit()
     return jsonify({'sucesso': True})
+
+@app.route('/api/pets/<int:pet_id>/adopt', methods=['POST'])
+@login_required
+def api_solicitar_adocao(pet_id):
+    pet = Pet.query.get(pet_id)
+    if not pet or pet.mod_status != 'approved':
+        return jsonify({'erro': 'Pet não encontrado'}), 404
+    if pet.usuario_id == current_user.id:
+        return jsonify({'erro': 'Você não pode solicitar adoção do próprio pet.'}), 400
+    if pet.status != 'available':
+        return jsonify({'erro': 'Este pet não está disponível para adoção.'}), 400
+
+    data = request.get_json() or {}
+    mensagem = data.get('mensagem', '').strip()
+    if not mensagem:
+        return jsonify({'erro': 'Escreva uma mensagem para o responsável.'}), 400
+
+    existente = SolicitacaoAdocao.query.filter_by(
+        pet_id=pet.id,
+        solicitante_id=current_user.id,
+        status='pending'
+    ).first()
+    if existente:
+        return jsonify({'erro': 'Você já enviou uma solicitação para este pet.'}), 400
+
+    solicitacao = SolicitacaoAdocao(
+        pet_id=pet.id,
+        solicitante_id=current_user.id,
+        mensagem=mensagem,
+        status='pending'
+    )
+    db.session.add(solicitacao)
+    db.session.commit()
+
+    return jsonify({'sucesso': True, 'mensagem': 'Solicitação enviada ao responsável.'}), 201
 
 @app.route('/logout')
 @login_required
