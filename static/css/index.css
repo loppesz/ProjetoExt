@@ -436,6 +436,9 @@
   border-left: 5px solid var(--blue);
   box-shadow: 0 4px 20px rgba(26,65,97,0.08);
   transition: transform .22s, box-shadow .22s;
+  display: block;
+  text-decoration: none;
+  color: inherit;
 }
 .how-card:nth-child(2) { border-left-color: var(--yellow); }
 .how-card:nth-child(3) { border-left-color: #5ba3d4; }
