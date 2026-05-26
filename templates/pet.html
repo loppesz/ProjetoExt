@@ -86,6 +86,9 @@
   </div>
 </footer>
 
+<script>
+  const IS_LOGGED_IN = {{ 'true' if current_user.is_authenticated else 'false' }};
+</script>
 <script src="/static/js/pet.js"></script>
 <script>
 // ===== SCROLL REVEAL =====

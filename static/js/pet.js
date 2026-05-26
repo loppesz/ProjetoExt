@@ -51,19 +51,33 @@ function render(){
   const waMsg = encodeURIComponent(`Olá! Vi o ${pet.name} no PetAdopt e tenho interesse em adoção.`);
   const waLink = `https://wa.me/5511999999999?text=${waMsg}`;
 
-  const adoptHtml = pet.status==='available'
-    ? `<div class="adopt-title">Pronto para um novo lar 🏠</div>
-       <p class="adopt-note">Envie sua solicitação de adoção ou entre em contato diretamente pelo WhatsApp.</p>
-       <button class="btn btn-primary btn-full btn-lg" onclick="openAdoptModal()">💌 Quero adotar ${pet.name}!</button>
-       <a href="${waLink}" target="_blank" class="btn btn-ghost btn-full" style="margin-top:10px;background:#25d366;color:#fff">💬 Falar no WhatsApp</a>
-       <div style="margin-top:10px">
-         <button class="btn btn-ghost btn-full" onclick="toggleFav()" id="fav-btn">🤍 Adicionar aos favoritos</button>
-       </div>`
-    : pet.status==='adopted'
-      ? `<div class="adopted-box">✅ ${pet.name} já foi adotado!<br><span style="font-size:.85rem;font-weight:400">Mas há outros pets esperando por você.</span></div>
-         <div style="margin-top:12px"><a href="/pets" class="btn btn-primary btn-full">Ver outros pets →</a></div>`
-      : `<div class="adopted-box" style="background:#fff8e1;color:#b8860b">⏳ ${pet.name} está reservado.<br><span style="font-size:.85rem;font-weight:400">Outro adotante está em processo. Aguarde ou veja outros pets.</span></div>
-         <div style="margin-top:12px"><a href="/pets" class="btn btn-outline btn-full">Ver outros pets</a></div>`;
+  let isAuth = typeof IS_LOGGED_IN !== 'undefined' && IS_LOGGED_IN;
+  
+  let adoptHtml = '';
+  if (pet.status === 'available') {
+    if (isAuth) {
+      adoptHtml = `<div class="adopt-title">Pronto para um novo lar 🏠</div>
+         <p class="adopt-note">Envie sua solicitação de adoção ou entre em contato diretamente pelo WhatsApp.</p>
+         <button class="btn btn-primary btn-full btn-lg" onclick="openAdoptModal()">💌 Quero adotar ${pet.name}!</button>
+         <a href="${waLink}" target="_blank" class="btn btn-ghost btn-full" style="margin-top:10px;background:#25d366;color:#fff">💬 Falar no WhatsApp</a>
+         <div style="margin-top:10px">
+           <button class="btn btn-ghost btn-full" onclick="toggleFav()" id="fav-btn">🤍 Adicionar aos favoritos</button>
+         </div>`;
+    } else {
+      adoptHtml = `<div class="adopt-title">Pronto para um novo lar 🏠</div>
+         <p class="adopt-note">Para solicitar a adoção ou ver os contatos, você precisa estar logado.</p>
+         <a href="/login" class="btn btn-primary btn-full btn-lg">Fazer login para adotar</a>
+         <div style="margin-top:10px">
+           <a href="/register" class="btn btn-ghost btn-full">Criar conta grátis</a>
+         </div>`;
+    }
+  } else if (pet.status === 'adopted') {
+    adoptHtml = `<div class="adopted-box">✅ ${pet.name} já foi adotado!<br><span style="font-size:.85rem;font-weight:400">Mas há outros pets esperando por você.</span></div>
+       <div style="margin-top:12px"><a href="/pets" class="btn btn-primary btn-full">Ver outros pets →</a></div>`;
+  } else {
+    adoptHtml = `<div class="adopted-box" style="background:#fff8e1;color:#b8860b">⏳ ${pet.name} está reservado.<br><span style="font-size:.85rem;font-weight:400">Outro adotante está em processo. Aguarde ou veja outros pets.</span></div>
+       <div style="margin-top:12px"><a href="/pets" class="btn btn-outline btn-full">Ver outros pets</a></div>`;
+  }
 
   document.getElementById('detail-content').innerHTML = `
     <div class="gallery">
