@@ -1,4 +1,4 @@
-from app import app, db, Usuario, Pet, Ong, SolicitacaoAdocao, Feedback
+from app import app, db, Usuario, Pet, Ong, SolicitacaoAdocao, Feedback, Favorito
 
 print('Iniciando seed...')
 

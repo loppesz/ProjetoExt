@@ -36,6 +36,7 @@ function render(){
   }
   
   currentPet = pet;
+  favState = pet.fav;
   document.title = `${pet.name} — PetAdopt`;
   if(document.getElementById('bc-name')) document.getElementById('bc-name').textContent = pet.name;
 
@@ -72,7 +73,7 @@ function render(){
          <button class="btn btn-primary btn-full btn-lg" onclick="openAdoptModal()">💌 Quero adotar ${pet.name}!</button>
          <a href="${waLink}" target="_blank" class="btn btn-ghost btn-full" style="margin-top:10px;background:#25d366;color:#fff">💬 Falar no WhatsApp</a>
          <div style="margin-top:10px">
-           <button class="btn btn-ghost btn-full" onclick="toggleFav()" id="fav-btn">🤍 Adicionar aos favoritos</button>
+           <button class="btn btn-ghost btn-full" onclick="toggleFav()" id="fav-btn">${favState ? '❤️ Nos favoritos!' : '🤍 Adicionar aos favoritos'}</button>
          </div>`;
     } else {
       adoptHtml = `<div class="adopt-title">Pronto para um novo lar 🏠</div>
@@ -188,12 +189,25 @@ function confirmAdopt(){
 }
 
 function toggleFav(){
-  favState = !favState;
-  const btn = document.getElementById('fav-btn');
-  if(btn){
-    btn.textContent = favState ? '❤️ Nos favoritos!' : '🤍 Adicionar aos favoritos';
-    showToast(favState?'Adicionado aos favoritos! ❤️':'Removido dos favoritos.', favState?'success':'');
-  }
+  fetch(`/api/pets/${currentPet.id}/favorite`, { method: 'POST' })
+    .then(res => {
+      if(res.redirected && res.url.includes('/login') || res.status === 401) {
+        window.location.href = '/login';
+        return null;
+      }
+      return res.json();
+    })
+    .then(data => {
+      if(!data) return;
+      favState = data.fav;
+      currentPet.fav = data.fav;
+      const btn = document.getElementById('fav-btn');
+      if(btn){
+        btn.textContent = favState ? '❤️ Nos favoritos!' : '🤍 Adicionar aos favoritos';
+        showToast(favState ? 'Adicionado aos favoritos! ❤️' : 'Removido dos favoritos.', favState ? 'success' : '');
+      }
+    })
+    .catch(e => console.error(e));
 }
 
 function closeModal(e){

@@ -140,11 +140,24 @@ function renderPagination(cur, total){
 function goPage(p){page=p;render();window.scrollTo({top:0,behavior:'smooth'});}
 
 function toggleFav(id,btn){
-  const p=ALL_PETS.find(x=>x.id===id);if(!p)return;
-  p.fav=!p.fav;
-  btn.classList.toggle('active',p.fav);
-  btn.textContent=p.fav?'❤️':'🤍';
-  showToast(p.fav?'Adicionado aos favoritos! ❤️':'Removido dos favoritos.',p.fav?'success':'');
+  fetch(`/api/pets/${id}/favorite`, { method: 'POST' })
+    .then(res => {
+      if(res.redirected && res.url.includes('/login') || res.status === 401) {
+        window.location.href = '/login';
+        return null;
+      }
+      return res.json();
+    })
+    .then(data => {
+      if(!data) return;
+      const p = ALL_PETS.find(x=>x.id==id);
+      if(!p) return;
+      p.fav = data.fav;
+      btn.classList.toggle('active', p.fav);
+      btn.textContent = p.fav ? '❤️' : '🤍';
+      showToast(p.fav ? 'Adicionado aos favoritos! ❤️' : 'Removido dos favoritos.', p.fav ? 'success':'');
+    })
+    .catch(err => console.error(err));
 }
 function showToast(msg,type=''){
   const t=document.getElementById('toast');

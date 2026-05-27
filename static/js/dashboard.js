@@ -90,8 +90,6 @@ let MY_PETS = [];
 // Todos os pets da plataforma (para moderação)
 let ALL_PLATFORM_PETS = [];
 
-const FAVORITES = [];
-
 // ── Stats ─────────────────────────────────────────────────────────────────────
 function updateStats() {
   document.getElementById('stat-mypets').textContent = MY_PETS.length;
@@ -442,15 +440,27 @@ function respondRequest(id, status) {
 
 // ── Favoritos ─────────────────────────────────────────────────────────────────
 function renderFavorites() {
-  document.getElementById('favorites-list').innerHTML = FAVORITES.map(p => `
-    <div class="mini-pet-card" onclick="location.href='/pet/${p.id}'">
-      <div class="mini-card-img"><img src="${p.photo}" alt="${p.name}"></div>
-      <div class="mini-card-body">
-        <div class="mini-card-name">${p.name}</div>
-        <div class="mini-card-meta">${p.breed} · ${p.city}</div>
-        <div class="status-pill pill-avail" style="margin-top:6px">Disponível</div>
-      </div>
-    </div>`).join('');
+  fetch('/api/user/favorites')
+    .then(r => r.json())
+    .then(data => {
+      const favs = data.favorites || [];
+      const el = document.getElementById('favorites-list');
+      if (!el) return;
+      if (!favs.length) {
+        el.innerHTML = `<div class="empty"><div class="empty-icon">🤍</div><div class="empty-title">Nenhum pet favoritado</div><p class="empty-desc">Você ainda não adicionou nenhum pet aos favoritos.</p><a href="/pets" class="btn btn-primary">Buscar pets</a></div>`;
+        return;
+      }
+      el.innerHTML = favs.map(p => `
+        <div class="mini-pet-card" onclick="location.href='/pet/${p.id}'">
+          <div class="mini-card-img"><img src="${p.photo || 'https://images.unsplash.com/photo-1548199973-03cce0bbc87b?w=600'}" alt="${p.name}"></div>
+          <div class="mini-card-body">
+            <div class="mini-card-name">${p.name}</div>
+            <div class="mini-card-meta">${p.breed || 'Sem raça definida'} · 📍 ${p.city}</div>
+            <div class="status-pill ${p.status==='available'?'pill-avail':p.status==='adopted'?'pill-adopted':'pill-reserved'}" style="margin-top:6px">${p.status==='available'?'Disponível':p.status==='adopted'?'Adotado':'Reservado'}</div>
+          </div>
+        </div>`).join('');
+    })
+    .catch(e => console.error('Erro ao buscar favoritos', e));
 }
 
 // ── Moderação (admin) ─────────────────────────────────────────────────────────

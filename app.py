@@ -93,6 +93,17 @@ class Feedback(db.Model):
     
     solicitacao = db.relationship('SolicitacaoAdocao', backref=db.backref('feedback', uselist=False))
 
+## Tabela de Favoritos
+class Favorito(db.Model):
+    __tablename__ = 'favorito'
+    id = db.Column(db.Integer, primary_key=True)
+    usuario_id = db.Column(db.Integer, db.ForeignKey('usuario.id'), nullable=False)
+    pet_id = db.Column(db.Integer, db.ForeignKey('pet.id'), nullable=False)
+    criado_em = db.Column(db.DateTime, default=db.func.now())
+    
+    usuario = db.relationship('Usuario', backref=db.backref('favoritos', cascade="all, delete-orphan"))
+    pet = db.relationship('Pet', backref=db.backref('favoritado_por', cascade="all, delete-orphan"))
+
 ## Tabela de pets
 class Pet(db.Model):
     __tablename__ = 'pet'
@@ -224,6 +235,10 @@ def listar_pets():
     
     pets = query.all()
     
+    user_favs = []
+    if current_user.is_authenticated:
+        user_favs = [f.pet_id for f in current_user.favoritos]
+    
     # Mapeamento de porte para label
     size_labels = {
         'small': 'Pequeno',
@@ -254,7 +269,7 @@ def listar_pets():
             'state': p.estado,
             'photo': p.foto_capa,
             'status': p.status,
-            'fav': False,
+            'fav': p.id in user_favs,
             'ownerName': owner_name
         })
         
@@ -568,6 +583,39 @@ def get_user_solicitacoes():
             'phone': s.solicitante.telefone or 'Não informado' if s.solicitante else '',
             'city': s.solicitante.cidade or 'Não informada' if s.solicitante else ''
         } for s in sols]}), 200
+    except Exception as e:
+        return jsonify({'erro': str(e)}), 500
+
+# POST - Favoritar / Desfavoritar pet
+@app.route('/api/pets/<int:pet_id>/favorite', methods=['POST'])
+@login_required
+def toggle_favorite(pet_id):
+    try:
+        pet = Pet.query.get_or_404(pet_id)
+        fav = Favorito.query.filter_by(usuario_id=current_user.id, pet_id=pet.id).first()
+        if fav:
+            db.session.delete(fav)
+            db.session.commit()
+            return jsonify({'sucesso': True, 'fav': False})
+        else:
+            novo_fav = Favorito(usuario_id=current_user.id, pet_id=pet.id)
+            db.session.add(novo_fav)
+            db.session.commit()
+            return jsonify({'sucesso': True, 'fav': True})
+    except Exception as e:
+        db.session.rollback()
+        return jsonify({'erro': str(e)}), 500
+
+# GET - Favoritos do usuário logado
+@app.route('/api/user/favorites', methods=['GET'])
+@login_required
+def get_user_favorites():
+    try:
+        favoritos = Favorito.query.filter_by(usuario_id=current_user.id).order_by(Favorito.criado_em.desc()).all()
+        return jsonify({'favorites': [{
+            'id': f.pet.id, 'name': f.pet.nome, 'breed': f.pet.raca,
+            'city': f.pet.cidade, 'photo': f.pet.foto_capa, 'status': f.pet.status
+        } for f in favoritos if f.pet]}), 200
     except Exception as e:
         return jsonify({'erro': str(e)}), 500
 
