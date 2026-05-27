@@ -119,9 +119,20 @@ function responderSolicitacao(reqId, status) {
     method: 'POST',
     headers: {'Content-Type': 'application/json'},
     body: JSON.stringify({status})
-  }).then(() => {
-    carregarSolicitacoes();
-    carregarResumo();
+  })
+  .then(r => r.json())
+  .then(data => {
+    if(data.sucesso) {
+      if(typeof showToast === 'function') showToast(status === 'approved' ? '✅ Adoção aprovada! Pet marcado como adotado.' : 'Solicitação recusada.', status === 'approved' ? 'success' : '');
+      carregarSolicitacoes();
+      carregarResumo();
+      carregarPets();
+    } else {
+      if(typeof showToast === 'function') showToast('❌ Erro: ' + data.erro, '');
+    }
+  })
+  .catch(e => {
+    if(typeof showToast === 'function') showToast('Erro de conexão', '');
   });
 }
 

@@ -614,3 +614,12 @@ body {
   resize: vertical;
   min-height: 80px;
 }
+
+/* ── Feedback Modal ────────────────────────────────────────────────────────── */
+.feedback-evaluated-badge { font-size: 0.85rem; color: #27ae60; align-self: center; margin-top: 4px; font-weight: 600; }
+.modal-error-banner { display: none; background: #fff0f0; border: 1.5px solid #fca5a5; border-radius: var(--r-sm); padding: 10px 14px; margin-bottom: 14px; color: #c0392b; font-size: .88rem; }
+.modal-error-banner.show { display: block; }
+.modal-btn-row { display: flex; gap: 10px; }
+.flex-1 { flex: 1; }
+.mb-14 { margin-bottom: 14px; }
+.text-danger { color: var(--terra); }

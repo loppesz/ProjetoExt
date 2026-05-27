@@ -81,6 +81,18 @@ class SolicitacaoAdocao(db.Model):
     pet = db.relationship('Pet', backref='solicitacoes')
     solicitante = db.relationship('Usuario', backref='solicitacoes_feitas')
 
+## Tabela de Feedbacks de Adoção
+class Feedback(db.Model):
+    __tablename__ = 'feedback'
+    id = db.Column(db.Integer, primary_key=True)
+    solicitacao_id = db.Column(db.Integer, db.ForeignKey('solicitacao_adocao.id'), nullable=False)
+    mensagem = db.Column(db.Text, nullable=False)
+    nota = db.Column(db.Integer, default=5)
+    aprovado = db.Column(db.Boolean, default=True) # Para moderação se necessário
+    criado_em = db.Column(db.DateTime, default=db.func.now())
+    
+    solicitacao = db.relationship('SolicitacaoAdocao', backref=db.backref('feedback', uselist=False))
+
 ## Tabela de pets
 class Pet(db.Model):
     __tablename__ = 'pet'
@@ -533,6 +545,7 @@ def get_user_adocoes():
             'city': s.pet.cidade if s.pet else '',
             'photo': s.pet.foto_capa if s.pet else 'https://images.unsplash.com/photo-1548199973-03cce0bbc87b?w=600',
             'status': s.status,
+            'has_feedback': bool(s.feedback),
             'date': s.criado_em.strftime('%d/%m/%Y') if s.criado_em else 'Recente'
         } for s in sols]}), 200
     except Exception as e:
@@ -867,13 +880,22 @@ def api_ong_perfil():
 @app.route('/api/ong/solicitacao/<int:req_id>/status', methods=['POST'])
 @login_required
 def api_ong_solicitacao_status(req_id):
-    if current_user.role != 'ong':
-        return jsonify({'erro': 'Acesso negado'}), 403
     solicitacao = SolicitacaoAdocao.query.get(req_id)
     if not solicitacao or solicitacao.pet.usuario_id != current_user.id:
-        return jsonify({'erro': 'Solicitação não encontrada'}), 404
+        return jsonify({'erro': 'Solicitação não encontrada ou acesso negado'}), 404
     data = request.get_json()
-    solicitacao.status = data.get('status', solicitacao.status)
+    novo_status = data.get('status', solicitacao.status)
+    solicitacao.status = novo_status
+    
+    # Se a adoção for aprovada, o status do pet muda para adotado automaticamente
+    if novo_status == 'approved' and solicitacao.pet:
+        solicitacao.pet.status = 'adopted'
+        
+        # Recusa automaticamente outras solicitações pendentes para este mesmo pet
+        outras = SolicitacaoAdocao.query.filter(SolicitacaoAdocao.pet_id == solicitacao.pet_id, SolicitacaoAdocao.id != solicitacao.id, SolicitacaoAdocao.status == 'pending').all()
+        for s in outras:
+            s.status = 'rejected'
+            
     db.session.commit()
     return jsonify({'sucesso': True})
 
@@ -908,6 +930,48 @@ def solicitar_adocao(pet_id):
         db.session.rollback()
         return jsonify({'erro': str(e)}), 500
 
+@app.route('/api/feedbacks', methods=['GET'])
+def listar_feedbacks():
+    try:
+        feedbacks = Feedback.query.filter_by(aprovado=True).order_by(Feedback.criado_em.desc()).limit(6).all()
+        return jsonify({'feedbacks': [{
+            'id': f.id,
+            'tutor': f.solicitacao.solicitante.name if f.solicitacao.solicitante else 'Anônimo',
+            'pet_name': f.solicitacao.pet.nome if f.solicitacao.pet else 'Pet Removido',
+            'pet_photo': f.solicitacao.pet.foto_capa if f.solicitacao.pet else '',
+            'mensagem': f.mensagem,
+            'nota': f.nota,
+            'data': f.criado_em.strftime('%d/%m/%Y') if f.criado_em else ''
+        } for f in feedbacks if f.solicitacao]}), 200
+    except Exception as e:
+        return jsonify({'erro': str(e)}), 500
+
+@app.route('/api/feedbacks', methods=['POST'])
+@login_required
+def criar_feedback():
+    try:
+        data = request.get_json()
+        solicitacao_id = data.get('solicitacao_id')
+        mensagem = data.get('mensagem')
+        
+        if not solicitacao_id or not mensagem:
+            return jsonify({'erro': 'Solicitação e mensagem são obrigatórias'}), 400
+            
+        sol = SolicitacaoAdocao.query.get(solicitacao_id)
+        if not sol or sol.solicitante_id != current_user.id or sol.status != 'approved':
+            return jsonify({'erro': 'Solicitação inválida ou não aprovada'}), 403
+            
+        if sol.feedback:
+            return jsonify({'erro': 'Feedback já enviado para esta adoção'}), 400
+            
+        novo_feedback = Feedback(solicitacao_id=sol.id, mensagem=mensagem, nota=data.get('nota', 5))
+        db.session.add(novo_feedback)
+        db.session.commit()
+        return jsonify({'sucesso': True, 'mensagem': 'Feedback enviado com sucesso!'}), 201
+    except Exception as e:
+        db.session.rollback()
+        return jsonify({'erro': str(e)}), 500
+
 @app.route('/logout')
 @login_required
 def logout():
@@ -920,11 +984,10 @@ def sobre():
 
 @app.after_request
 def add_header(response):
-    # Força o navegador a sempre recarregar o HTML para atualizar o status de login
-    if 'text/html' in response.headers.get('Content-Type', ''):
-        response.headers['Cache-Control'] = 'no-store, no-cache, must-revalidate, max-age=0'
-        response.headers['Pragma'] = 'no-cache'
-        response.headers['Expires'] = '-1'
+    # Força o navegador a não fazer cache de NADA (vital para os fetches do Dashboard atualizarem)
+    response.headers['Cache-Control'] = 'no-store, no-cache, must-revalidate, max-age=0'
+    response.headers['Pragma'] = 'no-cache'
+    response.headers['Expires'] = '-1'
     return response
 
 if __name__ == '__main__':

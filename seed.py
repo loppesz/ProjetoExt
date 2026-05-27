@@ -1,4 +1,4 @@
-from app import app, db, Usuario, Pet, Ong
+from app import app, db, Usuario, Pet, Ong, SolicitacaoAdocao, Feedback
 
 print('Iniciando seed...')
 
@@ -152,5 +152,15 @@ with app.app_context():
     db.session.add_all([ong1, ong2, ong3, ong4])
     db.session.commit()
     print('Pets de exemplo inseridos com sucesso!')
+
+    # 5. Criar Adoção e Feedback de Exemplo
+    adocao_rex = SolicitacaoAdocao(pet_id=pet5.id, solicitante_id=maria.id, mensagem="Quero muito adotar o Rex!", status="approved")
+    db.session.add(adocao_rex)
+    db.session.commit()
+
+    feedback_rex = Feedback(solicitacao_id=adocao_rex.id, mensagem="Adotar o Rex foi a melhor decisão! Ele é muito companheiro e alegrou a casa toda.", nota=5)
+    db.session.add(feedback_rex)
+    db.session.commit()
+    print('Feedbacks de exemplo inseridos com sucesso!')
 
 print('Seed finalizado!')

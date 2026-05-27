@@ -493,6 +493,14 @@
 .testimonial-name { font-weight: 700; color: var(--navy); font-size: .95rem; }
 .testimonial-city { font-size: .82rem; color: #9ca3af; margin-top: 2px; }
 
+.feedback-pet-img {
+  width: 70px;
+  height: 70px;
+  border-radius: 50%;
+  object-fit: cover;
+  border: 3px solid var(--blue-l);
+}
+
 
 .section-ongs {
   background: linear-gradient(135deg, #1a4161 0%, #2e86c1 100%);
@@ -683,6 +691,8 @@
 .reveal-delay-2 { transition-delay: .2s; }
 .reveal-delay-3 { transition-delay: .3s; }
 .reveal-delay-4 { transition-delay: .4s; }
+
+.d-none { display: none !important; }
 
 
 .container { max-width: 1200px; margin: 0 auto; padding: 0 28px; }

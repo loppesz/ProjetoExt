@@ -18,6 +18,14 @@ document.addEventListener('DOMContentLoaded', () => {
       renderHomeOngs(data.ongs || []);
     })
     .catch(err => console.error('Erro ao buscar ONGs:', err));
+
+  // Puxa os feedbacks para substituir os depoimentos hardcoded
+  fetch('/api/feedbacks')
+    .then(res => res.json())
+    .then(data => {
+      renderFeedbacks(data.feedbacks || []);
+    })
+    .catch(err => console.error('Erro ao buscar feedbacks:', err));
 });
 
 function petCard(p){
@@ -110,6 +118,32 @@ function renderHomeOngs(ongs) {
         <div class="ong-stats"><span>🐾 ${o.pets || 0} pets</span><span>🏠 ${o.adopted || 0} adoções</span></div>
         <a href="/ongs" class="btn-ong">Conhecer ONG</a>
       </div>
+    </div>
+  `).join('');
+}
+
+function renderFeedbacks(feedbacks) {
+  // Busca pelas classes nativas caso os IDs ainda não tenham sido definidos no HTML
+  const section = document.getElementById('feedback-section') || document.querySelector('.section-testimonials');
+  const grid = document.getElementById('feedbacks-grid') || document.querySelector('.testimonials-grid');
+  
+  if (!section || !grid) return;
+  
+  if (feedbacks.length === 0) {
+    section.classList.add('d-none');
+    return;
+  }
+  
+  section.classList.remove('d-none');
+  grid.innerHTML = feedbacks.map((f, index) => `
+    <div class="testimonial-card reveal reveal-delay-${(index % 3) + 1} visible">
+      <div class="testimonial-avatar">
+        <img src="${f.pet_photo || 'https://images.unsplash.com/photo-1548199973-03cce0bbc87b?w=200'}" alt="${f.pet_name}" class="feedback-pet-img">
+      </div>
+      <div class="testimonial-stars">${'⭐'.repeat(f.nota)}</div>
+      <div class="testimonial-quote">"${f.mensagem}"</div>
+      <div class="testimonial-name">${f.tutor}</div>
+      <div class="testimonial-city">Adotou o(a) ${f.pet_name}</div>
     </div>
   `).join('');
 }

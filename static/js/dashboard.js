@@ -321,6 +321,8 @@ function renderAdoptions() {
           <div class="item-actions" style="flex-direction:column">
             <a href="/pet/${a.petId}" class="btn btn-outline btn-sm">👁️ Ver pet</a>
             ${a.status==='pending'?`<button class="btn btn-outline btn-sm btn-danger" onclick="cancelRequest(${a.id})">🗑️ Cancelar</button>`:''}
+            ${a.status==='approved' && !a.has_feedback ? `<button class="btn btn-primary btn-sm" onclick="openFeedbackModal(${a.id})">⭐ Avaliar</button>` : ''}
+            ${a.has_feedback ? `<span class="feedback-evaluated-badge">⭐ Avaliado</span>` : ''}
           </div>
         </div>`).join('');
     });
@@ -333,6 +335,51 @@ function cancelRequest(id) {
       showToast('Solicitação cancelada.', '');
       renderAdoptions();
     });
+}
+
+function openFeedbackModal(reqId) {
+  document.getElementById('modal-content').innerHTML = `
+    <div class="modal-title">⭐ Como foi a adoção?</div>
+    <p class="modal-sub">Compartilhe sua experiência para inspirar outras pessoas!</p>
+    <div id="fb-error" class="modal-error-banner"></div>
+    <div class="mb-14">
+      <label class="form-label">Mensagem <span class="text-danger">*</span></label>
+      <textarea id="fb-msg" class="form-textarea" rows="4" placeholder="Ex: O pet é maravilhoso e a ONG foi super atenciosa..."></textarea>
+    </div>
+    <div class="modal-btn-row">
+      <button class="btn btn-primary flex-1" onclick="submitFeedback(${reqId})">Enviar Feedback</button>
+      <button class="btn btn-ghost" onclick="closeModal()">Cancelar</button>
+    </div>`;
+  document.getElementById('modal').classList.add('open');
+}
+
+function submitFeedback(reqId) {
+  const msg = document.getElementById('fb-msg').value.trim();
+  if (!msg) {
+    const err = document.getElementById('fb-error');
+    err.textContent = '⚠️ Escreva uma mensagem.';
+    err.classList.add('show');
+    return;
+  }
+  
+  fetch('/api/feedbacks', {
+    method: 'POST',
+    headers: { 'Content-Type': 'application/json' },
+    body: JSON.stringify({ solicitacao_id: reqId, mensagem: msg })
+  })
+  .then(r => r.json())
+  .then(data => {
+    if (data.sucesso) {
+      closeModal();
+      showToast('✅ ' + data.mensagem, 'success');
+      renderAdoptions();
+    } else {
+      const err = document.getElementById('fb-error');
+      err.textContent = '❌ ' + data.erro;
+      err.classList.add('show');
+    }
+  })
+  .catch(e => showToast('Erro: ' + e, ''));
 }
 
 // ── Pedidos Recebidos ─────────────────────────────────────────────────────────
@@ -379,10 +426,18 @@ function respondRequest(id, status) {
     method: 'POST',
     headers: {'Content-Type': 'application/json'},
     body: JSON.stringify({status})
-  }).then(() => {
-    showToast(status === 'approved' ? '✅ Adoção aprovada! O solicitante foi notificado.' : 'Solicitação recusada.', status === 'approved' ? 'success' : '');
-    renderReceived();
-  });
+  })
+  .then(r => r.json())
+  .then(data => {
+    if(data.sucesso) {
+      showToast(status === 'approved' ? '✅ Adoção aprovada! O solicitante foi notificado.' : 'Solicitação recusada.', status === 'approved' ? 'success' : '');
+      renderReceived();
+      renderMyPets(); // Atualiza a aba de pets para refletir que foi adotado
+    } else {
+      showToast('❌ Erro: ' + data.erro, '');
+    }
+  })
+  .catch(e => showToast('Erro de conexão', ''));
 }
 
 // ── Favoritos ─────────────────────────────────────────────────────────────────
