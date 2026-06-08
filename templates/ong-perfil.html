@@ -1,65 +1,164 @@
 <!DOCTYPE html>
 <html lang="pt-BR">
 <head>
-  <meta charset="UTF-8">
-  <title>{{ ong.nome }} - PetAdopt</title>
-  <link rel="stylesheet" href="/static/css/petadopt.css">
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>{{ ong.nome }} &mdash; PetAdopt</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Fraunces:ital,opsz,wght@0,9..144,300..900;1,9..144,300..900&family=DM+Sans:wght@300;400;500;600;700&display=swap" rel="stylesheet">
+<link rel="stylesheet" href="/static/css/petadopt.css">
 </head>
-<body>
-  <nav class="nav">
-    <div class="nav-i">
-      <a href="/" class="logo">🐾 PetAdopt</a>
-      <a href="/pets" class="btn btn-outline btn-sm">Ver todos os pets</a>
-    </div>
-  </nav>
+<body class="ong-profile-page">
 
-  <header class="page-header">
-    <div class="page-header-inner ong-profile-header-inner">
-      <img src="{{ ong.foto_url or 'https://images.unsplash.com/photo-1601758124096-7093b3fef44d?w=600' }}" alt="{{ ong.nome }}" class="ong-profile-avatar">
-      <div class="ong-profile-info">
-        <h1 class="page-title">{{ ong.nome }}</h1>
-        <p class="page-subtitle ong-profile-meta">
-          <span>📍 {{ ong.cidade }} / {{ ong.estado }}</span>
-          <span>🐕 {{ pets|length }} Pets aguardando adoção</span>
-        </p>
-        <p class="ong-profile-desc">{{ ong.descricao_completa or ong.descricao }}</p>
-        <div class="ong-profile-actions">
-          {% if ong.whatsapp %}
-          <a href="https://wa.me/{{ ong.whatsapp|replace(' ', '')|replace('-','')|replace('(','')|replace(')','') }}" target="_blank" class="btn btn-whatsapp">💬 WhatsApp</a>
+<!-- TOAST -->
+<div id="toast" class="toast"></div>
+
+<!-- NAV -->
+<nav class="nav">
+  <div class="nav-i">
+    <a href="/" class="logo">&#128062; PetAdopt</a>
+    <ul class="nav-links">
+      <li><a href="/pets" class="nav-link">Encontrar Pet</a></li>
+      <li><a href="/ongs" class="nav-link active">ONGs</a></li>
+      <li><a href="/new-pet" class="nav-link">Cadastrar Pet</a></li>
+      <li><a href="/sobre" class="nav-link">Sobre</a></li>
+    </ul>
+    <div class="nav-auth">
+      {% if current_user.is_authenticated %}
+        <a href="/dashboard" class="nav-link" style="font-weight: 700; color: #f0c040;">
+          {% if current_user.role == 'ong' %}
+            Painel ONG
+          {% elif current_user.role == 'admin' %}
+            Painel Admin
+          {% else %}
+            Ol&aacute;, {{ current_user.name.split(' ')[0] }}
           {% endif %}
-          {% if ong.link_vakinha %}
-          <a href="{{ ong.link_vakinha }}" target="_blank" class="btn btn-primary">❤️ Doar via Vakinha</a>
-          {% endif %}
-          {% if ong.chave_pix %}
-          <span class="btn btn-outline" onclick="alert('Chave PIX da ONG: {{ ong.chave_pix }}')">💠 Copiar Chave PIX</span>
-          {% endif %}
-        </div>
+        </a>
+        <a href="#" onclick="localStorage.removeItem('petadopt_user'); window.location.href='/logout'" class="nav-link">Sair</a>
+      {% else %}
+        <a href="/login" class="btn-nav-login">Entrar</a>
+        <a href="/register" class="btn-nav-register">Criar conta</a>
+      {% endif %}
+    </div>
+  </div>
+</nav>
+
+<!-- PAGE HEADER -->
+<header class="page-header ong-profile-header">
+  <div class="page-header-inner ong-profile-header-inner reveal">
+    <img src="{{ ong.foto_url or 'https://images.unsplash.com/photo-1601758124096-7093b3fef44d?w=600' }}" alt="{{ ong.nome }}" class="ong-profile-avatar">
+    <div class="ong-profile-info">
+      <div class="page-eyebrow">&#129309; ONG parceira</div>
+      <h1 class="page-title">{{ ong.nome }}</h1>
+      <p class="page-subtitle ong-profile-meta">
+        <span>&#128205; {{ ong.cidade }} / {{ ong.estado }}</span>
+        <span>&#128062; {{ pets|length }} pets aguardando ado&ccedil;&atilde;o</span>
+      </p>
+      <p class="ong-profile-desc">{{ ong.descricao_completa or ong.descricao }}</p>
+      <div class="ong-profile-actions">
+        {% if ong.whatsapp %}
+        <a href="https://wa.me/{{ ong.whatsapp|replace(' ', '')|replace('-','')|replace('(','')|replace(')','') }}" target="_blank" rel="noopener" class="btn btn-whatsapp">&#128172; WhatsApp</a>
+        {% endif %}
+        {% if ong.link_vakinha %}
+        <a href="{{ ong.link_vakinha }}" target="_blank" rel="noopener" class="btn btn-primary">&#10084; Doar via Vakinha</a>
+        {% endif %}
+        {% if ong.chave_pix %}
+        <button type="button" class="btn btn-outline" data-pix="{{ ong.chave_pix }}" onclick="copyPix(this)">&#128179; Copiar chave PIX</button>
+        {% endif %}
       </div>
     </div>
-  </header>
+  </div>
+</header>
 
-  <main class="ong-profile-main">
-    <h2 class="page-title ong-profile-title">Pets disponíveis para adoção</h2>
-    {% if pets %}
-    <div class="pets-grid">
-      {% for p in pets %}
-      <div class="pet-card" onclick="location.href='/pet/{{ p.id }}'">
-        <div class="card-img"><img src="{{ p.foto_capa }}" alt="{{ p.nome }}"></div>
-        <div class="card-body">
-          <div class="card-name">{{ p.nome }}</div>
-          <div class="card-breed">{{ p.raca }}</div>
-          <div class="card-meta"><span>📍 {{ p.cidade }}/{{ p.estado }}</span></div>
+<!-- PETS GRID -->
+<main class="ong-profile-main reveal reveal-delay-1">
+  <div class="section-head ong-profile-section-head">
+    <div class="page-eyebrow">&#128054; Aguardando um lar</div>
+    <h2 class="section-title">Pets dispon&iacute;veis para ado&ccedil;&atilde;o</h2>
+    <p class="section-sub">Conhe&ccedil;a os animais sob cuidado desta ONG e encontre um novo companheiro.</p>
+  </div>
+
+  {% if pets %}
+  <div class="pets-grid">
+    {% for p in pets %}
+    <article class="pet-card" onclick="location.href='/pet/{{ p.id }}'">
+      <div class="card-img">
+        <img src="{{ p.foto_capa }}" alt="{{ p.nome }}">
+        <span class="card-badge badge-avail">Dispon&iacute;vel</span>
+      </div>
+      <div class="card-body">
+        <div class="card-name">{{ p.nome }}</div>
+        <div class="card-breed">{{ p.raca }}</div>
+        <div class="card-meta">
+          <span>&#128205; {{ p.cidade }}/{{ p.estado }}</span>
         </div>
       </div>
-      {% endfor %}
-    </div>
-    {% else %}
-    <div class="empty">
-      <div class="empty-icon">🐕</div>
-      <div class="empty-title">Nenhum pet disponível no momento.</div>
-      <p class="empty-desc">Todos os pets desta ONG já encontraram uma família ou novos pets ainda estão sendo cadastrados.</p>
-    </div>
-    {% endif %}
-  </main>
+    </article>
+    {% endfor %}
+  </div>
+  {% else %}
+  <div class="empty">
+    <div class="empty-icon">&#128054;</div>
+    <div class="empty-title">Nenhum pet dispon&iacute;vel no momento.</div>
+    <p class="empty-desc">Todos os pets desta ONG j&aacute; encontraram uma fam&iacute;lia ou novos pets ainda est&atilde;o sendo cadastrados.</p>
+    <a href="/ongs" class="btn btn-primary">Ver outras ONGs</a>
+  </div>
+  {% endif %}
+</main>
+
+<!-- FOOTER -->
+<footer class="footer">
+  <div class="footer-compact">
+    <div class="footer-logo">&#128062; PetAdopt</div>
+    <span>Conectando pets a lares cheios de amor.</span>
+  </div>
+  <div class="footer-bar">
+    <span>&copy; 2025 PetAdopt. Feito com amor para os animais.</span>
+    <span>&#128062; Adote, n&atilde;o compre.</span>
+  </div>
+</footer>
+
+<script>
+function showToast(message, type) {
+  var toast = document.getElementById('toast');
+  if (!toast) return;
+  toast.textContent = message;
+  toast.className = 'toast show ' + (type || 'success');
+  setTimeout(function () {
+    toast.className = 'toast';
+  }, 2400);
+}
+
+function copyPix(button) {
+  var pix = button.getAttribute('data-pix');
+  if (!pix) return;
+
+  if (navigator.clipboard && navigator.clipboard.writeText) {
+    navigator.clipboard.writeText(pix).then(function () {
+      showToast('Chave PIX copiada.');
+    }).catch(function () {
+      window.prompt('Chave PIX da ONG:', pix);
+    });
+    return;
+  }
+
+  window.prompt('Chave PIX da ONG:', pix);
+}
+
+(function () {
+  var els = document.querySelectorAll('.reveal');
+  if (!els.length) return;
+  var observer = new IntersectionObserver(function (entries) {
+    entries.forEach(function (entry) {
+      if (entry.isIntersecting) {
+        entry.target.classList.add('visible');
+        observer.unobserve(entry.target);
+      }
+    });
+  }, { threshold: 0.12 });
+  els.forEach(function (el) { observer.observe(el); });
+})();
+</script>
 </body>
 </html>
