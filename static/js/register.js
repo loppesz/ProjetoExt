@@ -47,24 +47,33 @@ function submitForm(){
   btn.disabled = true;
   btn.textContent = 'Criando conta...';
 
-  const data = {
-    name: document.getElementById('name').value.trim(),
-    email: document.getElementById('email').value.trim(),
-    password: document.getElementById('password').value,
-    confirm: document.getElementById('confirm-pwd').value,
-    phone: document.getElementById('phone').value.trim(),
-    city: document.getElementById('city').value.trim(),
-    state: document.getElementById('state').value,
-    role: document.getElementById('user-role') ? document.getElementById('user-role').value : 'user',
-    ong_nome: document.getElementById('ong-nome') ? document.getElementById('ong-nome').value.trim() : ''
-  };
+  const role = document.getElementById('user-role') ? document.getElementById('user-role').value : 'user';
+  const name = document.getElementById('name').value.trim();
+  const email = document.getElementById('email').value.trim();
+
+  const formData = new FormData();
+  formData.append('name', name);
+  formData.append('email', email);
+  formData.append('password', document.getElementById('password').value);
+  formData.append('confirm', document.getElementById('confirm-pwd').value);
+  formData.append('phone', document.getElementById('phone').value.trim());
+  formData.append('city', document.getElementById('city').value.trim());
+  formData.append('state', document.getElementById('state').value);
+  formData.append('role', role);
+
+  if (role === 'ong') {
+    formData.append('ong_nome', document.getElementById('ong-nome') ? document.getElementById('ong-nome').value.trim() : '');
+    formData.append('ong_desc', document.getElementById('ong-desc') ? document.getElementById('ong-desc').value.trim() : '');
+    formData.append('ong_desc_full', document.getElementById('ong-desc-full') ? document.getElementById('ong-desc-full').value.trim() : '');
+    const ongFoto = document.getElementById('ong-foto');
+    if (ongFoto && ongFoto.files.length > 0) {
+      formData.append('ong_foto', ongFoto.files[0]);
+    }
+  }
 
   fetch('/register', {
     method: 'POST',
-    headers: {
-      'Content-Type': 'application/json'
-    },
-    body: JSON.stringify(data)
+    body: formData
   })
   .then(async response => {
     const body = await response.json();
@@ -77,13 +86,13 @@ function submitForm(){
 
     // Salvar no localStorage para os scripts de interface estática reconhecerem o usuário
     localStorage.setItem('petadopt_user', JSON.stringify({
-      name: data.name,
-      email: data.email,
-      role: data.role
+      name: name,
+      email: email,
+      role: role
     }));
 
     // Após cadastro bem sucedido: redirecionar pra /dashboard-ong se ONG, senão comportamento atual
-    if (data.role === 'ong') {
+    if (role === 'ong') {
       window.location.href = '/dashboard-ong';
     } else {
       document.getElementById('step2').style.display='none';
