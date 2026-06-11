@@ -107,10 +107,19 @@
           </div>
 
           <div style="margin-top: 24px; border-top: 1px solid var(--sand); padding-top: 20px;">
-            <h4 style="font-weight: 700; color: var(--bark); margin-bottom: 10px;">Link para Doação (Vakinha/Apoia.se)</h4>
-            <p style="color: var(--bark-m);">
+            <h4 style="font-weight: 700; color: var(--bark); margin-bottom: 10px;">Links e Redes Sociais</h4>
+            <p style="color: var(--bark-m); margin-bottom: 8px;">
+              <strong>Vakinha / Doação:</strong> 
               {% if ong.link_vakinha %}
-                <a href="{{ ong.link_vakinha }}" target="_blank" style="color: var(--ocean); text-decoration: underline;">{{ ong.link_vakinha }}</a>
+                <a href="{{ ong.link_vakinha }}" target="_blank" style="color: #2e86c1; text-decoration: underline;">{{ ong.link_vakinha }}</a>
+              {% else %}
+                Não informado.
+              {% endif %}
+            </p>
+            <p style="color: var(--bark-m);">
+              <strong>Instagram:</strong> 
+              {% if ong.instagram %}
+                <a href="{{ ong.instagram }}" target="_blank" style="color: #2e86c1; text-decoration: underline;">{{ ong.instagram }}</a>
               {% else %}
                 Não informado.
               {% endif %}

@@ -875,23 +875,23 @@ footer{background:var(--bark);color:rgba(255,255,255,.7);padding:36px 0 24px}
 .ong-profile-page .btn-nav-login:hover{border-color:#fff;background:rgba(255,255,255,.1)}
 .ong-profile-page .btn-nav-register{background:#f0c040;color:#1a1a1a;padding:8px 20px;border-radius:var(--r-xl);font-weight:700;font-size:.9rem;transition:transform var(--ease),background var(--ease)}
 .ong-profile-page .btn-nav-register:hover{background:#d4a820;transform:translateY(-1px)}
-.ong-profile-page .page-header{background:linear-gradient(135deg,#1a4161 0%,#0d1b2a 100%);min-height:260px;display:flex;align-items:center;position:relative;overflow:hidden;border-bottom:0}
-.ong-profile-page .page-header::before{content:'';position:absolute;inset:0;background-image:radial-gradient(circle at 20% 30%,rgba(255,255,255,.08) 0 2px,transparent 3px),radial-gradient(circle at 80% 65%,rgba(240,192,64,.12) 0 2px,transparent 3px);background-size:86px 86px;pointer-events:none}
-.ong-profile-page .page-header-inner{max-width:1200px;margin:0 auto;padding:56px 28px;width:100%;position:relative;z-index:1}
-.ong-profile-page .page-eyebrow{display:inline-flex;align-items:center;gap:8px;background:rgba(240,192,64,.15);border:1px solid rgba(240,192,64,.3);color:#f0c040;padding:6px 16px;border-radius:var(--r-xl);font-size:.82rem;font-weight:700;letter-spacing:.04em;text-transform:uppercase;margin-bottom:16px}
-.ong-profile-page .page-title{font-size:clamp(2rem,4vw,2.8rem);font-weight:800;color:#fff;line-height:1.2;margin-bottom:10px}
+.ong-profile-page .page-header{background:linear-gradient(135deg,#1a4161 0%,#0d1b2a 100%);min-height:auto;display:flex;align-items:center;position:relative;overflow:hidden;border-bottom:0;padding:0}
+.ong-profile-page .page-header::before{display:none}
+.ong-profile-page .page-header-inner{max-width:1200px;margin:0 auto;padding:64px 28px 80px;width:100%;position:relative;z-index:1}
+.ong-profile-page .page-eyebrow{display:inline-flex;align-items:center;gap:8px;background:rgba(240,192,64,.15);border:1px solid rgba(240,192,64,.3);color:var(--yellow-d, #d4a820);padding:6px 16px;border-radius:var(--r-xl);font-size:.85rem;font-weight:700;margin-bottom:16px}
+.ong-profile-page .page-title{font-size:clamp(2rem,4vw,2.8rem);font-weight:800;color:#fff;line-height:1.2;margin:0 0 10px 0}
 .ong-profile-page .page-subtitle{font-size:1rem;color:rgba(255,255,255,.72);line-height:1.7}
 .ong-profile-page .ong-profile-header-inner{display:flex;gap:34px;align-items:center;flex-wrap:wrap}
 .ong-profile-page .ong-profile-avatar{width:166px;height:166px;border-radius:50%;object-fit:cover;box-shadow:0 18px 48px rgba(0,0,0,.28);flex-shrink:0;background:#fff;padding:5px}
 .ong-profile-page .ong-profile-info{flex:1;min-width:280px}
-.ong-profile-page .ong-profile-meta{display:flex;gap:16px;flex-wrap:wrap;margin-bottom:14px;font-weight:600;max-width:none}
+.ong-profile-page .ong-profile-meta{display:flex;gap:16px;flex-wrap:wrap;margin-bottom:14px;font-weight:600;max-width:none;font-size:1rem}
 .ong-profile-page .ong-profile-desc{color:rgba(255,255,255,.78);font-size:1rem;max-width:720px;margin-bottom:22px;line-height:1.75}
 .ong-profile-page .ong-profile-actions{display:flex;gap:12px;flex-wrap:wrap}
 .ong-profile-page .ong-profile-actions .btn-outline{color:#fff;border-color:rgba(255,255,255,.45)}
 .ong-profile-page .ong-profile-actions .btn-outline:hover{border-color:#f0c040;color:#f0c040}
-.ong-profile-page .ong-profile-main{flex:1;max-width:1200px;width:100%;margin:0 auto;padding:56px 28px 84px}
+.ong-profile-page .ong-profile-main{flex:1;max-width:1200px;width:100%;margin:0 auto;padding:40px 28px 84px}
 .ong-profile-page .ong-profile-section-head{text-align:left;margin-bottom:30px}
-.ong-profile-page .ong-profile-section-head .page-eyebrow{background:rgba(192,106,58,.1);border-color:rgba(192,106,58,.2);color:var(--terra);margin-bottom:12px}
+.ong-profile-page .ong-profile-section-head .page-eyebrow{margin-bottom:12px}
 .ong-profile-page .section-title{font-size:clamp(1.6rem,3vw,2.25rem);margin-bottom:8px}
 .ong-profile-page .section-sub{max-width:560px}
 .ong-profile-page .empty{background:#fff;border-radius:var(--r-lg);box-shadow:var(--sh-sm);padding:64px 24px}
@@ -908,7 +908,7 @@ footer{background:var(--bark);color:rgba(255,255,255,.7);padding:36px 0 24px}
   .ong-profile-page .nav-i{padding:0 18px}
   .ong-profile-page .nav-auth{gap:8px}
   .ong-profile-page .btn-nav-login,.ong-profile-page .btn-nav-register{padding:7px 14px;font-size:.84rem}
-  .ong-profile-page .page-header-inner{padding:42px 18px}
+  .ong-profile-page .page-header-inner{padding:48px 18px 56px}
   .ong-profile-page .ong-profile-header-inner{text-align:center;justify-content:center}
   .ong-profile-page .ong-profile-info{min-width:0}
   .ong-profile-page .ong-profile-meta,.ong-profile-page .ong-profile-actions{justify-content:center}

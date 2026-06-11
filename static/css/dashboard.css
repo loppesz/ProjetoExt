@@ -623,3 +623,49 @@ body {
 .flex-1 { flex: 1; }
 .mb-14 { margin-bottom: 14px; }
 .text-danger { color: var(--terra); }
+
+/* =========================================
+   INTERAÇÕES DOS BOTÕES DE SOLICITAÇÃO
+========================================= */
+.btn-adopt-confirm {
+  background: var(--navy);
+  color: var(--white);
+  border: 2px solid var(--navy);
+  transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+  position: relative;
+  overflow: hidden;
+  z-index: 1;
+}
+.btn-adopt-confirm::before {
+  content: '';
+  position: absolute;
+  top: 0; left: 0; right: 0; bottom: 0;
+  background: var(--yellow);
+  z-index: -1;
+  transform: scaleX(0);
+  transform-origin: left;
+  transition: transform 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+}
+.btn-adopt-confirm:hover {
+  color: var(--navy-d) !important;
+  border-color: var(--yellow);
+  box-shadow: 0 6px 20px rgba(240, 192, 64, 0.4);
+  transform: translateY(-2px);
+}
+.btn-adopt-confirm:hover::before {
+  transform: scaleX(1);
+}
+
+.btn-adopt-dismiss {
+  background: transparent;
+  color: var(--navy);
+  border: 2px solid var(--navy);
+  transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+}
+.btn-adopt-dismiss:hover {
+  background: var(--blue);
+  color: var(--white) !important;
+  border-color: var(--blue);
+  box-shadow: 0 6px 20px rgba(46, 134, 193, 0.3);
+  transform: translateY(-2px);
+}

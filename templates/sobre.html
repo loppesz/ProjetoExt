@@ -19,7 +19,9 @@
     <ul class="nav-links">
       <li><a href="/pets" class="nav-link">Encontrar Pet</a></li>
       <li><a href="/ongs" class="nav-link">ONGs</a></li>
+      {% if current_user.is_authenticated and current_user.role == 'ong' %}
       <li><a href="/new-pet" class="nav-link">Cadastrar Pet</a></li>
+      {% endif %}
       <li><a href="/sobre" class="nav-link active">Sobre</a></li>
     </ul>
     <div class="nav-auth">
@@ -181,7 +183,9 @@
     <p class="cta-sobre-sub">Milhares de pets estão esperando por um lar cheio de amor. Comece agora — é gratuito e leva menos de 2 minutos.</p>
     <div class="cta-sobre-btns">
       <a href="/pets" class="btn-hero-primary">Encontrar um pet →</a>
+      {% if current_user.is_authenticated and current_user.role == 'ong' %}
       <a href="/new-pet" class="btn-hero-outline">Cadastrar pet para adoção</a>
+      {% endif %}
     </div>
   </div>
 </section>
@@ -198,7 +202,9 @@
       <ul class="footer-links">
         <li><a href="/pets">Encontrar Pet</a></li>
         <li><a href="/ongs">ONGs Parceiras</a></li>
+        {% if current_user.is_authenticated and current_user.role == 'ong' %}
         <li><a href="/new-pet">Cadastrar Pet</a></li>
+        {% endif %}
         <li><a href="/sobre">Sobre nós</a></li>
       </ul>
     </div>

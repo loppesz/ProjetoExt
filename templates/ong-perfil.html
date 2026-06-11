@@ -8,6 +8,7 @@
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
 <link href="https://fonts.googleapis.com/css2?family=Fraunces:ital,opsz,wght@0,9..144,300..900;1,9..144,300..900&family=DM+Sans:wght@300;400;500;600;700&display=swap" rel="stylesheet">
 <link rel="stylesheet" href="/static/css/petadopt.css">
+<link rel="stylesheet" href="/static/css/ong-perfil.css">
 </head>
 <body class="ong-profile-page">
 
@@ -21,7 +22,9 @@
     <ul class="nav-links">
       <li><a href="/pets" class="nav-link">Encontrar Pet</a></li>
       <li><a href="/ongs" class="nav-link active">ONGs</a></li>
+      {% if current_user.is_authenticated and current_user.role == 'ong' %}
       <li><a href="/new-pet" class="nav-link">Cadastrar Pet</a></li>
+      {% endif %}
       <li><a href="/sobre" class="nav-link">Sobre</a></li>
     </ul>
     <div class="nav-auth">
@@ -49,32 +52,39 @@
   <div class="page-header-inner ong-profile-header-inner reveal">
     <img src="{{ ong.foto_url or 'https://images.unsplash.com/photo-1601758124096-7093b3fef44d?w=600' }}" alt="{{ ong.nome }}" class="ong-profile-avatar">
     <div class="ong-profile-info">
-      <div class="page-eyebrow">&#129309; ONG parceira</div>
+      <div class="page-eyebrow">🐾 ONG Parceira</div>
       <h1 class="page-title">{{ ong.nome }}</h1>
       <p class="page-subtitle ong-profile-meta">
         <span>&#128205; {{ ong.cidade }} / {{ ong.estado }}</span>
         <span>&#128062; {{ pets|length }} pets aguardando ado&ccedil;&atilde;o</span>
       </p>
       <p class="ong-profile-desc">{{ ong.descricao_completa or ong.descricao }}</p>
-      <div class="ong-profile-actions">
-        {% if ong.whatsapp %}
-        <a href="https://wa.me/{{ ong.whatsapp|replace(' ', '')|replace('-','')|replace('(','')|replace(')','') }}" target="_blank" rel="noopener" class="btn btn-whatsapp">&#128172; WhatsApp</a>
-        {% endif %}
-        {% if ong.link_vakinha %}
-        <a href="{{ ong.link_vakinha }}" target="_blank" rel="noopener" class="btn btn-primary">&#10084; Doar via Vakinha</a>
-        {% endif %}
-        {% if ong.chave_pix %}
-        <button type="button" class="btn btn-outline" data-pix="{{ ong.chave_pix }}" onclick="copyPix(this)">&#128179; Copiar chave PIX</button>
-        {% endif %}
-      </div>
     </div>
   </div>
 </header>
 
+<!-- MARQUEE STRIP -->
+<div class="marquee-strip" aria-hidden="true">
+  <div class="marquee-track">
+    <div class="marquee-item"><span>🐾</span> {{ ong.pets_count }} pets resgatados</div>
+    <div class="marquee-item"><span>🏠</span> {{ ong.adopted_count }} adoções realizadas</div>
+    <div class="marquee-item"><span>❤️</span> {{ (ong.donations_count|int) }}+ apoios recebidos</div>
+    <div class="marquee-item"><span>⭐</span> ONG Verificada</div>
+    <div class="marquee-item"><span>🤝</span> Adoção 100% gratuita</div>
+    <!-- Duplicated for infinite effect -->
+    <div class="marquee-item"><span>🐾</span> {{ ong.pets_count }} pets resgatados</div>
+    <div class="marquee-item"><span>🏠</span> {{ ong.adopted_count }} adoções realizadas</div>
+    <div class="marquee-item"><span>❤️</span> {{ (ong.donations_count|int) }}+ apoios recebidos</div>
+    <div class="marquee-item"><span>⭐</span> ONG Verificada</div>
+    <div class="marquee-item"><span>🤝</span> Adoção 100% gratuita</div>
+  </div>
+</div>
+
 <!-- PETS GRID -->
 <main class="ong-profile-main reveal reveal-delay-1">
+  
   <div class="section-head ong-profile-section-head">
-    <div class="page-eyebrow">&#128054; Aguardando um lar</div>
+    <div class="page-eyebrow">🐾 Aguardando um lar</div>
     <h2 class="section-title">Pets dispon&iacute;veis para ado&ccedil;&atilde;o</h2>
     <p class="section-sub">Conhe&ccedil;a os animais sob cuidado desta ONG e encontre um novo companheiro.</p>
   </div>
@@ -105,7 +115,121 @@
     <a href="/ongs" class="btn btn-primary">Ver outras ONGs</a>
   </div>
   {% endif %}
+
+  <!-- IMPACTO EM NÚMEROS -->
+  <section class="ong-impact reveal" id="ong-impact" style="background: var(--navy); padding: 80px 0; margin: 80px 0; border-radius: var(--r-lg); color: #fff; position: relative; overflow: hidden; box-shadow: 0 12px 32px rgba(26,65,97,0.2);">
+    <div style="position: absolute; inset: 0; background: radial-gradient(ellipse at 20% 50%, rgba(46,134,193,0.2) 0%, transparent 60%), radial-gradient(ellipse at 80% 50%, rgba(240,192,64,0.08) 0%, transparent 60%); pointer-events: none;"></div>
+    <div class="section-head ong-profile-section-head" style="text-align: center; margin-bottom: 40px; position: relative; z-index: 1;">
+      <h2 class="section-title" style="color: #fff;">Nosso impacto em números</h2>
+      <p class="section-sub" style="color: rgba(255,255,255,0.7); margin: 0 auto;">Cada número representa uma vida transformada com a sua ajuda.</p>
+    </div>
+    <div style="display: grid; grid-template-columns: repeat(auto-fit, minmax(200px, 1fr)); gap: 32px; max-width: 900px; margin: 0 auto; padding: 0 28px; position: relative; z-index: 1; text-align: center;">
+      <div class="impact-item reveal reveal-delay-1">
+        <span class="impact-num" data-target="{{ ong.pets_count }}" style="font-family: var(--ff-display); font-size: 3.5rem; font-weight: 900; color: var(--yellow); display: block; margin-bottom: 8px;">0</span>
+        <span class="impact-label" style="font-size: 0.95rem; color: rgba(255,255,255,0.8); font-weight: 500; text-transform: uppercase; letter-spacing: 0.05em;">Pets resgatados</span>
+      </div>
+      <div class="impact-item reveal reveal-delay-2">
+        <span class="impact-num" data-target="{{ ong.adopted_count }}" style="font-family: var(--ff-display); font-size: 3.5rem; font-weight: 900; color: var(--yellow); display: block; margin-bottom: 8px;">0</span>
+        <span class="impact-label" style="font-size: 0.95rem; color: rgba(255,255,255,0.8); font-weight: 500; text-transform: uppercase; letter-spacing: 0.05em;">Adoções realizadas</span>
+      </div>
+      <div class="impact-item reveal reveal-delay-3">
+        <span class="impact-num" data-target="{{ ong.donations_count|int }}" style="font-family: var(--ff-display); font-size: 3.5rem; font-weight: 900; color: var(--yellow); display: block; margin-bottom: 8px;">0</span>
+        <span class="impact-label" style="font-size: 0.95rem; color: rgba(255,255,255,0.8); font-weight: 500; text-transform: uppercase; letter-spacing: 0.05em;">Apoios recebidos</span>
+      </div>
+    </div>
+  </section>
+
+  {% if adopted_pets %}
+  <!-- HISTÓRIAS DE SUCESSO (DINÂMICO) -->
+  <div class="reveal">
+    <div class="section-head ong-profile-section-head" style="text-align: center; margin-bottom: 40px;">
+      <div class="page-eyebrow" style="background: rgba(46, 134, 193, 0.1); color: var(--blue); border-color: rgba(46, 134, 193, 0.2);">&#127775; Finais Felizes</div>
+      <h2 class="section-title">Vidas transformadas</h2>
+      <p class="section-sub" style="margin: 0 auto;">Estes pets já ganharam um lar graças ao trabalho da <b>{{ ong.nome }}</b>.</p>
+    </div>
+    
+    <div style="display: grid; grid-template-columns: repeat(auto-fit, minmax(280px, 1fr)); gap: 24px; margin-bottom: 20px;">
+      {% for ap in adopted_pets %}
+      <article class="pet-card" onclick="location.href='/pet/{{ ap.id }}'" style="box-shadow: 0 4px 16px rgba(26,65,97,0.08);">
+        <div class="card-img" style="height: 220px;">
+          <img src="{{ ap.foto_capa }}" alt="{{ ap.nome }}" style="object-position: top center;">
+          <span class="card-badge badge-adopted" style="position: absolute; top: 12px; left: 12px; background: var(--sage); color: #fff; padding: 4px 12px; border-radius: var(--r-xl); font-size: 0.72rem; font-weight: 700;">🏠 Adotado</span>
+        </div>
+        <div class="card-body">
+          <div class="card-name" style="font-size: 1.15rem; color: var(--navy);">{{ ap.nome }}</div>
+          <div class="card-breed" style="color: var(--muted); line-height: 1.6; margin-top: 6px;">{{ ap.descricao or 'Mais um final feliz para um pet que aguardava por amor!' }}</div>
+        </div>
+      </article>
+      {% endfor %}
+    </div>
+  </div>
+  {% endif %}
+
+  <!-- PAINÉIS DE INTERAÇÃO (CHAMADA PARA AÇÃO) -->
+  <div class="reveal" style="text-align: center; margin-bottom: 36px; margin-top: 80px;">
+    <h2 style="font-family: var(--ff-display); font-size: 2rem; color: var(--navy); margin-bottom: 12px;">Faça parte dessa história</h2>
+    <p style="color: var(--muted); max-width: 600px; margin: 0 auto; font-size: 1.05rem; line-height: 1.7;">Nós dependemos da comunidade para continuar resgatando e mudando o destino desses animais. Escolha como nos ajudar:</p>
+  </div>
+
+  <div class="ong-panels-grid reveal">
+    <!-- PAINEL DE DOAÇÃO -->
+    <div class="ong-panel panel-donate">
+      <div class="ong-panel-header">
+        <div class="ong-panel-icon">💛</div>
+        <h3 class="ong-panel-title">Apoie nossa causa</h3>
+      </div>
+      <p class="ong-panel-desc">
+        Sua doa&ccedil;&atilde;o ajuda a <b>{{ ong.nome }}</b> a resgatar e tratar diversos animais que aguardam por um lar. Cada contribui&ccedil;&atilde;o faz a diferen&ccedil;a!
+      </p>
+      <div class="ong-panel-actions">
+        {% if ong.link_vakinha %}
+        <a href="{{ ong.link_vakinha }}" target="_blank" class="btn-panel-solid">
+          <span style="font-size:1.1rem">❤️</span> Doar na Vakinha
+        </a>
+        {% endif %}
+        {% if ong.chave_pix %}
+        <button type="button" data-pix="{{ ong.chave_pix }}" onclick="copyPix(this)" class="btn-panel-outline">
+          <span style="font-size:1.1rem">💳</span> Copiar PIX
+        </button>
+        {% endif %}
+      </div>
+    </div>
+
+    <!-- PAINEL DE ATENDIMENTO / SOS -->
+    <div class="ong-panel panel-contact">
+      <div class="ong-panel-header">
+        <div class="ong-panel-icon">📞</div>
+        <h3 class="ong-panel-title">Atendimento e Emerg&ecirc;ncias</h3>
+      </div>
+      <p class="ong-panel-desc">
+        Precisando de informa&ccedil;&otilde;es sobre pets ou atendimentos gerais? Chame no WhatsApp. <br>
+        <strong style="color: #F3C623; font-weight: 600;">Em casos de resgate ou emerg&ecirc;ncia grave, utilize a liga&ccedil;&atilde;o.</strong>
+      </p>
+      <div class="ong-panel-actions">
+        {% if ong.whatsapp %}
+        {% set zap_clean = ong.whatsapp|replace(' ', '')|replace('-','')|replace('(','')|replace(')','') %}
+        {% set nome_clean = ong.nome|replace("'", "\\'") %}
+        <a href="tel:{{ zap_clean }}" class="btn-panel-solid">
+          <span style="font-size:1.1rem">📞</span> Ligar
+        </a>
+        <button type="button" onclick="openVisitModal('{{ zap_clean }}', '{{ nome_clean }}')" class="btn-panel-outline">
+          <span style="font-size:1.1rem">💬</span> WhatsApp
+        </button>
+        {% else %}
+        <span style="display: inline-block; background: rgba(255,255,255,0.1); color: rgba(255,255,255,0.5); padding: 10px 20px; border-radius: 40px; font-size: 0.85rem;">Contatos indispon&iacute;veis</span>
+        {% endif %}
+      </div>
+    </div>
+  </div>
+
 </main>
+
+<!-- MODAL -->
+<div id="modal" class="modal-overlay" onclick="closeModal(event)">
+  <div class="modal" onclick="event.stopPropagation()">
+    <div id="modal-content"></div>
+  </div>
+</div>
 
 <!-- FOOTER -->
 <footer class="footer">
@@ -145,6 +269,111 @@ function copyPix(button) {
 
   window.prompt('Chave PIX da ONG:', pix);
 }
+
+function closeModal(e) {
+  if (!e || e.target === document.getElementById('modal')) {
+    document.getElementById('modal').classList.remove('open');
+  }
+}
+
+function openVisitModal(whatsapp, ongNome) {
+  if (!whatsapp || whatsapp === 'None' || whatsapp.trim() === '') {
+    showToast('Esta ONG não possui WhatsApp cadastrado.', '');
+    return;
+  }
+  document.getElementById('modal-content').innerHTML = `
+    <div class="modal-title">📅 Falar com a ONG</div>
+    <p class="modal-sub">Preencha seus dados para entrarmos em contato com <b>${ongNome}</b> de forma organizada.</p>
+    
+    <div style="margin-bottom:14px">
+      <label class="form-label">Seu Nome <span style="color:var(--terra)">*</span></label>
+      <input type="text" id="vis-nome" class="form-input" placeholder="Ex: João Silva" style="padding:10px;">
+    </div>
+
+    <div style="margin-bottom:14px">
+      <label class="form-label">Motivo do Contato <span style="color:var(--terra)">*</span></label>
+      <select id="vis-motivo" class="form-input" style="padding:10px;">
+        <option value="">Selecione</option>
+        <option value="Agendar uma visita">Agendar uma visita</option>
+        <option value="Quero ser voluntário">Quero ser voluntário</option>
+        <option value="Mais informações sobre adoção">Mais informações sobre adoção</option>
+        <option value="Outro assunto">Outro assunto</option>
+      </select>
+    </div>
+
+    <div style="display:grid;grid-template-columns:1fr 1fr;gap:14px;margin-bottom:14px">
+      <div>
+        <label class="form-label">Dias da Semana <span style="color:var(--terra)">*</span></label>
+        <select id="vis-dia" class="form-input" style="padding:10px;">
+          <option value="">Selecione</option>
+          <option value="Dias de Semana">Dias de Semana</option>
+          <option value="Finais de Semana">Finais de Semana</option>
+          <option value="Qualquer dia">Qualquer dia</option>
+        </select>
+      </div>
+      <div>
+        <label class="form-label">Melhor Horário <span style="color:var(--terra)">*</span></label>
+        <select id="vis-hora" class="form-input" style="padding:10px;">
+          <option value="">Selecione</option>
+          <option value="Manhã (08h-12h)">Manhã</option>
+          <option value="Tarde (13h-18h)">Tarde</option>
+        </select>
+      </div>
+    </div>
+
+    <div style="margin-bottom:14px">
+      <label class="form-label">Mensagem Adicional (Opcional)</label>
+      <textarea id="vis-msg" class="form-textarea" rows="2" placeholder="Descreva brevemente o que precisa..." style="min-height:60px;"></textarea>
+    </div>
+
+    <div class="modal-actions">
+      <button class="btn btn-primary" style="flex:1; background:#25d366; border-color:#25d366; color:#fff;" onclick="sendVisitRequest('${whatsapp}')">💬 Enviar via WhatsApp</button>
+      <button class="btn btn-ghost" onclick="closeModal()">Cancelar</button>
+    </div>
+  `;
+  document.getElementById('modal').classList.add('open');
+}
+
+function sendVisitRequest(whatsapp) {
+  const nome = document.getElementById('vis-nome').value.trim();
+  const motivo = document.getElementById('vis-motivo').value;
+  const dia = document.getElementById('vis-dia').value;
+  const hora = document.getElementById('vis-hora').value;
+  const msg = document.getElementById('vis-msg').value.trim();
+
+  if (!nome || !motivo || !dia || !hora) {
+    showToast('⚠️ Por favor, preencha todos os campos obrigatórios (*)', '');
+    return;
+  }
+
+  const texto = `Olá! Meu nome é ${nome} e gostaria de falar com vocês.\n\n*Motivo:* ${motivo}\n*Disponibilidade:* ${dia} no período da ${hora}\n\n*Mensagem:* ${msg || 'Gostaria de mais informações sobre o trabalho da ONG.'}`;
+  
+  const url = `https://wa.me/${whatsapp}?text=${encodeURIComponent(texto)}`;
+  window.open(url, '_blank');
+  closeModal();
+}
+
+(function() {
+  var obs = new IntersectionObserver(function(entries) {
+    entries.forEach(function(e) {
+      if (e.isIntersecting) {
+        e.target.querySelectorAll('.impact-num[data-target]').forEach(function(el) {
+          var end = parseInt(el.dataset.target, 10) || 0;
+          if (end === 0) { el.textContent = '0'; return; }
+          var start = 0, step = Math.ceil(end / 80);
+          var timer = setInterval(function() {
+            start += step;
+            if (start >= end) { start = end; clearInterval(timer); }
+            el.textContent = start.toLocaleString('pt-BR');
+          }, 16);
+        });
+        obs.unobserve(e.target);
+      }
+    });
+  }, { threshold: 0.3 });
+  var s = document.getElementById('ong-impact');
+  if (s) obs.observe(s);
+})();
 
 (function () {
   var els = document.querySelectorAll('.reveal');

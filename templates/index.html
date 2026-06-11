@@ -20,7 +20,9 @@
     <ul class="nav-links">
       <li><a href="/pets" class="nav-link">Encontrar Pet</a></li>
       <li><a href="/ongs" class="nav-link">ONGs</a></li>
+      {% if current_user.is_authenticated and current_user.role == 'ong' %}
       <li><a href="/new-pet" class="nav-link">Cadastrar Pet</a></li>
+      {% endif %}
       <li><a href="/sobre" class="nav-link">Sobre</a></li>
     </ul>
     <div class="nav-auth">
@@ -56,7 +58,9 @@
       </p>
       <div class="hero-ctas">
         <a href="/pets" class="btn-hero-primary">Ver pets disponíveis →</a>
-        <a href="/new-pet" class="btn-hero-outline">Cadastrar para adoção</a>
+        {% if not current_user.is_authenticated or current_user.role == 'ong' %}
+        <a href="/new-pet" class="btn-hero-outline">Sou ONG e quero cadastrar</a>
+        {% endif %}
       </div>
       <div class="hero-stats">
         <div class="hero-stat">
@@ -232,7 +236,9 @@
       <ul class="footer-links">
         <li><a href="/pets">Encontrar Pet</a></li>
         <li><a href="/ongs">ONGs Parceiras</a></li>
+        {% if current_user.is_authenticated and current_user.role == 'ong' %}
         <li><a href="/new-pet">Cadastrar Pet</a></li>
+        {% endif %}
         <li><a href="/sobre">Sobre nós</a></li>
       </ul>
     </div>

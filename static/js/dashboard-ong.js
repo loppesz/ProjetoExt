@@ -1,6 +1,31 @@
 document.addEventListener('DOMContentLoaded', () => {
   carregarResumo();
   carregarPets(); // Já carrega os pets ao abrir
+
+  // Injeta o botão "Editar Perfil" no final do menu lateral
+  const sidebarNav = document.querySelector('.sidebar-nav');
+  if (sidebarNav) {
+    sidebarNav.insertAdjacentHTML('beforeend', `
+      <hr class="sidebar-divider">
+      <a class="sidebar-link" onclick="openEditOngTab(this)">
+        <span class="icon" style="font-size:1.15rem;">⚙️</span> Editar Perfil
+      </a>
+    `);
+  }
+
+  // Torna os cards de estatísticas clicáveis para navegar para as abas
+  const statCards = document.querySelectorAll('.stat-card');
+  if (statCards.length >= 2) {
+    statCards.forEach(card => {
+      card.style.cursor = 'pointer';
+      card.style.transition = 'transform 0.2s, box-shadow 0.2s';
+      card.addEventListener('mouseenter', () => { card.style.transform = 'translateY(-4px)'; });
+      card.addEventListener('mouseleave', () => { card.style.transform = 'translateY(0)'; });
+    });
+    
+    statCards[0].onclick = () => { const l = document.querySelector('[onclick*="pets"]'); if(l) showTab('pets', l); };
+    statCards[1].onclick = () => { const l = document.querySelector('[onclick*="solicitacoes"]'); if(l) showTab('solicitacoes', l); };
+  }
 });
 
 function showTab(id, el) {
@@ -77,28 +102,65 @@ function carregarSolicitacoes() {
         return;
       }
       
-      container.innerHTML = sol.map(s => `
+      container.innerHTML = sol.map(s => {
+        const phoneMatch = s.mensagem.match(/📞 Contato:\s*(.*?)\s*\(/);
+        const derivedPhone = s.solicitantePhone || (phoneMatch ? phoneMatch[1] : '');
+
+        // Transformar a mensagem única em blocos de estilo do projeto
+        let msgFormatted = '';
+        if (s.mensagem.includes('📞 Contato:')) {
+          const parts = s.mensagem.split('\n\n💬 Mensagem:');
+          const infoList = parts[0].split('\n').filter(l => l.trim() !== '');
+          const obs = parts.length > 1 ? parts[1].trim() : '';
+          
+          const borderColors = ['var(--blue)', 'var(--yellow)', 'var(--navy)', '#5ba3d4'];
+          const gridItems = infoList.map((item, index) => {
+            const colonIdx = item.indexOf(':');
+            let label = item, val = '';
+            if (colonIdx > -1) {
+              label = item.substring(0, colonIdx + 1);
+              val = item.substring(colonIdx + 1).trim();
+            }
+            return `<div style="background:#fff; border: 1px solid #e5e7eb; border-left: 4px solid ${borderColors[index % borderColors.length]}; padding: 12px 16px; border-radius: 12px; font-size: 0.88rem; color: #374151; box-shadow: 0 4px 14px rgba(46, 134, 193, 0.08);"><strong style="color:var(--navy); font-weight:700; display:block; margin-bottom:2px;">${label}</strong> ${val}</div>`;
+          }).join('');
+          
+          msgFormatted = `<div style="display:grid; grid-template-columns: repeat(auto-fit, minmax(200px, 1fr)); gap: 12px; margin-top: 16px;">${gridItems}</div>` + 
+                         (obs ? `<div style="background:#fff; border: 1px solid #e5e7eb; border-left: 4px solid var(--blue); padding: 14px 18px; border-radius: 12px; box-shadow: 0 4px 14px rgba(46, 134, 193, 0.08); font-size:.87rem; color:var(--bark-m); margin-top:12px; line-height:1.6;"><strong style="color:var(--navy); display:block; margin-bottom:4px; font-weight:700;">💬 Mensagem do Adotante:</strong>${obs}</div>` : '');
+        } else {
+          msgFormatted = `<div style="background:#fff; border: 1px solid #e5e7eb; border-left: 4px solid var(--blue); padding: 14px 18px; border-radius: 12px; box-shadow: 0 4px 14px rgba(46, 134, 193, 0.08); font-size:.87rem; color:var(--bark-m); margin-top:12px; line-height:1.6; white-space:pre-wrap;"><strong style="color:var(--navy); display:block; margin-bottom:4px; font-weight:700;">💬 Mensagem do Adotante:</strong>\n${s.mensagem}</div>`;
+        }
+
+        return `
         <div class="item-card">
           <div style="width:52px;height:52px;border-radius:50%;background:var(--blush);display:flex;align-items:center;justify-content:center;font-size:1.4rem;flex-shrink:0">🧑</div>
           <div class="item-info">
             <div class="item-name">${s.solicitanteName}</div>
-            <div class="item-meta">Quer adotar: <strong>${s.petName}</strong></div>
-            <div style="font-size:.87rem;color:var(--bark-m);margin-top:8px;font-style:italic;line-height:1.6;background:var(--cream-d);padding:10px 14px;border-radius:var(--r-sm);border-left:3px solid var(--sand)">"${s.mensagem}"</div>
+            <div class="item-meta">Interesse em: <strong>${s.petName}</strong></div>
+            ${msgFormatted}
           </div>
-          <div class="item-actions" style="flex-direction:column">
+          <div class="item-actions" style="flex-direction:column; min-width: 220px;">
+            ${derivedPhone ? `<a href="https://wa.me/55${derivedPhone.replace(/\D/g,'')}" target="_blank" class="btn btn-whatsapp btn-sm" style="background:#25d366;color:#fff;border:none;text-decoration:none;display:flex;justify-content:center;">💬 Chamar no WhatsApp</a>` : `<div style="font-size: 0.8rem; color: var(--muted); text-align: center; padding: 4px;">Sem WhatsApp</div>`}
             ${s.status === 'pending' ? `
-              <button class="btn btn-sage btn-sm" onclick="responderSolicitacao(${s.id}, 'approved')">✅ Aprovar</button>
-              <button class="btn btn-outline btn-sm btn-danger" onclick="responderSolicitacao(${s.id}, 'rejected')">❌ Recusar</button>
-            ` : `<span class="status-pill ${s.status==='approved'?'pill-approved':'pill-rejected'}">${s.status==='approved'?'✅ Aprovada':'❌ Recusada'}</span>`}
+              <button class="btn btn-adopt-confirm btn-sm" onclick="responderSolicitacao(${s.id}, 'approved')" style="margin-top:6px;">🏆 Confirmar Adoção</button>
+              <button class="btn btn-adopt-dismiss btn-sm" onclick="responderSolicitacao(${s.id}, 'rejected')" style="margin-top:4px;">❌ Dispensar</button>
+            ` : (s.status === 'approved' ? `<span class="status-pill pill-approved" style="margin-top:6px; justify-content:center;">🏆 Adoção Confirmada</span>` : `<span class="status-pill pill-rejected" style="margin-top:6px; justify-content:center;">❌ Dispensado</span>`)}
           </div>
-        </div>`).join('');
+        </div>`;
+      }).join('');
     });
 }
 
 function marcarAdotado(petId) {
   if(confirm('Tem certeza que deseja marcar este pet como adotado?')) {
     fetch(`/api/ong/pet/${petId}/marcar-adotado`, { method: 'POST' })
-      .then(() => carregarPets());
+      .then(r => r.json())
+      .then(data => {
+        if (data.sucesso) {
+          if (typeof showToast === 'function') showToast('✅ Pet marcado como adotado e estatísticas atualizadas!', 'success');
+          carregarPets();
+          carregarResumo();
+        }
+      });
   }
 }
 
@@ -123,7 +185,7 @@ function responderSolicitacao(reqId, status) {
   .then(r => r.json())
   .then(data => {
     if(data.sucesso) {
-      if(typeof showToast === 'function') showToast(status === 'approved' ? '✅ Adoção aprovada! Pet marcado como adotado.' : 'Solicitação recusada.', status === 'approved' ? 'success' : '');
+      if(typeof showToast === 'function') showToast(status === 'approved' ? '🏆 Parabéns! Adoção confirmada e pet atualizado.' : 'Solicitação dispensada.', status === 'approved' ? 'success' : '');
       carregarSolicitacoes();
       carregarResumo();
       carregarPets();
@@ -136,57 +198,114 @@ function responderSolicitacao(reqId, status) {
   });
 }
 
-function openEditOngModal() {
+function openEditOngTab(el) {
+  // Ativa o link visualmente no menu lateral e limpa as outras abas
+  document.querySelectorAll('.sidebar-link').forEach(l => l.classList.remove('active'));
+  if(el) el.classList.add('active');
+  document.querySelectorAll('.tab-panel').forEach(p => p.classList.remove('active'));
+
+  // Verifica se a aba já foi criada no DOM. Se não, cria uma nova.
+  let tab = document.getElementById('tab-edit-ong');
+  if (!tab) {
+    tab = document.createElement('div');
+    tab.id = 'tab-edit-ong';
+    tab.className = 'tab-panel';
+    document.querySelector('.content').appendChild(tab);
+  }
+  tab.classList.add('active');
+  
+  // Aviso de carregamento "fofo" e animado enquanto busca os dados
+  tab.innerHTML = `
+    <div style="text-align:center; padding: 50px 20px;" class="fu">
+      <div style="font-size:3.5rem; margin-bottom:16px; animation: float 2s ease-in-out infinite;">🐾</div>
+      <h3 style="font-family: var(--ff-display); color: var(--bark); font-size: 1.4rem;">Buscando dados...</h3>
+      <p style="color: var(--muted); font-size: 0.95rem;">Só um segundinho!</p>
+    </div>
+  `;
+
   fetch('/api/ong/perfil')
     .then(r => r.json())
     .then(ong => {
-      document.getElementById('modal-content').innerHTML = `
-        <div class="modal-title">✏️ Editar Perfil da ONG</div>
-        <p class="modal-sub">Atualize os dados e a apresentação da sua instituição</p>
-        <form id="form-edit-ong" onsubmit="saveOngProfile(event)">
-          <div style="margin-bottom:14px">
-            <label class="form-label">Nome da ONG <span style="color:var(--terra)">*</span></label>
-            <input type="text" id="edit-ong-nome" class="form-input" value="${ong.nome || ''}" required>
-          </div>
-          <div style="margin-bottom:14px">
-            <label class="form-label">Nova Foto de Perfil <span style="font-weight:400;color:var(--muted);text-transform:none;letter-spacing:normal">(Deixe vazio para manter a atual)</span></label>
-            <input type="file" id="edit-ong-foto" class="form-input" accept="image/*">
-          </div>
-          <div style="display:grid;grid-template-columns:1fr 1fr;gap:14px;margin-bottom:14px">
-            <div>
-              <label class="form-label">Cidade <span style="color:var(--terra)">*</span></label>
-              <input type="text" id="edit-ong-cidade" class="form-input" value="${ong.cidade || ''}" required>
+      // Um pequeno atraso de 300ms garante que a tela não "pisque" se a internet for muito rápida
+      setTimeout(() => {
+        tab.innerHTML = `
+          <div class="fade-in">
+            <div class="panel-header" style="margin-bottom: 8px;">
+              <div class="panel-title">⚙️ Editar Perfil da ONG</div>
             </div>
-            <div>
-              <label class="form-label">Estado <span style="color:var(--terra)">*</span></label>
-              <input type="text" id="edit-ong-estado" class="form-input" value="${ong.estado || ''}" required maxlength="2">
-            </div>
+            <p style="color: var(--muted); margin-bottom: 24px; font-size: 0.95rem;">Mantenha suas informações atualizadas para atrair mais adotantes!</p>
+            
+            <form id="form-edit-ong" onsubmit="saveOngProfile(event)">
+              <!-- 1. Foto de Perfil -->
+              <div style="background:#fff; border: 1px solid #e5e7eb; border-left: 4px solid #5ba3d4; padding: 18px; border-radius: 12px; box-shadow: 0 4px 14px rgba(46, 134, 193, 0.08); margin-bottom: 16px;">
+                <label class="form-label" style="margin-bottom:12px;">📸 Foto de Perfil <span style="font-weight:400;color:var(--muted);text-transform:none;letter-spacing:normal">(Deixe vazio para manter)</span></label>
+                <div style="display:flex; gap:16px; align-items:center;">
+                  <img src="${ong.foto_url || 'https://images.unsplash.com/photo-1601758124096-7093b3fef44d?w=100&q=80'}" style="width:56px; height:56px; border-radius:50%; object-fit:cover; border:2px solid #e5e7eb; box-shadow: var(--sh-sm);">
+                  <input type="file" id="edit-ong-foto" class="form-input" accept="image/*" style="flex:1;">
+                </div>
+              </div>
+
+              <!-- 2. Dados Principais -->
+              <div style="background:#fff; border: 1px solid #e5e7eb; border-left: 4px solid var(--blue); padding: 18px; border-radius: 12px; box-shadow: 0 4px 14px rgba(46, 134, 193, 0.08); margin-bottom: 16px;">
+                <div class="form-group" style="margin-bottom: 14px;">
+                  <label class="form-label">🏢 Nome da ONG <span class="req">*</span></label>
+                  <input type="text" id="edit-ong-nome" class="form-input" value="${ong.nome || ''}" required>
+                </div>
+                <div style="display:grid; grid-template-columns: 1fr 1fr; gap: 14px;">
+                  <div>
+                    <label class="form-label">📍 Cidade <span class="req">*</span></label>
+                    <input type="text" id="edit-ong-cidade" class="form-input" value="${ong.cidade || ''}" required>
+                  </div>
+                  <div>
+                    <label class="form-label">🗺️ Estado <span class="req">*</span></label>
+                    <input type="text" id="edit-ong-estado" class="form-input" value="${ong.estado || ''}" required maxlength="2">
+                  </div>
+                </div>
+              </div>
+
+              <!-- 3. Contatos e Doações -->
+              <div style="background:#fff; border: 1px solid #e5e7eb; border-left: 4px solid var(--yellow); padding: 18px; border-radius: 12px; box-shadow: 0 4px 14px rgba(46, 134, 193, 0.08); margin-bottom: 16px;">
+                <div style="display:grid; grid-template-columns: 1fr 1fr; gap: 14px; margin-bottom: 14px;">
+                  <div>
+                    <label class="form-label">💬 WhatsApp</label>
+                    <input type="text" id="edit-ong-whatsapp" class="form-input" value="${ong.whatsapp || ''}" placeholder="Ex: 11999990000">
+                  </div>
+                  <div>
+                    <label class="form-label">💳 Chave PIX</label>
+                    <input type="text" id="edit-ong-pix" class="form-input" value="${ong.chave_pix || ''}" placeholder="E-mail, CPF, Celular...">
+                  </div>
+                </div>
+                <div style="display:grid; grid-template-columns: 1fr 1fr; gap: 14px;">
+                  <div>
+                    <label class="form-label">❤️ Link da Vakinha</label>
+                    <input type="url" id="edit-ong-vakinha" class="form-input" value="${ong.link_vakinha || ''}" placeholder="https://vakinha.com.br/...">
+                  </div>
+                  <div>
+                    <label class="form-label">✨ Instagram</label>
+                    <input type="url" id="edit-ong-instagram" class="form-input" value="${ong.instagram || ''}" placeholder="https://instagram.com/...">
+                  </div>
+                </div>
+              </div>
+
+              <!-- 4. Sobre a ONG -->
+              <div style="background:#fff; border: 1px solid #e5e7eb; border-left: 4px solid var(--navy); padding: 18px; border-radius: 12px; box-shadow: 0 4px 14px rgba(46, 134, 193, 0.08); margin-bottom: 16px;">
+                <div class="form-group" style="margin-bottom: 14px;">
+                  <label class="form-label">📝 Descrição Curta</label>
+                  <textarea id="edit-ong-desc" class="form-textarea" rows="2" placeholder="Resumo em uma frase sobre o que a ONG faz...">${ong.descricao || ''}</textarea>
+                </div>
+                <div class="form-group" style="margin-bottom: 0;">
+                  <label class="form-label">📖 História Completa</label>
+                  <textarea id="edit-ong-desc-full" class="form-textarea" rows="4" placeholder="Conte a história detalhada da instituição, como surgiu, como ajudam...">${ong.descricao_completa || ''}</textarea>
+                </div>
+              </div>
+
+              <div style="margin-top: 28px;">
+                <button type="submit" class="btn btn-primary" id="btn-save-ong" style="padding: 12px 24px;">💾 Salvar Alterações</button>
+              </div>
+            </form>
           </div>
-          <div style="display:grid;grid-template-columns:1fr 1fr;gap:14px;margin-bottom:14px">
-            <div>
-              <label class="form-label">WhatsApp</label>
-              <input type="text" id="edit-ong-whatsapp" class="form-input" value="${ong.whatsapp || ''}">
-            </div>
-            <div>
-              <label class="form-label">Chave PIX</label>
-              <input type="text" id="edit-ong-pix" class="form-input" value="${ong.chave_pix || ''}">
-            </div>
-          </div>
-          <div style="margin-bottom:14px">
-            <label class="form-label">Descrição Curta</label>
-            <textarea id="edit-ong-desc" class="form-textarea" rows="2">${ong.descricao || ''}</textarea>
-          </div>
-          <div style="margin-bottom:18px">
-            <label class="form-label">História Completa</label>
-            <textarea id="edit-ong-desc-full" class="form-textarea" rows="4">${ong.descricao_completa || ''}</textarea>
-          </div>
-          <div style="display:flex;gap:10px">
-            <button type="submit" class="btn btn-primary" id="btn-save-ong" style="flex:1">💾 Salvar Alterações</button>
-            <button type="button" class="btn btn-ghost" onclick="closeModal()">Cancelar</button>
-          </div>
-        </form>
-      `;
-      document.getElementById('modal').classList.add('open');
+        `;
+      }, 300); // Fim do setTimeout
     });
 }
 
@@ -202,6 +321,8 @@ function saveOngProfile(e) {
   formData.append('estado', document.getElementById('edit-ong-estado').value);
   formData.append('whatsapp', document.getElementById('edit-ong-whatsapp').value);
   formData.append('chave_pix', document.getElementById('edit-ong-pix').value);
+  formData.append('link_vakinha', document.getElementById('edit-ong-vakinha').value);
+  formData.append('instagram', document.getElementById('edit-ong-instagram').value);
   formData.append('descricao', document.getElementById('edit-ong-desc').value);
   formData.append('descricao_completa', document.getElementById('edit-ong-desc-full').value);
 
@@ -212,13 +333,12 @@ function saveOngProfile(e) {
   .then(r => r.json())
   .then(data => {
     if (data.sucesso) {
-      closeModal();
       showToast('Perfil atualizado com sucesso!', 'success');
       setTimeout(() => location.reload(), 1000); // Atualiza a página para carregar foto e nome novos!
     } else {
-      alert('Erro: ' + data.erro);
+      showToast('Erro: ' + data.erro, '');
       btn.disabled = false;
-      btn.textContent = '💾 Salvar';
+      btn.textContent = '💾 Salvar Alterações';
     }
   });
 }

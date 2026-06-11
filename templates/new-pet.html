@@ -21,7 +21,9 @@
     <ul class="nav-links">
       <li><a href="/pets"    class="nav-link">Encontrar Pet</a></li>
       <li><a href="/ongs"    class="nav-link">ONGs</a></li>
+      {% if current_user.is_authenticated and current_user.role == 'ong' %}
       <li><a href="/new-pet" class="nav-link active">Cadastrar Pet</a></li>
+      {% endif %}
       <li><a href="/sobre"   class="nav-link">Sobre</a></li>
     </ul>
     <div class="nav-auth">

@@ -80,6 +80,36 @@ function initDashboard() {
     renderAdminOngs();
     renderPendingOngs();
   }
+
+  // Se a URL contiver uma hash (ex: /dashboard#adoptions), abre a aba correspondente na hora
+  if (window.location.hash) {
+    const tabId = window.location.hash.replace('#', '');
+    const linkEl = document.querySelector(`[onclick*="'${tabId}'"]`);
+    if (document.getElementById('tab-' + tabId)) showTab(tabId, linkEl);
+  }
+
+  // Torna os cards de estatísticas clicáveis e interativos
+  const statCards = document.querySelectorAll('.stat-card');
+  if (statCards.length > 0) {
+    statCards.forEach(card => {
+      card.style.cursor = 'pointer';
+      card.style.transition = 'transform 0.2s, box-shadow 0.2s';
+      card.addEventListener('mouseenter', () => { card.style.transform = 'translateY(-4px)'; });
+      card.addEventListener('mouseleave', () => { card.style.transform = 'translateY(0)'; });
+    });
+
+    if (user.role === 'admin' && statCards.length >= 3) {
+      statCards[0].onclick = () => { const l = document.querySelector('[onclick*="my-pets"]'); if(l) showTab('my-pets', l); };
+      statCards[1].onclick = () => { const l = document.querySelector('[onclick*="ongs"]'); if(l) showTab('admin-ongs', l); };
+      statCards[2].onclick = () => { const l = document.querySelector('[onclick*="moderation"]'); if(l) showTab('moderation', l); };
+    } else if (statCards.length >= 2) {
+      statCards[0].onclick = () => { const l = document.querySelector('[onclick*="adoptions"]'); if(l) showTab('adoptions', l); };
+      statCards[1].onclick = () => { const l = document.querySelector('[onclick*="favorites"]'); if(l) showTab('favorites', l); };
+      if (statCards.length >= 3) {
+        statCards[2].onclick = () => { const l = document.querySelector('[onclick*="received"]'); if(l) showTab('received', l); };
+      }
+    }
+  }
 }
 
 // Para testar como admin: abra o console e rode:
@@ -128,8 +158,8 @@ function renderMyPets() {
             </div>
           </div>
           <div class="item-actions" style="flex-direction:column">
-            <button class="btn btn-ghost btn-sm" onclick="openEditModal('${p.id}')">✏️ Editar</button>
-            <button class="btn btn-outline btn-sm btn-danger" onclick="openRemoveModal('${p.id}')">🗑️ Remover</button>
+            <button class="btn btn-ghost btn-sm" onclick="openEditTab('${p.id}')">✏️ Editar</button>
+            <button class="btn btn-outline btn-sm btn-danger" onclick="confirmRemove('${p.id}')">🗑️ Remover</button>
           </div>
         </div>`).join('');
       updateStats();
@@ -161,42 +191,68 @@ function changeStatus(id, newStatus) {
 }
 
 // ── Editar Pet ────────────────────────────────────────────────────────────────
-function openEditModal(id) {
+function openEditTab(id) {
   const p = MY_PETS.find(x => x.id === id);
   if (!p) return;
-  document.getElementById('modal-content').innerHTML = `
-    <div class="modal-title">✏️ Editar ${p.name}</div>
-    <p class="modal-sub">Atualize as informações do pet</p>
-    <div id="edit-error" style="display:none;background:#fff0f0;border:1.5px solid #fca5a5;border-radius:var(--r-sm);padding:10px 14px;margin-bottom:14px;color:#c0392b;font-size:.88rem"></div>
-    <div style="display:grid;grid-template-columns:1fr 1fr;gap:14px;margin-bottom:14px">
-      <div>
-            <label class="form-label">Nome <span style="color:var(--terra)">*</span></label>
-            <input id="edit-name" class="form-input" value="${p.name}">
+
+  document.querySelectorAll('.sidebar-link').forEach(l => l.classList.remove('active'));
+  document.querySelectorAll('.tab-panel').forEach(p => p.classList.remove('active'));
+
+  let tab = document.getElementById('tab-edit-pet');
+  if (!tab) {
+    tab = document.createElement('div');
+    tab.id = 'tab-edit-pet';
+    tab.className = 'tab-panel';
+    document.querySelector('.content').appendChild(tab);
+  }
+  tab.classList.add('active');
+
+  tab.innerHTML = `
+    <div class="fade-in">
+      <div class="panel-header" style="margin-bottom: 8px;">
+        <div class="panel-title">✏️ Editar ${p.name}</div>
       </div>
-      <div>
-            <label class="form-label">Raça</label>
-            <input id="edit-breed" class="form-input" value="${p.breed}">
+      <p style="color: var(--muted); margin-bottom: 24px; font-size: 0.95rem;">Atualize as informações do pet</p>
+      <div id="edit-error" class="modal-error-banner"></div>
+      
+      <!-- Dados do Pet -->
+      <div style="background:#fff; border: 1px solid #e5e7eb; border-left: 4px solid var(--blue); padding: 18px; border-radius: 12px; box-shadow: 0 4px 14px rgba(46, 134, 193, 0.08); margin-bottom: 16px;">
+        <div style="display:grid;grid-template-columns:1fr 1fr;gap:14px;margin-bottom:14px">
+          <div>
+                <label class="form-label">Nome <span style="color:var(--terra)">*</span></label>
+                <input id="edit-name" class="form-input" value="${p.name}">
+          </div>
+          <div>
+                <label class="form-label">Raça</label>
+                <input id="edit-breed" class="form-input" value="${p.breed}">
+          </div>
+        </div>
+        <div style="display:grid;grid-template-columns:1fr 1fr;gap:14px;margin-bottom:0">
+          <div>
+                <label class="form-label">Cidade <span style="color:var(--terra)">*</span></label>
+                <input id="edit-city" class="form-input" value="${p.city}">
+          </div>
+          <div>
+                <label class="form-label">Estado <span style="color:var(--terra)">*</span></label>
+                <input id="edit-state" class="form-input" value="${p.state}" maxlength="2">
+          </div>
+        </div>
+      </div>
+      
+      <!-- Descrição -->
+      <div style="background:#fff; border: 1px solid #e5e7eb; border-left: 4px solid var(--yellow); padding: 18px; border-radius: 12px; box-shadow: 0 4px 14px rgba(46, 134, 193, 0.08); margin-bottom: 18px;">
+        <div style="margin-bottom:0">
+              <label class="form-label">Descrição</label>
+              <textarea id="edit-desc" class="form-textarea" rows="3">${p.desc}</textarea>
+        </div>
+      </div>
+      
+      <div style="margin-top: 28px; display:flex; gap:10px;">
+        <button class="btn btn-primary" onclick="saveEdit('${p.id}')" style="padding: 12px 24px;">💾 Salvar alterações</button>
+        <button class="btn btn-ghost" onclick="showTab('my-pets')" style="padding: 12px 24px;">Voltar</button>
       </div>
     </div>
-    <div style="display:grid;grid-template-columns:1fr 1fr;gap:14px;margin-bottom:14px">
-      <div>
-            <label class="form-label">Cidade <span style="color:var(--terra)">*</span></label>
-            <input id="edit-city" class="form-input" value="${p.city}">
-      </div>
-      <div>
-            <label class="form-label">Estado <span style="color:var(--terra)">*</span></label>
-            <input id="edit-state" class="form-input" value="${p.state}" maxlength="2">
-      </div>
-    </div>
-    <div style="margin-bottom:18px">
-          <label class="form-label">Descrição</label>
-          <textarea id="edit-desc" class="form-textarea" rows="3">${p.desc}</textarea>
-    </div>
-    <div style="display:flex;gap:10px">
-      <button class="btn btn-primary" style="flex:1" onclick="saveEdit('${p.id}')">💾 Salvar alterações</button>
-      <button class="btn btn-ghost" onclick="closeModal()">Cancelar</button>
-    </div>`;
-  document.getElementById('modal').classList.add('open');
+  `;
 }
 
 function saveEdit(id) {
@@ -231,9 +287,9 @@ function saveEdit(id) {
   .then(data => {
     console.log('DEBUG: Response data', data);
     if (data.sucesso) {
-      closeModal();
       showToast(`✅ ${data.mensagem}`, 'success');
       renderMyPets();
+      showTab('my-pets');
     } else {
       err.textContent = `⚠️ ${data.erro}`;
       err.style.display = 'block';
@@ -247,24 +303,8 @@ function saveEdit(id) {
 }
 
 // ── Remover Pet ───────────────────────────────────────────────────────────────
-function openRemoveModal(id) {
-  const p = MY_PETS.find(x => x.id === id);
-  if (!p) return;
-  document.getElementById('modal-content').innerHTML = `
-    <div style="text-align:center;padding:10px 0">
-      <div style="font-size:3rem;margin-bottom:14px">🗑️</div>
-      <div class="modal-title">Remover ${p.name}?</div>
-      <p class="modal-sub">Esta ação não pode ser desfeita. O pet será removido da plataforma.</p>
-      <div style="display:flex;gap:10px;margin-top:20px">
-        <button class="btn btn-outline btn-danger" style="flex:1;border-color:rgba(192,106,58,.3);color:var(--terra)" onclick="confirmRemove('${p.id}')">Sim, remover</button>
-        <button class="btn btn-ghost" style="flex:1" onclick="closeModal()">Cancelar</button>
-      </div>
-    </div>`;
-  document.getElementById('modal').classList.add('open');
-}
-
 function confirmRemove(id) {
-  console.log('DEBUG: Removendo pet', id);
+  if(!confirm('Esta ação não pode ser desfeita. Deseja realmente remover o pet da plataforma?')) return;
   
   fetch(`/api/pets/${id}`, {
     method: 'DELETE',
@@ -302,6 +342,22 @@ function renderAdoptions() {
         document.getElementById('stat-adoptions').textContent = adocoes.length;
       }
 
+      // ===== ATUALIZAÇÃO DO MENU LATERAL E NOTIFICAÇÃO =====
+      const sidebarAdoptions = document.querySelector(`[onclick*="showTab('adoptions'"]`) || document.querySelector(`[onclick*='showTab("adoptions"']`);
+      if (sidebarAdoptions) {
+        // Renomeia o texto do menu para "Acompanhar Pedidos"
+        const iconSpan = sidebarAdoptions.querySelector('.icon');
+        if (iconSpan && !sidebarAdoptions.innerText.includes('Acompanhar Pedidos')) {
+          sidebarAdoptions.innerHTML = '';
+          sidebarAdoptions.appendChild(iconSpan);
+          sidebarAdoptions.appendChild(document.createTextNode(' Acompanhar Pedidos'));
+        }
+      }
+      
+      const panelTitle = document.querySelector('#tab-adoptions .panel-title');
+      if (panelTitle) panelTitle.innerHTML = '📋 Acompanhar Pedidos';
+      // ======================================================
+
       if (!adocoes.length) {
         el.innerHTML = `<div class="empty"><div class="empty-icon">💌</div><div class="empty-title">Nenhuma solicitação enviada</div><p class="empty-desc">Você ainda não enviou nenhum pedido de adoção.</p><a href="/pets" class="btn btn-primary">Encontrar um pet</a></div>`;
         return;
@@ -312,14 +368,15 @@ function renderAdoptions() {
           <div class="item-info">
             <div class="item-name">${a.petName}</div>
             <div class="item-meta">${a.petBreed} · 📍 ${a.city} · ${a.date}</div>
-            <div class="status-pill ${a.status==='pending'?'pill-pending':a.status==='approved'?'pill-approved':'pill-rejected'}" style="margin-top: 6px;">
-              ${a.status==='pending'?'⏳ Aguardando':a.status==='approved'?'✅ Aprovado':'❌ Recusado'}
-            </div>
+            ${a.status==='pending'?`<div class="status-pill pill-pending" style="margin-top:6px;">⏳ Em análise (Aguarde contato)</div>`:
+              a.status==='approved'?`<div class="status-pill pill-approved" style="margin-top:6px;">🏆 Adoção Confirmada!</div>`:
+              `<div class="status-pill" style="margin-top:6px; background:#f3f4f6; color:#4b5563;">❌ Solicitação não aprovada</div>`}
           </div>
           <div class="item-actions" style="flex-direction:column">
             <a href="/pet/${a.petId}" class="btn btn-outline btn-sm">👁️ Ver pet</a>
+            ${a.whatsapp && a.status !== 'rejected' ? `<a href="https://wa.me/55${a.whatsapp.replace(/\D/g,'')}" target="_blank" class="btn btn-whatsapp btn-sm" style="background:#25d366;color:#fff;border:none;text-decoration:none;display:flex;justify-content:center;">💬 WhatsApp</a>` : ''}
             ${a.status==='pending'?`<button class="btn btn-outline btn-sm btn-danger" onclick="cancelRequest(${a.id})">🗑️ Cancelar</button>`:''}
-            ${a.status==='approved' && !a.has_feedback ? `<button class="btn btn-primary btn-sm" onclick="openFeedbackModal(${a.id})">⭐ Avaliar</button>` : ''}
+            ${a.status==='approved' && !a.has_feedback ? `<button class="btn btn-primary btn-sm" onclick="openFeedbackTab(${a.id})">⭐ Avaliar</button>` : ''}
             ${a.has_feedback ? `<span class="feedback-evaluated-badge">⭐ Avaliado</span>` : ''}
           </div>
         </div>`).join('');
@@ -335,20 +392,40 @@ function cancelRequest(id) {
     });
 }
 
-function openFeedbackModal(reqId) {
-  document.getElementById('modal-content').innerHTML = `
-    <div class="modal-title">⭐ Como foi a adoção?</div>
-    <p class="modal-sub">Compartilhe sua experiência para inspirar outras pessoas!</p>
-    <div id="fb-error" class="modal-error-banner"></div>
-    <div class="mb-14">
-      <label class="form-label">Mensagem <span class="text-danger">*</span></label>
-      <textarea id="fb-msg" class="form-textarea" rows="4" placeholder="Ex: O pet é maravilhoso e a ONG foi super atenciosa..."></textarea>
+function openFeedbackTab(reqId) {
+  document.querySelectorAll('.sidebar-link').forEach(l => l.classList.remove('active'));
+  document.querySelectorAll('.tab-panel').forEach(p => p.classList.remove('active'));
+
+  let tab = document.getElementById('tab-feedback');
+  if (!tab) {
+    tab = document.createElement('div');
+    tab.id = 'tab-feedback';
+    tab.className = 'tab-panel';
+    document.querySelector('.content').appendChild(tab);
+  }
+  tab.classList.add('active');
+
+  tab.innerHTML = `
+    <div class="fade-in">
+      <div class="panel-header" style="margin-bottom: 8px;">
+        <div class="panel-title">⭐ Como foi a adoção?</div>
+      </div>
+      <p style="color: var(--muted); margin-bottom: 24px; font-size: 0.95rem;">Compartilhe sua experiência para inspirar outras pessoas!</p>
+      <div id="fb-error" class="modal-error-banner"></div>
+
+      <div style="background:#fff; border: 1px solid #e5e7eb; border-left: 4px solid var(--yellow); padding: 18px; border-radius: 12px; box-shadow: 0 4px 14px rgba(46, 134, 193, 0.08); margin-bottom: 16px;">
+        <div style="margin-bottom:0;">
+          <label class="form-label">Mensagem <span class="text-danger">*</span></label>
+          <textarea id="fb-msg" class="form-textarea" rows="4" placeholder="Ex: O pet é maravilhoso e a ONG foi super atenciosa..."></textarea>
+        </div>
+      </div>
+
+      <div style="margin-top: 28px; display:flex; gap:10px;">
+        <button class="btn btn-primary" onclick="submitFeedback(${reqId})" style="padding: 12px 24px;">Enviar Feedback</button>
+        <button class="btn btn-ghost" onclick="showTab('adoptions')" style="padding: 12px 24px;">Voltar</button>
+      </div>
     </div>
-    <div class="modal-btn-row">
-      <button class="btn btn-primary flex-1" onclick="submitFeedback(${reqId})">Enviar Feedback</button>
-      <button class="btn btn-ghost" onclick="closeModal()">Cancelar</button>
-    </div>`;
-  document.getElementById('modal').classList.add('open');
+  `;
 }
 
 function submitFeedback(reqId) {
@@ -368,9 +445,9 @@ function submitFeedback(reqId) {
   .then(r => r.json())
   .then(data => {
     if (data.sucesso) {
-      closeModal();
       showToast('✅ ' + data.mensagem, 'success');
       renderAdoptions();
+      showTab('adoptions');
     } else {
       const err = document.getElementById('fb-error');
       err.textContent = '❌ ' + data.erro;
@@ -395,26 +472,54 @@ function renderReceived() {
         el.innerHTML = `<div class="empty"><div class="empty-icon">📥</div><div class="empty-title">Nenhum pedido recebido</div><p class="empty-desc">Quando alguém quiser adotar seus pets, os pedidos aparecerão aqui.</p></div>`;
         return;
       }
-      el.innerHTML = recebidas.map(r => `
+      el.innerHTML = recebidas.map(r => {
+        const phoneMatch = r.msg.match(/📞 Contato:\s*(.*?)\s*\(/);
+        const derivedPhone = r.phone || (phoneMatch ? phoneMatch[1] : '');
+
+        // Transformar a mensagem única em blocos de estilo do projeto
+        let msgFormatted = '';
+        if (r.msg.includes('📞 Contato:')) {
+          const parts = r.msg.split('\n\n💬 Mensagem:');
+          const infoList = parts[0].split('\n').filter(l => l.trim() !== '');
+          const obs = parts.length > 1 ? parts[1].trim() : '';
+          
+          const borderColors = ['var(--blue)', 'var(--yellow)', 'var(--navy)', '#5ba3d4'];
+          const gridItems = infoList.map((item, index) => {
+            const colonIdx = item.indexOf(':');
+            let label = item, val = '';
+            if (colonIdx > -1) {
+              label = item.substring(0, colonIdx + 1);
+              val = item.substring(colonIdx + 1).trim();
+            }
+            return `<div style="background:#fff; border: 1px solid #e5e7eb; border-left: 4px solid ${borderColors[index % borderColors.length]}; padding: 12px 16px; border-radius: 12px; font-size: 0.88rem; color: #374151; box-shadow: 0 4px 14px rgba(46, 134, 193, 0.08);"><strong style="color:var(--navy); font-weight:700; display:block; margin-bottom:2px;">${label}</strong> ${val}</div>`;
+          }).join('');
+          
+          msgFormatted = `<div style="display:grid; grid-template-columns: repeat(auto-fit, minmax(200px, 1fr)); gap: 12px; margin-top: 16px;">${gridItems}</div>` + 
+                         (obs ? `<div style="background:#fff; border: 1px solid #e5e7eb; border-left: 4px solid var(--blue); padding: 14px 18px; border-radius: 12px; box-shadow: 0 4px 14px rgba(46, 134, 193, 0.08); font-size:.87rem; color:var(--bark-m); margin-top:12px; line-height:1.6;"><strong style="color:var(--navy); display:block; margin-bottom:4px; font-weight:700;">💬 Mensagem do Adotante:</strong>${obs}</div>` : '');
+        } else {
+          msgFormatted = `<div style="background:#fff; border: 1px solid #e5e7eb; border-left: 4px solid var(--blue); padding: 14px 18px; border-radius: 12px; box-shadow: 0 4px 14px rgba(46, 134, 193, 0.08); font-size:.87rem; color:var(--bark-m); margin-top:12px; line-height:1.6; white-space:pre-wrap;"><strong style="color:var(--navy); display:block; margin-bottom:4px; font-weight:700;">💬 Mensagem do Adotante:</strong>\n${r.msg}</div>`;
+        }
+
+        return `
         <div class="item-card" id="req-${r.id}">
           <div style="width:52px;height:52px;border-radius:50%;background:var(--blush);display:flex;align-items:center;justify-content:center;font-size:1.4rem;flex-shrink:0">🧑</div>
           <div class="item-info">
             <div class="item-name">${r.from}</div>
-            <div class="item-meta">Quer adotar: <strong>${r.petName}</strong></div>
-            <div style="font-size:.87rem;color:var(--bark-m);margin-top:8px;font-style:italic;line-height:1.6;background:var(--cream-d);padding:10px 14px;border-radius:var(--r-sm);border-left:3px solid var(--sand)">"${r.msg}"</div>
-            <div style="display:flex;gap:8px;margin-top:10px;flex-wrap:wrap">
-              <span style="font-size:.82rem;color:var(--muted)">📞 ${r.phone}</span>
-              <span style="font-size:.82rem;color:var(--muted)">·</span>
-              <span style="font-size:.82rem;color:var(--muted)">📍 ${r.city}</span>
+            <div class="item-meta">Interesse em: <strong>${r.petName}</strong></div>
+            ${msgFormatted}
+            <div style="display:flex;gap:8px;margin-top:10px;flex-wrap:wrap;align-items:center;">
+              <span style="font-size:.82rem;color:var(--muted)"> ${r.city}</span>
             </div>
           </div>
-          <div class="item-actions" style="flex-direction:column">
+          <div class="item-actions" style="flex-direction:column; min-width: 220px;">
+            ${derivedPhone ? `<a href="https://wa.me/55${derivedPhone.replace(/\D/g,'')}" target="_blank" class="btn btn-whatsapp btn-sm" style="background:#25d366;color:#fff;border:none;text-decoration:none;display:flex;justify-content:center;">💬 Chamar no WhatsApp</a>` : `<div style="font-size: 0.8rem; color: var(--muted); text-align: center; padding: 4px;">Sem WhatsApp</div>`}
             ${r.status==='pending'?`
-              <button class="btn btn-sage btn-sm" onclick="respondRequest(${r.id}, 'approved')">✅ Aprovar</button>
-              <button class="btn btn-outline btn-sm btn-danger" onclick="respondRequest(${r.id}, 'rejected')">❌ Recusar</button>
-            `:`<span class="status-pill ${r.status==='approved'?'pill-approved':'pill-rejected'}">${r.status==='approved'?'✅ Aprovado':'❌ Recusado'}</span>`}
+              <button class="btn btn-adopt-confirm btn-sm" onclick="respondRequest(${r.id}, 'approved')" style="margin-top:6px;">🏆 Confirmar Adoção</button>
+              <button class="btn btn-adopt-dismiss btn-sm" onclick="respondRequest(${r.id}, 'rejected')" style="margin-top:4px;">❌ Dispensar</button>
+            `:(r.status === 'approved' ? `<span class="status-pill pill-approved" style="margin-top:6px; justify-content:center;">🏆 Adoção Confirmada</span>` : `<span class="status-pill pill-rejected" style="margin-top:6px; justify-content:center;">❌ Dispensado</span>`)}
           </div>
-        </div>`).join('');
+        </div>`;
+      }).join('');
     });
 }
 
@@ -428,7 +533,7 @@ function respondRequest(id, status) {
   .then(r => r.json())
   .then(data => {
     if(data.sucesso) {
-      showToast(status === 'approved' ? '✅ Adoção aprovada! O solicitante foi notificado.' : 'Solicitação recusada.', status === 'approved' ? 'success' : '');
+      showToast(status === 'approved' ? '🏆 Parabéns! Adoção confirmada e pet atualizado.' : 'Solicitação dispensada.', status === 'approved' ? 'success' : '');
       renderReceived();
       renderMyPets(); // Atualiza a aba de pets para refletir que foi adotado
     } else {
@@ -582,45 +687,49 @@ function renderAdminOngs() {
     });
 }
 
-function openNewOngModal() {
-  document.getElementById('modal-content').innerHTML = `
-    <div class="modal-title">🏢 Cadastrar Nova ONG</div>
-    <p class="modal-sub">Preencha os dados básicos da ONG parceira</p>
-    <div id="ong-error" style="display:none;background:#fff0f0;border:1.5px solid #fca5a5;border-radius:var(--r-sm);padding:10px 14px;margin-bottom:14px;color:#c0392b;font-size:.88rem"></div>
-    <div style="display:grid;grid-template-columns:1fr 1fr;gap:14px;margin-bottom:14px">
-      <div>
-        <label class="form-label">Nome da ONG <span style="color:var(--terra)">*</span></label>
-        <input id="ong-nome" class="form-input">
+window.openNewOngModal = function() {
+  document.querySelectorAll('.sidebar-link').forEach(l => l.classList.remove('active'));
+  document.querySelectorAll('.tab-panel').forEach(p => p.classList.remove('active'));
+
+  let tab = document.getElementById('tab-new-ong');
+  if (!tab) {
+    tab = document.createElement('div');
+    tab.id = 'tab-new-ong';
+    tab.className = 'tab-panel';
+    document.querySelector('.content').appendChild(tab);
+  }
+  tab.classList.add('active');
+
+  tab.innerHTML = `
+    <div class="fade-in">
+      <div class="panel-header" style="margin-bottom: 8px;">
+        <div class="panel-title">🏢 Cadastrar Nova ONG</div>
       </div>
-      <div>
-        <label class="form-label">WhatsApp</label>
-        <input id="ong-whatsapp" class="form-input">
+      <p style="color: var(--muted); margin-bottom: 24px; font-size: 0.95rem;">Preencha os dados básicos da ONG parceira</p>
+      <div id="ong-error" class="modal-error-banner"></div>
+      
+      <div style="background:#fff; border: 1px solid #e5e7eb; border-left: 4px solid var(--blue); padding: 18px; border-radius: 12px; box-shadow: 0 4px 14px rgba(46, 134, 193, 0.08); margin-bottom: 16px;">
+        <div style="display:grid;grid-template-columns:1fr 1fr;gap:14px;margin-bottom:14px">
+          <div><label class="form-label">Nome da ONG <span style="color:var(--terra)">*</span></label><input id="ong-nome" class="form-input"></div>
+          <div><label class="form-label">WhatsApp</label><input id="ong-whatsapp" class="form-input"></div>
+        </div>
+        <div style="display:grid;grid-template-columns:1fr 1fr;gap:14px;margin-bottom:0">
+          <div><label class="form-label">Cidade <span style="color:var(--terra)">*</span></label><input id="ong-city" class="form-input"></div>
+          <div><label class="form-label">Estado <span style="color:var(--terra)">*</span></label><input id="ong-state" class="form-input" maxlength="2"></div>
+        </div>
       </div>
-    </div>
-    <div style="display:grid;grid-template-columns:1fr 1fr;gap:14px;margin-bottom:14px">
-      <div>
-        <label class="form-label">Cidade <span style="color:var(--terra)">*</span></label>
-        <input id="ong-city" class="form-input">
+
+      <div style="background:#fff; border: 1px solid #e5e7eb; border-left: 4px solid var(--yellow); padding: 18px; border-radius: 12px; box-shadow: 0 4px 14px rgba(46, 134, 193, 0.08); margin-bottom: 16px;">
+        <div style="margin-bottom:14px"><label class="form-label">Chave PIX</label><input id="ong-pix" class="form-input"></div>
+        <div style="margin-bottom:0"><label class="form-label">Descrição Curta <span style="color:var(--terra)">*</span></label><textarea id="ong-desc" class="form-textarea" rows="3"></textarea></div>
       </div>
-      <div>
-        <label class="form-label">Estado <span style="color:var(--terra)">*</span></label>
-        <input id="ong-state" class="form-input" maxlength="2">
+
+      <div style="margin-top: 28px; display:flex; gap:10px;">
+        <button class="btn btn-primary" onclick="saveNewOng()" style="padding: 12px 24px;">Cadastrar ONG</button>
+        <button class="btn btn-ghost" onclick="location.reload()" style="padding: 12px 24px;">Voltar</button>
       </div>
-    </div>
-    <div style="margin-bottom:14px">
-      <label class="form-label">Chave PIX</label>
-      <input id="ong-pix" class="form-input">
-    </div>
-    <div style="margin-bottom:18px">
-      <label class="form-label">Descrição Curta <span style="color:var(--terra)">*</span></label>
-      <textarea id="ong-desc" class="form-textarea" rows="3"></textarea>
-    </div>
-    <div style="display:flex;gap:10px">
-      <button class="btn btn-primary" style="flex:1" onclick="saveNewOng()">Cadastrar ONG</button>
-      <button class="btn btn-ghost" onclick="closeModal()">Cancelar</button>
     </div>
   `;
-  document.getElementById('modal').classList.add('open');
 }
 
 function saveNewOng() {
@@ -648,9 +757,9 @@ function saveNewOng() {
   .then(r => r.json())
   .then(data => {
     if(data.sucesso) {
-      closeModal();
       showToast(data.mensagem, 'success');
       renderAdminOngs();
+      location.reload();
     } else {
       err.textContent = data.erro; err.style.display = 'block';
     }
