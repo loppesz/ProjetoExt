@@ -48,9 +48,21 @@
         </div>
 
         <div id="ong-fields" class="ong-fields-wrap">
-          <div class="field mb-0">
+          <div class="field">
             <label for="ong-nome">Nome da ONG / Projeto</label>
             <input type="text" id="ong-nome" name="ong_nome" placeholder="Ex: Patinhas do Bem">
+          </div>
+          <div class="field">
+            <label for="ong-foto">Logo / Foto da ONG (Opcional)</label>
+            <input type="file" id="ong-foto" name="ong_foto" accept="image/*" style="padding: 10px; background: #f9fafb; border: 2px solid #e5e7eb; border-radius: 10px; width: 100%; box-sizing: border-box; cursor: pointer; color: #1f2937;">
+          </div>
+          <div class="field">
+            <label for="ong-desc">Descrição Curta</label>
+            <textarea id="ong-desc" name="ong_desc" placeholder="Resumo sobre a atuação da ONG (ex: resgate de cães na região)..." rows="2" style="width: 100%; padding: 14px; border: 2px solid #e5e7eb; border-radius: 12px; font-family: inherit; font-size: 1rem; box-sizing: border-box; resize: vertical;"></textarea>
+          </div>
+          <div class="field mb-0">
+            <label for="ong-desc-full">História Completa / Detalhes</label>
+            <textarea id="ong-desc-full" name="ong_desc_full" placeholder="Conte mais sobre o trabalho, missão e história do projeto..." rows="4" style="width: 100%; padding: 14px; border: 2px solid #e5e7eb; border-radius: 12px; font-family: inherit; font-size: 1rem; box-sizing: border-box; resize: vertical;"></textarea>
           </div>
         </div>
 

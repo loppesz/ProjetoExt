@@ -44,7 +44,7 @@
 
 
 .hero {
-  min-height: 100vh;
+  min-height: auto;
   background: linear-gradient(135deg, #0d1b2a 0%, #1a4161 50%, #1e4f78 100%);
   display: flex;
   align-items: center;
@@ -60,8 +60,8 @@
 }
 .hero-inner {
   max-width: 1200px;
-  margin: 0 auto;
-  padding: 80px 28px;
+  margin: -4.5rem auto 0;
+  padding: 0 28px 0;
   display: grid;
   grid-template-columns: 1fr 1fr;
   gap: 60px;
@@ -172,6 +172,9 @@
   display: flex;
   align-items: center;
   justify-content: center;
+  margin-top: 0;
+  margin-bottom: -12rem; /* Remove o fundo azul extra na parte de baixo */
+  transform: translateY(-12rem); /* Força visualmente o cachorro para cima */
 }
 .hero-img-wrap {
   width: 420px;
@@ -433,6 +436,9 @@
   border-left: 5px solid var(--blue);
   box-shadow: 0 4px 20px rgba(26,65,97,0.08);
   transition: transform .22s, box-shadow .22s;
+  display: block;
+  text-decoration: none;
+  color: inherit;
 }
 .how-card:nth-child(2) { border-left-color: var(--yellow); }
 .how-card:nth-child(3) { border-left-color: #5ba3d4; }
@@ -486,6 +492,14 @@
 .testimonial-quote { font-size: .93rem; color: #374151; line-height: 1.75; margin-bottom: 20px; font-style: italic; }
 .testimonial-name { font-weight: 700; color: var(--navy); font-size: .95rem; }
 .testimonial-city { font-size: .82rem; color: #9ca3af; margin-top: 2px; }
+
+.feedback-pet-img {
+  width: 70px;
+  height: 70px;
+  border-radius: 50%;
+  object-fit: cover;
+  border: 3px solid var(--blue-l);
+}
 
 
 .section-ongs {
@@ -677,6 +691,8 @@
 .reveal-delay-2 { transition-delay: .2s; }
 .reveal-delay-3 { transition-delay: .3s; }
 .reveal-delay-4 { transition-delay: .4s; }
+
+.d-none { display: none !important; }
 
 
 .container { max-width: 1200px; margin: 0 auto; padding: 0 28px; }

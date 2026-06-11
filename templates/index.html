@@ -20,7 +20,9 @@
     <ul class="nav-links">
       <li><a href="/pets" class="nav-link">Encontrar Pet</a></li>
       <li><a href="/ongs" class="nav-link">ONGs</a></li>
+      {% if current_user.is_authenticated and current_user.role == 'ong' %}
       <li><a href="/new-pet" class="nav-link">Cadastrar Pet</a></li>
+      {% endif %}
       <li><a href="/sobre" class="nav-link">Sobre</a></li>
     </ul>
     <div class="nav-auth">
@@ -56,7 +58,9 @@
       </p>
       <div class="hero-ctas">
         <a href="/pets" class="btn-hero-primary">Ver pets disponíveis →</a>
-        <a href="/new-pet" class="btn-hero-outline">Cadastrar para adoção</a>
+        {% if not current_user.is_authenticated or current_user.role == 'ong' %}
+        <a href="/new-pet" class="btn-hero-outline">Sou ONG e quero cadastrar</a>
+        {% endif %}
       </div>
       <div class="hero-stats">
         <div class="hero-stat">
@@ -133,24 +137,24 @@
     <p class="section-sub">Em três passos simples, você encontra o companheiro perfeito.</p>
   </div>
   <div class="how-grid">
-    <div class="how-card reveal reveal-delay-1">
+    <a href="/pets" class="how-card reveal reveal-delay-1">
       <div class="how-num">1</div>
       <div class="how-icon">🔍</div>
       <h3 class="how-title">Explore os pets</h3>
       <p class="how-desc">Navegue por centenas de pets disponíveis. Filtre por espécie, tamanho, cidade e muito mais para encontrar o match perfeito.</p>
-    </div>
-    <div class="how-card reveal reveal-delay-2">
+    </a>
+    <a href="/pets" class="how-card reveal reveal-delay-2">
       <div class="how-num">2</div>
       <div class="how-icon">💬</div>
       <h3 class="how-title">Solicite a adoção</h3>
       <p class="how-desc">Entre em contato com a ONG ou tutor responsável. Conheça o pet, tire suas dúvidas e agende uma visita.</p>
-    </div>
-    <div class="how-card reveal reveal-delay-3">
+    </a>
+    <a href="/dashboard" class="how-card reveal reveal-delay-3">
       <div class="how-num">3</div>
       <div class="how-icon">🏠</div>
       <h3 class="how-title">Leve para casa</h3>
       <p class="how-desc">Após aprovação, leve seu novo companheiro para casa. Uma vida transformada — para você e para ele.</p>
-    </div>
+    </a>
   </div>
 </section>
 
@@ -200,7 +204,9 @@
   <p class="cta-banner-sub">Milhares de pets estão esperando por um lar cheio de amor. Comece agora.</p>
   <div class="cta-banner-btns">
     <a href="/pets" class="btn-hero-primary">Ver pets disponíveis →</a>
+    {% if not current_user.is_authenticated %}
     <a href="/register" class="btn-hero-outline">Criar conta grátis</a>
+    {% endif %}
   </div>
 </section>
 
@@ -215,16 +221,21 @@
       <ul class="footer-links">
         <li><a href="/pets">Encontrar Pet</a></li>
         <li><a href="/ongs">ONGs Parceiras</a></li>
+        {% if current_user.is_authenticated and current_user.role == 'ong' %}
         <li><a href="/new-pet">Cadastrar Pet</a></li>
+        {% endif %}
         <li><a href="/sobre">Sobre nós</a></li>
       </ul>
     </div>
     <div>
       <div class="footer-col-title">Conta</div>
       <ul class="footer-links">
+        {% if not current_user.is_authenticated %}
         <li><a href="/login">Entrar</a></li>
         <li><a href="/register">Criar conta</a></li>
+        {% else %}
         <li><a href="/dashboard">Meu painel</a></li>
+        {% endif %}
       </ul>
     </div>
   </div>

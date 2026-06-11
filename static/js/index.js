@@ -19,6 +19,14 @@ document.addEventListener('DOMContentLoaded', () => {
       renderHomeOngs(data.ongs || []);
     })
     .catch(err => console.error('Erro ao buscar ONGs:', err));
+
+  // Puxa os feedbacks para substituir os depoimentos hardcoded
+  fetch('/api/feedbacks')
+    .then(res => res.json())
+    .then(data => {
+      renderFeedbacks(data.feedbacks || []);
+    })
+    .catch(err => console.error('Erro ao buscar feedbacks:', err));
 });
 
 function petCard(p){
@@ -68,12 +76,24 @@ window.filterSpecies = function(s, btn){
 }
 
 function toggleFav(id, btn){
-  const p = ALL_PETS.find(x=>x.id==id);
-  if(!p) return;
-  p.fav = !p.fav;
-  btn.classList.toggle('active', p.fav);
-  btn.textContent = p.fav ? '❤️' : '🤍';
-  showToast(p.fav ? 'Adicionado aos favoritos!' : 'Removido dos favoritos.', p.fav ? 'success':'');
+  fetch(`/api/pets/${id}/favorite`, { method: 'POST' })
+    .then(res => {
+      if(res.redirected && res.url.includes('/login') || res.status === 401) {
+        window.location.href = '/login';
+        return null;
+      }
+      return res.json();
+    })
+    .then(data => {
+      if(!data) return;
+      const p = ALL_PETS.find(x=>x.id==id);
+      if(!p) return;
+      p.fav = data.fav;
+      btn.classList.toggle('active', p.fav);
+      btn.textContent = p.fav ? '❤️' : '🤍';
+      showToast(p.fav ? 'Adicionado aos favoritos!' : 'Removido dos favoritos.', p.fav ? 'success':'');
+    })
+    .catch(err => console.error(err));
 }
 
 function showToast(msg, type=''){
@@ -137,6 +157,32 @@ function renderHomeOngs(ongs) {
         <div class="ong-stats"><span>🐾 ${o.pets || 0} pets</span><span>🏠 ${o.adopted || 0} adoções</span></div>
         <a href="/ongs" class="btn-ong">Conhecer ONG</a>
       </div>
+    </div>
+  `).join('');
+}
+
+function renderFeedbacks(feedbacks) {
+  // Busca pelas classes nativas caso os IDs ainda não tenham sido definidos no HTML
+  const section = document.getElementById('feedback-section') || document.querySelector('.section-testimonials');
+  const grid = document.getElementById('feedbacks-grid') || document.querySelector('.testimonials-grid');
+  
+  if (!section || !grid) return;
+  
+  if (feedbacks.length === 0) {
+    section.classList.add('d-none');
+    return;
+  }
+  
+  section.classList.remove('d-none');
+  grid.innerHTML = feedbacks.map((f, index) => `
+    <div class="testimonial-card reveal reveal-delay-${(index % 3) + 1} visible">
+      <div class="testimonial-avatar">
+        <img src="${f.pet_photo || 'https://images.unsplash.com/photo-1548199973-03cce0bbc87b?w=200'}" alt="${f.pet_name}" class="feedback-pet-img">
+      </div>
+      <div class="testimonial-stars">${'⭐'.repeat(f.nota)}</div>
+      <div class="testimonial-quote">"${f.mensagem}"</div>
+      <div class="testimonial-name">${f.tutor}</div>
+      <div class="testimonial-city">Adotou o(a) ${f.pet_name}</div>
     </div>
   `).join('');
 }

@@ -4,6 +4,7 @@
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
 <title>Pet — PetAdopt</title>
+<meta name="user-auth" content="{{ 'true' if current_user.is_authenticated else 'false' }}">
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
 <link href="https://fonts.googleapis.com/css2?family=Fraunces:ital,opsz,wght@0,9..144,300..900;1,9..144,300..900&family=DM+Sans:wght@300;400;500;600;700&display=swap" rel="stylesheet">
@@ -22,7 +23,9 @@
     <ul class="nav-links">
       <li><a href="/pets" class="nav-link">Encontrar Pet</a></li>
       <li><a href="/ongs" class="nav-link">ONGs</a></li>
+      {% if current_user.is_authenticated and current_user.role == 'ong' %}
       <li><a href="/new-pet" class="nav-link">Cadastrar Pet</a></li>
+      {% endif %}
       <li><a href="/sobre" class="nav-link">Sobre</a></li>
     </ul>
     <div class="nav-auth">
