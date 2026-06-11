@@ -2,16 +2,6 @@ document.addEventListener('DOMContentLoaded', () => {
   carregarResumo();
   carregarPets(); // Já carrega os pets ao abrir
 
-  // Injeta o botão "Editar Perfil" no final do menu lateral
-  const sidebarNav = document.querySelector('.sidebar-nav');
-  if (sidebarNav) {
-    sidebarNav.insertAdjacentHTML('beforeend', `
-      <hr class="sidebar-divider">
-      <a class="sidebar-link" onclick="openEditOngTab(this)">
-        <span class="icon" style="font-size:1.15rem;">⚙️</span> Editar Perfil
-      </a>
-    `);
-  }
 
   // Torna os cards de estatísticas clicáveis para navegar para as abas
   const statCards = document.querySelectorAll('.stat-card');
@@ -226,10 +216,8 @@ function openEditOngTab(el) {
   fetch('/api/ong/perfil')
     .then(r => r.json())
     .then(ong => {
-      // Um pequeno atraso de 300ms garante que a tela não "pisque" se a internet for muito rápida
-      setTimeout(() => {
-        tab.innerHTML = `
-          <div class="fade-in">
+      tab.innerHTML = `
+        <div class="fade-in">
             <div class="panel-header" style="margin-bottom: 8px;">
               <div class="panel-title">⚙️ Editar Perfil da ONG</div>
             </div>
@@ -304,8 +292,7 @@ function openEditOngTab(el) {
               </div>
             </form>
           </div>
-        `;
-      }, 300); // Fim do setTimeout
+      `;
     });
 }
 

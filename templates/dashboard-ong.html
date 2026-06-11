@@ -81,54 +81,62 @@
           <div class="panel-title">Perfil Institucional</div>
         </div>
         
-        <div class="form-card" style="margin-top: 20px;">
-          <div style="display: flex; gap: 20px; align-items: flex-start; flex-wrap: wrap;">
-            <img src="{{ ong.foto_url or 'https://images.unsplash.com/photo-1601758124096-7093b3fef44d?w=600&q=80' }}" alt="{{ ong.nome }}" style="width: 120px; height: 120px; border-radius: 50%; object-fit: cover; border: 3px solid var(--sand);">
-            <div style="flex: 1; min-width: 250px;">
-              <h3 style="font-family: var(--ff-display); font-size: 1.5rem; color: var(--bark); margin-bottom: 8px;">{{ ong.nome }}</h3>
-              <p style="color: var(--bark-m); margin-bottom: 12px;">📍 {{ ong.cidade }} / {{ ong.estado }}</p>
-              <div style="display: flex; gap: 10px; flex-wrap: wrap; margin-bottom: 16px;">
-                <span class="status-pill pill-avail">WhatsApp: {{ ong.whatsapp or 'Não informado' }}</span>
-                <span class="status-pill pill-approved">Chave PIX: {{ ong.chave_pix or 'Não informada' }}</span>
+        <div style="margin-top: 20px;">
+          <!-- Cabeçalho (Card principal) -->
+          <div style="background:#fff; border: 1px solid #e5e7eb; border-left: 4px solid #5ba3d4; padding: 20px; border-radius: 12px; box-shadow: 0 4px 14px rgba(46, 134, 193, 0.08); margin-bottom: 16px;">
+            <div style="display: flex; gap: 20px; align-items: flex-start; flex-wrap: wrap;">
+              <img src="{{ ong.foto_url or 'https://images.unsplash.com/photo-1601758124096-7093b3fef44d?w=600&q=80' }}" alt="{{ ong.nome }}" style="width: 100px; height: 100px; border-radius: 50%; object-fit: cover; border: 3px solid #f3f4f6; box-shadow: 0 2px 8px rgba(0,0,0,0.1);">
+              <div style="flex: 1; min-width: 250px;">
+                <h3 style="font-family: var(--ff-display); font-size: 1.5rem; color: var(--bark); margin-top: 0; margin-bottom: 8px;">{{ ong.nome }}</h3>
+                <p style="color: var(--bark-m); margin-bottom: 12px; font-size: 0.95rem;">📍 {{ ong.cidade }} / {{ ong.estado }}</p>
+                <div style="display: flex; gap: 10px; flex-wrap: wrap;">
+                  <span class="status-pill pill-avail" style="margin:0;">💬 WhatsApp: {{ ong.whatsapp or 'Não informado' }}</span>
+                  <span class="status-pill pill-approved" style="margin:0;">💳 Chave PIX: {{ ong.chave_pix or 'Não informada' }}</span>
+                </div>
               </div>
             </div>
           </div>
           
-          <div style="margin-top: 24px; border-top: 1px solid var(--sand); padding-top: 20px;">
-            <h4 style="font-weight: 700; color: var(--bark); margin-bottom: 10px;">Descrição Curta</h4>
-            <p style="color: var(--bark-m); line-height: 1.6; background: var(--cream); padding: 14px; border-radius: var(--r-sm);">
+          <!-- Descrição -->
+          <div style="background:#fff; border: 1px solid #e5e7eb; border-left: 4px solid var(--blue); padding: 20px; border-radius: 12px; box-shadow: 0 4px 14px rgba(46, 134, 193, 0.08); margin-bottom: 16px;">
+            <h4 style="font-weight: 700; color: var(--navy); margin-top: 0; margin-bottom: 10px; font-size: 1.05rem;">📝 Descrição Curta</h4>
+            <p style="color: var(--bark-m); line-height: 1.6; font-size: 0.95rem; margin-bottom: 0;">
               {{ ong.descricao or 'Nenhuma descrição curta informada.' }}
             </p>
           </div>
 
-          <div style="margin-top: 20px;">
-            <h4 style="font-weight: 700; color: var(--bark); margin-bottom: 10px;">Descrição Completa (História)</h4>
-            <p style="color: var(--bark-m); line-height: 1.6; background: var(--cream); padding: 14px; border-radius: var(--r-sm); white-space: pre-wrap;">{{ ong.descricao_completa or 'A ONG ainda não forneceu uma descrição detalhada.' }}</p>
+          <!-- História -->
+          <div style="background:#fff; border: 1px solid #e5e7eb; border-left: 4px solid var(--yellow); padding: 20px; border-radius: 12px; box-shadow: 0 4px 14px rgba(46, 134, 193, 0.08); margin-bottom: 16px;">
+            <h4 style="font-weight: 700; color: var(--navy); margin-top: 0; margin-bottom: 10px; font-size: 1.05rem;">📖 História Completa</h4>
+            <p style="color: var(--bark-m); line-height: 1.6; white-space: pre-wrap; font-size: 0.95rem; margin-bottom: 0;">{{ ong.descricao_completa or 'A ONG ainda não forneceu uma descrição detalhada.' }}</p>
           </div>
 
-          <div style="margin-top: 24px; border-top: 1px solid var(--sand); padding-top: 20px;">
-            <h4 style="font-weight: 700; color: var(--bark); margin-bottom: 10px;">Links e Redes Sociais</h4>
-            <p style="color: var(--bark-m); margin-bottom: 8px;">
-              <strong>Vakinha / Doação:</strong> 
-              {% if ong.link_vakinha %}
-                <a href="{{ ong.link_vakinha }}" target="_blank" style="color: #2e86c1; text-decoration: underline;">{{ ong.link_vakinha }}</a>
-              {% else %}
-                Não informado.
-              {% endif %}
-            </p>
-            <p style="color: var(--bark-m);">
-              <strong>Instagram:</strong> 
-              {% if ong.instagram %}
-                <a href="{{ ong.instagram }}" target="_blank" style="color: #2e86c1; text-decoration: underline;">{{ ong.instagram }}</a>
-              {% else %}
-                Não informado.
-              {% endif %}
-            </p>
+          <!-- Links -->
+          <div style="background:#fff; border: 1px solid #e5e7eb; border-left: 4px solid var(--navy); padding: 20px; border-radius: 12px; box-shadow: 0 4px 14px rgba(46, 134, 193, 0.08); margin-bottom: 24px;">
+            <h4 style="font-weight: 700; color: var(--navy); margin-top: 0; margin-bottom: 12px; font-size: 1.05rem;">🔗 Links e Redes Sociais</h4>
+            <div style="display: grid; grid-template-columns: repeat(auto-fit, minmax(200px, 1fr)); gap: 14px;">
+              <div style="background: #f8fafc; padding: 12px; border-radius: 8px; border: 1px solid #e2e8f0;">
+                <strong style="color:var(--bark); display:block; margin-bottom:4px; font-size:0.85rem;">❤️ Vakinha / Doação</strong>
+                {% if ong.link_vakinha %}
+                  <a href="{{ ong.link_vakinha }}" target="_blank" style="color: #2e86c1; text-decoration: none; font-weight: 600; font-size: 0.9rem;">Acessar Link ↗</a>
+                {% else %}
+                  <span style="color: var(--muted); font-size: 0.9rem;">Não informado</span>
+                {% endif %}
+              </div>
+              <div style="background: #f8fafc; padding: 12px; border-radius: 8px; border: 1px solid #e2e8f0;">
+                <strong style="color:var(--bark); display:block; margin-bottom:4px; font-size:0.85rem;">✨ Instagram</strong>
+                {% if ong.instagram %}
+                  <a href="{{ ong.instagram }}" target="_blank" style="color: #2e86c1; text-decoration: none; font-weight: 600; font-size: 0.9rem;">Acessar Link ↗</a>
+                {% else %}
+                  <span style="color: var(--muted); font-size: 0.9rem;">Não informado</span>
+                {% endif %}
+              </div>
+            </div>
           </div>
 
-          <div style="margin-top: 24px; display: flex; gap: 10px;">
-            <a href="/ong/{{ ong.id }}" target="_blank" class="btn btn-outline">👁️ Ver Perfil Público</a>
-            <button class="btn btn-primary" onclick="openEditOngModal()">✏️ Editar Perfil</button>
+          <div style="display: flex; gap: 12px;">
+            <button class="btn btn-primary" onclick="openEditOngTab(null)" style="flex: 1; justify-content: center;">✏️ Editar Perfil</button>
+            <a href="/ong/{{ ong.id }}" target="_blank" class="btn btn-outline" style="flex: 1; justify-content: center;">👁️ Ver Perfil Público</a>
           </div>
         </div>
       </div>
