@@ -135,22 +135,35 @@
           </div>
 
           <div style="display: flex; gap: 12px;">
-            <button class="btn btn-primary" onclick="openEditOngTab(null)" style="flex: 1; justify-content: center;">✏️ Editar Perfil</button>
+            <button class="btn btn-primary" onclick="document.getElementById('edit-profile-section').style.display='block'" style="flex: 1; justify-content: center;">✏️ Editar Perfil</button>
             <a href="/ong/{{ ong.id }}" target="_blank" class="btn btn-outline" style="flex: 1; justify-content: center;">👁️ Ver Perfil Público</a>
           </div>
         </div>
+
+        <!-- Seção de Edição do Perfil -->
+        <div class="quick-card" id="edit-profile-section" style="display: none; margin-top: 24px;">
+          <h4 style="font-weight: 700; color: var(--navy); margin-top: 0; margin-bottom: 16px; font-size: 1.05rem;">Atualizar Dados</h4>
+          <div id="ong-profile-error" class="form-alert"></div>
+          <div class="profile-form-grid">
+            <label>Nome da ONG<input id="ong-profile-name" class="form-input" value="{{ ong.nome }}"></label>
+            <label>WhatsApp<input id="ong-profile-whatsapp" class="form-input" value="{{ ong.whatsapp }}"></label>
+            <label>Cidade<input id="ong-profile-city" class="form-input" value="{{ ong.cidade }}"></label>
+            <label>UF<input id="ong-profile-state" class="form-input" maxlength="2" value="{{ ong.estado }}"></label>
+            <label>Foto / logo URL<input id="ong-profile-photo" class="form-input" value="{{ ong.foto_url }}"></label>
+            <label>Link Vakinha<input id="ong-profile-vakinha" class="form-input" value="{{ ong.link_vakinha }}"></label>
+          </div>
+          <label class="profile-form-full">Chave PIX<input id="ong-profile-pix" class="form-input" value="{{ ong.chave_pix }}"></label>
+          <label class="profile-form-full">Descrição curta<textarea id="ong-profile-desc" class="form-input" rows="3">{{ ong.descricao }}</textarea></label>
+          <label class="profile-form-full">Descrição completa<textarea id="ong-profile-desc-full" class="form-input" rows="5">{{ ong.descricao_completa }}</textarea></label>
+          <div class="quick-actions">
+            <button class="btn btn-primary" onclick="saveOngProfile()">Salvar perfil</button>
+            <button class="btn btn-ghost" onclick="document.getElementById('edit-profile-section').style.display='none'">Cancelar</button>
+          </div>
+        </div>
+
       </div>
     </main>
   </div>
-
-  <!-- TOAST -->
-  <div id="toast" class="toast"></div>
-
-  <!-- MODAL -->
-  <div class="modal-overlay" id="modal" onclick="closeModal(event)">
-    <div class="modal-box" id="modal-content" onclick="event.stopPropagation()"></div>
-  </div>
-
   <script> const USER_ROLE = "{{ current_user.role }}"; </script>
   <script src="/static/js/dashboard-ong.js"></script>
 </body>

@@ -21,199 +21,86 @@ document.addEventListener('DOMContentLoaded', () => {
 function showTab(id, el) {
   document.querySelectorAll('.tab-panel').forEach(p => p.classList.remove('active'));
   document.querySelectorAll('.sidebar-link').forEach(l => l.classList.remove('active'));
-  
-  const tab = document.getElementById('tab-' + id);
-  if(tab) tab.classList.add('active');
-  if(el) el.classList.add('active');
-  
-  if(id === 'pets') carregarPets();
-  if(id === 'solicitacoes') carregarSolicitacoes();
+  document.getElementById('tab-' + id).classList.add('active');
+  if (el) el.classList.add('active');
 }
 
-function carregarResumo() {
+function loadOngData() {
   fetch('/api/ong/meus-pets')
     .then(r => r.json())
     .then(data => {
       const pets = data.pets || [];
       document.getElementById('total-pets').textContent = pets.length;
-    });
-    
-  fetch('/api/ong/solicitacoes')
-    .then(r => r.json())
-    .then(data => {
-      const sol = data.solicitacoes || [];
-      const pendentes = sol.filter(s => s.status === 'pending').length;
-      document.getElementById('total-solicitacoes').textContent = pendentes;
-    });
-}
 
-function carregarPets() {
-  fetch('/api/user/pets')
-    .then(r => r.json())
-    .then(data => {
-      const pets = data.pets || [];
-      const container = document.getElementById('lista-pets');
-      
-      if (pets.length === 0) {
-        container.innerHTML = `<div class="empty"><div class="empty-icon">🐾</div><div class="empty-title">Nenhum pet cadastrado</div><p class="empty-desc">Cadastre seu primeiro pet para adoção!</p><a href="/new-pet" class="btn btn-primary">Cadastrar pet</a></div>`;
+      const listaPets = document.getElementById('lista-pets');
+      if (!pets.length) {
+        listaPets.innerHTML = '<div class="empty"><div class="empty-icon">🐾</div><div class="empty-title">Nenhum pet cadastrado no momento.</div></div>';
         return;
       }
-      
-      container.innerHTML = pets.map(p => `
+
+      listaPets.innerHTML = pets.map(p => `
         <div class="item-card">
-          <img class="item-img" src="${p.photo}" alt="${p.name}" onclick="location.href='/pet/${p.id}'" style="cursor:pointer">
+          <img class="item-img" src="${p.photo || 'https://images.unsplash.com/photo-1548199973-03cce0bbc87b?w=300'}" alt="${p.name}">
           <div class="item-info">
             <div class="item-name">${p.name}</div>
-            <div class="item-meta">${p.breed} · 📍 ${p.city}/${p.state}</div>
-            <div style="display:flex;align-items:center;gap:10px;margin-top:8px;flex-wrap:wrap">
-              <span class="status-pill ${p.status==='available'?'pill-avail':p.status==='adopted'?'pill-approved':'pill-pending'}">
-                ${p.status==='available'?'✅ Disponível':p.status==='adopted'?'🏠 Adotado':'⏳ Reservado'}
+            <div class="item-meta">${p.breed || 'Sem raça definida'} · 📍 ${p.city || '-'}/${p.state || '-'}</div>
+            <div style="display:flex;gap:8px;flex-wrap:wrap">
+              <span class="status-pill ${p.status === 'available' ? 'pill-avail' : p.status === 'adopted' ? 'pill-adopted' : 'pill-reserved'}">
+                ${p.status === 'available' ? 'Disponível' : p.status === 'adopted' ? 'Adotado' : 'Reservado'}
+              </span>
+              <span class="status-pill ${p.modStatus === 'approved' ? 'pill-approved' : p.modStatus === 'pending' ? 'pill-pending' : 'pill-rejected'}">
+                ${p.modStatus === 'approved' ? 'Aprovado' : p.modStatus === 'pending' ? 'Aguardando admin' : 'Removido'}
               </span>
             </div>
           </div>
-          <div class="item-actions" style="flex-direction:column">
-            <button class="btn btn-outline btn-sm" onclick="location.href='/pet/${p.id}'">👁️ Ver pet</button>
-            ${p.status !== 'adopted' ? `<button class="btn btn-sage btn-sm" onclick="marcarAdotado(${p.id})">🏠 Marcar Adotado</button>` : ''}
-            <button class="btn btn-outline btn-sm btn-danger" onclick="excluirPet(${p.id})">🗑️ Excluir</button>
+          <div class="item-actions">
+            ${p.status !== 'adopted' ? `<button class="btn btn-sage btn-sm" onclick="marcarAdotado(${p.id})">Marcar como adotado</button>` : ''}
           </div>
-        </div>`).join('');
+        </div>
+      `).join('');
     });
-}
 
-function carregarSolicitacoes() {
   fetch('/api/ong/solicitacoes')
     .then(r => r.json())
     .then(data => {
-      const sol = data.solicitacoes || [];
-      const container = document.getElementById('lista-solicitacoes');
-      
-      if (sol.length === 0) {
-        container.innerHTML = `<div class="empty"><div class="empty-icon">💌</div><div class="empty-title">Nenhuma solicitação</div><p class="empty-desc">Sua ONG ainda não recebeu pedidos de adoção pela plataforma.</p></div>`;
+      const solicitacoes = data.solicitacoes || [];
+      const pendentes = solicitacoes.filter(s => s.status === 'pending');
+      document.getElementById('total-solicitacoes').textContent = pendentes.length;
+
+      const listaSol = document.getElementById('lista-solicitacoes');
+      if (!solicitacoes.length) {
+        listaSol.innerHTML = '<div class="empty"><div class="empty-icon">💌</div><div class="empty-title">Nenhuma solicitação até o momento.</div></div>';
         return;
       }
-      
-      container.innerHTML = sol.map(s => {
-        const phoneMatch = s.mensagem.match(/📞 Contato:\s*(.*?)\s*\(/);
-        const derivedPhone = s.solicitantePhone || (phoneMatch ? phoneMatch[1] : '');
 
-        // Transformar a mensagem única em blocos de estilo do projeto
-        let msgFormatted = '';
-        if (s.mensagem.includes('📞 Contato:')) {
-          const parts = s.mensagem.split('\n\n💬 Mensagem:');
-          const infoList = parts[0].split('\n').filter(l => l.trim() !== '');
-          const obs = parts.length > 1 ? parts[1].trim() : '';
-          
-          const borderColors = ['var(--blue)', 'var(--yellow)', 'var(--navy)', '#5ba3d4'];
-          const gridItems = infoList.map((item, index) => {
-            const colonIdx = item.indexOf(':');
-            let label = item, val = '';
-            if (colonIdx > -1) {
-              label = item.substring(0, colonIdx + 1);
-              val = item.substring(colonIdx + 1).trim();
-            }
-            return `<div style="background:#fff; border: 1px solid #e5e7eb; border-left: 4px solid ${borderColors[index % borderColors.length]}; padding: 12px 16px; border-radius: 12px; font-size: 0.88rem; color: #374151; box-shadow: 0 4px 14px rgba(46, 134, 193, 0.08);"><strong style="color:var(--navy); font-weight:700; display:block; margin-bottom:2px;">${label}</strong> ${val}</div>`;
-          }).join('');
-          
-          msgFormatted = `<div style="display:grid; grid-template-columns: repeat(auto-fit, minmax(200px, 1fr)); gap: 12px; margin-top: 16px;">${gridItems}</div>` + 
-                         (obs ? `<div style="background:#fff; border: 1px solid #e5e7eb; border-left: 4px solid var(--blue); padding: 14px 18px; border-radius: 12px; box-shadow: 0 4px 14px rgba(46, 134, 193, 0.08); font-size:.87rem; color:var(--bark-m); margin-top:12px; line-height:1.6;"><strong style="color:var(--navy); display:block; margin-bottom:4px; font-weight:700;">💬 Mensagem do Adotante:</strong>${obs}</div>` : '');
-        } else {
-          msgFormatted = `<div style="background:#fff; border: 1px solid #e5e7eb; border-left: 4px solid var(--blue); padding: 14px 18px; border-radius: 12px; box-shadow: 0 4px 14px rgba(46, 134, 193, 0.08); font-size:.87rem; color:var(--bark-m); margin-top:12px; line-height:1.6; white-space:pre-wrap;"><strong style="color:var(--navy); display:block; margin-bottom:4px; font-weight:700;">💬 Mensagem do Adotante:</strong>\n${s.mensagem}</div>`;
-        }
-
-        return `
+      listaSol.innerHTML = solicitacoes.map(s => `
         <div class="item-card">
-          <div style="width:52px;height:52px;border-radius:50%;background:var(--blush);display:flex;align-items:center;justify-content:center;font-size:1.4rem;flex-shrink:0">🧑</div>
+          <div class="req-avatar">👤</div>
           <div class="item-info">
             <div class="item-name">${s.solicitanteName}</div>
-            <div class="item-meta">Interesse em: <strong>${s.petName}</strong></div>
-            ${msgFormatted}
+            <div class="item-meta">Quer adotar: <strong>${s.petName}</strong></div>
+            <div class="item-meta">${s.email || ''}${s.telefone ? ' · ' + s.telefone : ''}</div>
+            <div class="item-meta">${s.cidade || ''}${s.estado ? '/' + s.estado : ''}</div>
+            <div class="req-quote">"${s.mensagem}"</div>
+            <div class="mt-10">
+              <span class="status-pill ${s.status === 'pending' ? 'pill-pending' : s.status === 'approved' ? 'pill-approved' : 'pill-rejected'}">
+                ${s.status === 'pending' ? 'Aguardando' : s.status === 'approved' ? 'Aprovado' : 'Recusado'}
+              </span>
+            </div>
           </div>
-          <div class="item-actions" style="flex-direction:column; min-width: 220px;">
-            ${derivedPhone ? `<a href="https://wa.me/55${derivedPhone.replace(/\D/g,'')}" target="_blank" class="btn btn-whatsapp btn-sm" style="background:#25d366;color:#fff;border:none;text-decoration:none;display:flex;justify-content:center;">💬 Chamar no WhatsApp</a>` : `<div style="font-size: 0.8rem; color: var(--muted); text-align: center; padding: 4px;">Sem WhatsApp</div>`}
+          <div class="item-actions flex-column">
             ${s.status === 'pending' ? `
-              <button class="btn btn-adopt-confirm btn-sm" onclick="responderSolicitacao(${s.id}, 'approved')" style="margin-top:6px;">🏆 Confirmar Adoção</button>
-              <button class="btn btn-adopt-dismiss btn-sm" onclick="responderSolicitacao(${s.id}, 'rejected')" style="margin-top:4px;">❌ Dispensar</button>
-            ` : (s.status === 'approved' ? `<span class="status-pill pill-approved" style="margin-top:6px; justify-content:center;">🏆 Adoção Confirmada</span>` : `<span class="status-pill pill-rejected" style="margin-top:6px; justify-content:center;">❌ Dispensado</span>`)}
+              <button class="btn btn-sage btn-sm" onclick="mudarStatusSolicitacao(${s.id}, 'approved')">Aprovar</button>
+              <button class="btn btn-outline btn-sm btn-danger" onclick="mudarStatusSolicitacao(${s.id}, 'rejected')">Recusar</button>
+            ` : ''}
           </div>
-        </div>`;
-      }).join('');
+        </div>
+      `).join('');
     });
 }
 
 function marcarAdotado(petId) {
-  if(confirm('Tem certeza que deseja marcar este pet como adotado?')) {
-    fetch(`/api/ong/pet/${petId}/marcar-adotado`, { method: 'POST' })
-      .then(r => r.json())
-      .then(data => {
-        if (data.sucesso) {
-          if (typeof showToast === 'function') showToast('✅ Pet marcado como adotado e estatísticas atualizadas!', 'success');
-          carregarPets();
-          carregarResumo();
-        }
-      });
-  }
-}
-
-function excluirPet(petId) {
-  if(confirm('Tem certeza que deseja excluir este pet permanentemente?')) {
-    fetch(`/api/pets/${petId}`, { method: 'DELETE' })
-      .then(r => r.json())
-      .then(data => {
-        if (typeof showToast === 'function') showToast('Pet excluído com sucesso!', 'success');
-        carregarPets();
-        carregarResumo();
-      });
-  }
-}
-
-function responderSolicitacao(reqId, status) {
-  fetch(`/api/ong/solicitacao/${reqId}/status`, {
-    method: 'POST',
-    headers: {'Content-Type': 'application/json'},
-    body: JSON.stringify({status})
-  })
-  .then(r => r.json())
-  .then(data => {
-    if(data.sucesso) {
-      if(typeof showToast === 'function') showToast(status === 'approved' ? '🏆 Parabéns! Adoção confirmada e pet atualizado.' : 'Solicitação dispensada.', status === 'approved' ? 'success' : '');
-      carregarSolicitacoes();
-      carregarResumo();
-      carregarPets();
-    } else {
-      if(typeof showToast === 'function') showToast('❌ Erro: ' + data.erro, '');
-    }
-  })
-  .catch(e => {
-    if(typeof showToast === 'function') showToast('Erro de conexão', '');
-  });
-}
-
-function openEditOngTab(el) {
-  // Ativa o link visualmente no menu lateral e limpa as outras abas
-  document.querySelectorAll('.sidebar-link').forEach(l => l.classList.remove('active'));
-  if(el) el.classList.add('active');
-  document.querySelectorAll('.tab-panel').forEach(p => p.classList.remove('active'));
-
-  // Verifica se a aba já foi criada no DOM. Se não, cria uma nova.
-  let tab = document.getElementById('tab-edit-ong');
-  if (!tab) {
-    tab = document.createElement('div');
-    tab.id = 'tab-edit-ong';
-    tab.className = 'tab-panel';
-    document.querySelector('.content').appendChild(tab);
-  }
-  tab.classList.add('active');
-  
-  // Aviso de carregamento "fofo" e animado enquanto busca os dados
-  tab.innerHTML = `
-    <div style="text-align:center; padding: 50px 20px;" class="fu">
-      <div style="font-size:3.5rem; margin-bottom:16px; animation: float 2s ease-in-out infinite;">🐾</div>
-      <h3 style="font-family: var(--ff-display); color: var(--bark); font-size: 1.4rem;">Buscando dados...</h3>
-      <p style="color: var(--muted); font-size: 0.95rem;">Só um segundinho!</p>
-    </div>
-  `;
-
-  fetch('/api/ong/perfil')
+  fetch(`/api/ong/pet/${petId}/marcar-adotado`, { method: 'POST' })
     .then(r => r.json())
     .then(ong => {
       tab.innerHTML = `
@@ -296,44 +183,66 @@ function openEditOngTab(el) {
     });
 }
 
-function saveOngProfile(e) {
-  e.preventDefault();
-  const btn = document.getElementById('btn-save-ong');
-  btn.disabled = true;
-  btn.textContent = 'Salvando...';
-
-  const formData = new FormData();
-  formData.append('nome', document.getElementById('edit-ong-nome').value);
-  formData.append('cidade', document.getElementById('edit-ong-cidade').value);
-  formData.append('estado', document.getElementById('edit-ong-estado').value);
-  formData.append('whatsapp', document.getElementById('edit-ong-whatsapp').value);
-  formData.append('chave_pix', document.getElementById('edit-ong-pix').value);
-  formData.append('link_vakinha', document.getElementById('edit-ong-vakinha').value);
-  formData.append('instagram', document.getElementById('edit-ong-instagram').value);
-  formData.append('descricao', document.getElementById('edit-ong-desc').value);
-  formData.append('descricao_completa', document.getElementById('edit-ong-desc-full').value);
-
-  const fotoInput = document.getElementById('edit-ong-foto');
-  if (fotoInput.files.length > 0) formData.append('foto', fotoInput.files[0]);
-
-  fetch('/api/ong/perfil', { method: 'POST', body: formData })
-  .then(r => r.json())
-  .then(data => {
-    if (data.sucesso) {
-      showToast('Perfil atualizado com sucesso!', 'success');
-      setTimeout(() => location.reload(), 1000); // Atualiza a página para carregar foto e nome novos!
-    } else {
-      showToast('Erro: ' + data.erro, '');
-      btn.disabled = false;
-      btn.textContent = '💾 Salvar Alterações';
-    }
-  });
+function mudarStatusSolicitacao(reqId, novoStatus) {
+  fetch(`/api/ong/solicitacao/${reqId}/status`, {
+    method: 'POST',
+    headers: { 'Content-Type': 'application/json' },
+    body: JSON.stringify({ status: novoStatus })
+  })
+    .then(r => r.json())
+    .then(data => {
+      if (data.sucesso) loadOngData();
+    });
 }
 
-function closeModal(e) { if (!e || e.target === document.getElementById('modal')) document.getElementById('modal').classList.remove('open'); }
+function loadOngProfile() {
+  fetch('/api/ong/profile')
+    .then(r => r.json())
+    .then(data => {
+      document.getElementById('ong-profile-name').value = data.name || '';
+      document.getElementById('ong-profile-whatsapp').value = data.whatsapp || '';
+      document.getElementById('ong-profile-city').value = data.city || '';
+      document.getElementById('ong-profile-state').value = data.state || '';
+      document.getElementById('ong-profile-photo').value = data.photo || '';
+      document.getElementById('ong-profile-vakinha').value = data.vakinha || '';
+      document.getElementById('ong-profile-pix').value = data.pix || '';
+      document.getElementById('ong-profile-desc').value = data.desc || '';
+      document.getElementById('ong-profile-desc-full').value = data.descFull || '';
+    });
+}
 
-function showToast(msg, type = '') {
-  const t = document.getElementById('toast'); if(!t) return;
-  t.textContent = msg; t.className = 'toast' + (type ? ' ' + type : ''); t.classList.add('show');
-  clearTimeout(t._t); t._t = setTimeout(() => t.classList.remove('show'), 3200);
+function saveOngProfile() {
+  const alertBox = document.getElementById('ong-profile-error');
+  alertBox.classList.remove('show');
+
+  fetch('/api/ong/profile', {
+    method: 'PUT',
+    headers: { 'Content-Type': 'application/json' },
+    body: JSON.stringify({
+      name: document.getElementById('ong-profile-name').value.trim(),
+      whatsapp: document.getElementById('ong-profile-whatsapp').value.trim(),
+      city: document.getElementById('ong-profile-city').value.trim(),
+      state: document.getElementById('ong-profile-state').value.trim().toUpperCase(),
+      photo: document.getElementById('ong-profile-photo').value.trim(),
+      vakinha: document.getElementById('ong-profile-vakinha').value.trim(),
+      pix: document.getElementById('ong-profile-pix').value.trim(),
+      desc: document.getElementById('ong-profile-desc').value.trim(),
+      descFull: document.getElementById('ong-profile-desc-full').value.trim()
+    })
+  })
+    .then(r => r.json())
+    .then(data => {
+      if (data.sucesso) {
+        alertBox.textContent = data.mensagem;
+        alertBox.style.background = '#ecfdf5';
+        alertBox.style.color = '#065f46';
+        alertBox.classList.add('show');
+        loadOngProfile();
+      } else {
+        alertBox.textContent = data.erro || 'Não foi possível salvar.';
+        alertBox.style.background = '#fff0f0';
+        alertBox.style.color = '#c0392b';
+        alertBox.classList.add('show');
+      }
+    });
 }

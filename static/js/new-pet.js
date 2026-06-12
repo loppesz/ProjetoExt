@@ -84,11 +84,18 @@ function submitPet(){
     method: 'POST',
     body: formData
   })
-  .then(response => response.json())
+  .then(async response => {
+    const data = await response.json();
+    if (response.status === 401 || data.login_required) {
+      window.location.href = '/login-required?next=/new-pet';
+      return null;
+    }
+    return data;
+  })
   .then(data => {
+    if (!data) return;
     if (data.sucesso) {
-      // Redireciona para o dashboard em caso de sucesso
-      window.location.href = '/dashboard';
+      window.location.href = `/pet-submitted?pet_id=${data.pet_id}`;
     } else {
       showError(data.erro || 'Erro ao cadastrar o pet.');
     }

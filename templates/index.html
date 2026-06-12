@@ -54,7 +54,7 @@
         Cada lar merece <span class="hero-word-cycle" id="hero-word">amor</span>.
       </h1>
       <p class="hero-sub">
-        Conectamos tutores responsáveis a pets que precisam de um lar. Simples, gratuito e cheio de amor.
+        Conectamos tutores responsáveis a pets que precisam de um lar. Simples, seguro e cheio de amor.
       </p>
       <div class="hero-ctas">
         <a href="/pets" class="btn-hero-primary">Ver pets disponíveis →</a>
@@ -83,24 +83,13 @@
       </div>
       <div class="float-card">Thor foi adotado! 🎉</div>
       <div class="float-card">❤️ 3 novos pets hoje</div>
-      <div class="float-card">🏠 92 cidades</div>
+      <div class="float-card" id="float-cities">🏠 0 cidades</div>
     </div>
   </div>
 </section>
 
 <div class="marquee-strip" aria-hidden="true">
-  <div class="marquee-track">
-    <div class="marquee-item"><span>🐾</span> +1.200 pets cadastrados</div>
-    <div class="marquee-item"><span>🏠</span> 840+ adoções realizadas</div>
-    <div class="marquee-item"><span>❤️</span> 92 cidades atendidas</div>
-    <div class="marquee-item"><span>🤝</span> 100% gratuito</div>
-    <div class="marquee-item"><span>⭐</span> Plataforma confiável</div>
-    <div class="marquee-item"><span>🐾</span> +1.200 pets cadastrados</div>
-    <div class="marquee-item"><span>🏠</span> 840+ adoções realizadas</div>
-    <div class="marquee-item"><span>❤️</span> 92 cidades atendidas</div>
-    <div class="marquee-item"><span>🤝</span> 100% gratuito</div>
-    <div class="marquee-item"><span>⭐</span> Plataforma confiável</div>
-  </div>
+  <div class="marquee-track" id="impact-marquee"></div>
 </div>
 
 <section class="section-pets">
@@ -127,20 +116,16 @@
   </div>
   <div class="impact-grid">
     <div class="impact-item reveal reveal-delay-1">
-      <span class="impact-num" data-target="1247" data-suffix="">0</span>
+      <span class="impact-num" id="impact-pets" data-target="0" data-suffix="">0</span>
       <span class="impact-label">Pets cadastrados</span>
     </div>
     <div class="impact-item reveal reveal-delay-2">
-      <span class="impact-num" data-target="843" data-suffix="">0</span>
+      <span class="impact-num" id="impact-adopted" data-target="0" data-suffix="">0</span>
       <span class="impact-label">Adoções realizadas</span>
     </div>
     <div class="impact-item reveal reveal-delay-3">
-      <span class="impact-num" data-target="92" data-suffix="">0</span>
+      <span class="impact-num" id="impact-cities" data-target="0" data-suffix="">0</span>
       <span class="impact-label">Cidades atendidas</span>
-    </div>
-    <div class="impact-item reveal reveal-delay-4">
-      <span class="impact-num" data-target="3400" data-suffix="+">0</span>
-      <span class="impact-label">Usuários cadastrados</span>
     </div>
   </div>
   <svg class="wave-bottom" viewBox="0 0 1440 60" preserveAspectRatio="none" xmlns="http://www.w3.org/2000/svg"><path d="M0,60 C360,0 1080,0 1440,60 L1440,0 L0,0 Z" fill="#e8f1f9"/></svg>
@@ -216,7 +201,7 @@
 
 <section class="section-cta-banner">
   <h2 class="cta-banner-title">Pronto para transformar uma vida?</h2>
-  <p class="cta-banner-sub">Milhares de pets estão esperando por um lar cheio de amor. Comece agora — é gratuito.</p>
+  <p class="cta-banner-sub">Milhares de pets estão esperando por um lar cheio de amor. Comece agora.</p>
   <div class="cta-banner-btns">
     <a href="/pets" class="btn-hero-primary">Ver pets disponíveis →</a>
     {% if not current_user.is_authenticated %}
@@ -229,7 +214,7 @@
   <div class="footer-inner">
     <div>
       <div class="footer-logo">🐾 PetAdopt</div>
-      <p class="footer-desc">Conectando pets que precisam de um lar a famílias cheias de amor. 100% gratuito, 100% responsável.</p>
+      <p class="footer-desc">Conectando pets que precisam de um lar a famílias cheias de amor, com adoção responsável.</p>
     </div>
     <div>
       <div class="footer-col-title">Navegação</div>
@@ -281,11 +266,6 @@
 })();
 
 (function() {
-  var targets = [
-    { id: 'cnt-pets',    end: 1247 },
-    { id: 'cnt-adopted', end: 843  },
-    { id: 'cnt-cities',  end: 92   }
-  ];
   function animateCount(el, end) {
     var start = 0, step = Math.ceil(end / 112);
     var timer = setInterval(function() {
@@ -297,9 +277,9 @@
   var obs = new IntersectionObserver(function(entries) {
     entries.forEach(function(e) {
       if (e.isIntersecting) {
-        targets.forEach(function(t) {
-          var el = document.getElementById(t.id);
-          if (el) animateCount(el, t.end);
+        ['cnt-pets', 'cnt-adopted', 'cnt-cities'].forEach(function(id) {
+          var el = document.getElementById(id);
+          if (el) animateCount(el, parseInt(el.dataset.target || '0', 10));
         });
         obs.disconnect();
       }

@@ -2,12 +2,13 @@ let ALL_PETS = [];
 let currentSpecies = '';
 
 document.addEventListener('DOMContentLoaded', () => {
+  updateMetrics();
+
   fetch('/api/pets')
     .then(res => res.json())
     .then(data => {
       ALL_PETS = data.pets || [];
       renderGrid('');
-      updateMetrics();
     })
     .catch(err => console.error('Erro ao buscar pets:', err));
 
@@ -106,14 +107,40 @@ function showToast(msg, type=''){
 }
 
 function updateMetrics() {
-  const totalPets = ALL_PETS.length > 0 ? ALL_PETS.length + 1240 : 1247;
-  const totalAdopted = 840; 
-  const cities = new Set(ALL_PETS.map(p => p.city)).size > 0 ? new Set(ALL_PETS.map(p => p.city)).size + 85 : 92;
+  fetch('/api/site-impact')
+    .then(r => r.json())
+    .then(data => {
+      const totals = data.totals || {};
+      setMetric('cnt-pets', totals.pets || 0);
+      setMetric('cnt-adopted', totals.adoptions || 0);
+      setMetric('cnt-cities', totals.cities || 0);
+      setMetric('impact-pets', totals.pets || 0);
+      setMetric('impact-adopted', totals.adoptions || 0);
+      setMetric('impact-cities', totals.cities || 0);
 
-  const statVals = document.querySelectorAll('.stat-val');
-  if (statVals[0]) statVals[0].textContent = totalPets + '+';
-  if (statVals[1]) statVals[1].textContent = totalAdopted + '+';
-  if (statVals[2]) statVals[2].textContent = cities;
+      const floatCities = document.getElementById('float-cities');
+      if (floatCities) floatCities.textContent = `🏠 ${formatNumber(totals.cities || 0)} cidades`;
+
+      const marquee = document.getElementById('impact-marquee');
+      if (marquee) {
+        const items = (data.highlights || []).concat(data.highlights || []);
+        marquee.innerHTML = items.map(item => `
+          <div class="marquee-item"><span>${item.icon}</span> ${item.label}</div>
+        `).join('');
+      }
+    })
+    .catch(err => console.error('Erro ao carregar impacto do site:', err));
+}
+
+function setMetric(id, value) {
+  const el = document.getElementById(id);
+  if (!el) return;
+  el.dataset.target = value;
+  el.textContent = formatNumber(value);
+}
+
+function formatNumber(value) {
+  return Number(value || 0).toLocaleString('pt-BR');
 }
 
 function renderHomeOngs(ongs) {

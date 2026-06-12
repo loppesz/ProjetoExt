@@ -30,7 +30,10 @@ function initDashboard() {
     
     // Exibe aba de moderação na sidebar
     const modNav = document.getElementById('nav-moderation');
-    if(modNav) modNav.style.display = 'flex';
+    if(modNav) modNav.style.display = 'none';
+
+    const pendingPetsNav = document.getElementById('nav-pending-pets');
+    if(pendingPetsNav) pendingPetsNav.style.display = 'flex';
     
     const ongNav = document.getElementById('nav-ongs');
     if(ongNav) ongNav.style.display = 'flex';
@@ -38,11 +41,14 @@ function initDashboard() {
     const pendingOngNav = document.getElementById('nav-pending-ongs');
     if(pendingOngNav) pendingOngNav.style.display = 'flex';
 
+    const siteImpactNav = document.getElementById('nav-site-impact');
+    if(siteImpactNav) siteImpactNav.style.display = 'flex';
+
     // Altera as ações rápidas da aba "Resumo" para focar na administração
     const quickActions = document.querySelector('.quick-actions');
     if (quickActions) {
         quickActions.innerHTML = `
-          <button class="btn btn-primary" onclick="showTab('moderation', document.getElementById('nav-moderation'))">🛡️ Avaliar Pets Pendentes</button>
+          <button class="btn btn-primary" onclick="showTab('moderation', document.getElementById('nav-pending-pets'))">Avaliar pets pendentes</button>
           <a href="/pets" class="btn btn-outline">🔍 Ver site público</a>
         `;
     }
@@ -79,6 +85,7 @@ function initDashboard() {
     renderModeration();
     renderAdminOngs();
     renderPendingOngs();
+    renderSiteImpact();
   }
 
   // Se a URL contiver uma hash (ex: /dashboard#adoptions), abre a aba correspondente na hora
@@ -119,6 +126,7 @@ let MY_PETS = [];
 
 // Todos os pets da plataforma (para moderação)
 let ALL_PLATFORM_PETS = [];
+let PENDING_PETS = [];
 
 // ── Stats ─────────────────────────────────────────────────────────────────────
 function updateStats() {
@@ -575,6 +583,7 @@ function renderModeration() {
     .then(r => r.json())
     .then(data => {
       const pets = data.pets || [];
+      PENDING_PETS = pets;
       
       // Contar pets por status
       const pending = pets.length;
@@ -616,6 +625,7 @@ function renderModeration() {
             <span class="status-pill pill-pending" style="margin-top:8px">⏳ Pendente de aprovação</span>
           </div>
           <div class="item-actions" style="flex-direction:column">
+            <button class="btn btn-ghost btn-sm" onclick="openAdminPetEdit(${p.id})">Editar</button>
             <button class="btn btn-sage btn-sm" onclick="moderateApprove(${p.id})">✅ Aprovar</button>
             <button class="btn btn-outline btn-sm btn-danger" onclick="moderateRemove(${p.id})">🗑️ Remover</button>
           </div>
@@ -666,6 +676,75 @@ function moderateRemove(petId) {
 }
 
 // ── Gerenciar ONGs (admin) ───────────────────────────────────────────────────
+function openAdminPetEdit(petId) {
+  const p = PENDING_PETS.find(x => x.id == petId);
+  if (!p) return;
+  document.getElementById('modal-content').innerHTML = `
+    <div class="modal-title">Editar cadastro pendente</div>
+    <p class="modal-sub">Corrija informações incoerentes antes de aprovar o pet.</p>
+    <div id="admin-pet-error" style="display:none;background:#fff0f0;color:#c0392b;padding:10px;border-radius:10px;margin-bottom:14px;font-size:.9rem"></div>
+    <div class="admin-edit-grid">
+      <label>Nome<input id="admin-pet-name" class="form-input" value="${escapeAttr(p.name || '')}"></label>
+      <label>Espécie<select id="admin-pet-species" class="form-input"><option value="dog" ${p.species==='dog'?'selected':''}>Cachorro</option><option value="cat" ${p.species==='cat'?'selected':''}>Gato</option><option value="other" ${p.species==='other'?'selected':''}>Outro</option></select></label>
+      <label>Raça<input id="admin-pet-breed" class="form-input" value="${escapeAttr(p.breed || '')}"></label>
+      <label>Porte<select id="admin-pet-size" class="form-input"><option value="small" ${p.size==='small'?'selected':''}>Pequeno</option><option value="medium" ${p.size==='medium'?'selected':''}>Médio</option><option value="large" ${p.size==='large'?'selected':''}>Grande</option><option value="giant" ${p.size==='giant'?'selected':''}>Gigante</option></select></label>
+      <label>Cidade<input id="admin-pet-city" class="form-input" value="${escapeAttr(p.city || '')}"></label>
+      <label>UF<input id="admin-pet-state" class="form-input" maxlength="2" value="${escapeAttr(p.state || '')}"></label>
+    </div>
+    <label class="admin-edit-desc">Descrição<textarea id="admin-pet-description" class="form-input" rows="4">${escapeHtml(p.description || '')}</textarea></label>
+    <div style="display:flex;gap:10px;margin-top:18px">
+      <button class="btn btn-primary" style="flex:1" onclick="saveAdminPetEdit(${p.id})">Salvar correções</button>
+      <button class="btn btn-ghost" onclick="closeModal()">Cancelar</button>
+    </div>`;
+  document.getElementById('modal').classList.add('open');
+}
+
+function saveAdminPetEdit(petId) {
+  const err = document.getElementById('admin-pet-error');
+  fetch(`/api/admin/pets/${petId}`, {
+    method: 'PUT',
+    headers: { 'Content-Type': 'application/json' },
+    body: JSON.stringify({
+      name: document.getElementById('admin-pet-name').value.trim(),
+      species: document.getElementById('admin-pet-species').value,
+      breed: document.getElementById('admin-pet-breed').value.trim(),
+      size: document.getElementById('admin-pet-size').value,
+      city: document.getElementById('admin-pet-city').value.trim(),
+      state: document.getElementById('admin-pet-state').value.trim().toUpperCase(),
+      description: document.getElementById('admin-pet-description').value.trim()
+    })
+  })
+  .then(r => r.json())
+  .then(data => {
+    if (data.sucesso) {
+      closeModal();
+      showToast(data.mensagem, 'success');
+      renderModeration();
+    } else {
+      err.textContent = data.erro || 'Não foi possível salvar.';
+      err.style.display = 'block';
+    }
+  })
+  .catch(e => {
+    err.textContent = `Erro: ${e}`;
+    err.style.display = 'block';
+  });
+}
+
+function escapeHtml(value) {
+  return String(value).replace(/[&<>"']/g, char => ({
+    '&': '&amp;',
+    '<': '&lt;',
+    '>': '&gt;',
+    '"': '&quot;',
+    "'": '&#39;'
+  }[char]));
+}
+
+function escapeAttr(value) {
+  return escapeHtml(value);
+}
+
 function renderAdminOngs() {
   fetch('/api/ongs')
     .then(r => r.json())
@@ -823,6 +902,59 @@ function moderateOngReject(id) {
 }
 
 // ── Tabs ──────────────────────────────────────────────────────────────────────
+function fillSiteImpactForm(data) {
+  document.getElementById('impact-pets-total').textContent = data.totals.pets;
+  document.getElementById('impact-adoptions-total').textContent = data.totals.adoptions;
+  document.getElementById('impact-cities-total').textContent = data.totals.cities;
+
+  document.getElementById('impact-pets-base').textContent = data.base.pets;
+  document.getElementById('impact-adoptions-base').textContent = data.base.adoptions;
+  document.getElementById('impact-cities-base').textContent = data.base.cities;
+
+  document.getElementById('impact-pets-offset').value = data.offsets.pets;
+  document.getElementById('impact-adoptions-offset').value = data.offsets.adoptions;
+  document.getElementById('impact-cities-offset').value = data.offsets.cities;
+
+  document.getElementById('impact-show-trust').checked = data.flags.show_trust;
+}
+
+function renderSiteImpact() {
+  fetch('/api/admin/site-impact')
+    .then(r => r.json())
+    .then(fillSiteImpactForm)
+    .catch(e => {
+      console.error('Erro ao carregar impacto do site:', e);
+      showToast('Erro ao carregar impacto do site.', '');
+    });
+}
+
+function saveSiteImpact() {
+  fetch('/api/admin/site-impact', {
+    method: 'PUT',
+    headers: { 'Content-Type': 'application/json' },
+    body: JSON.stringify({
+      offsets: {
+        pets: parseInt(document.getElementById('impact-pets-offset').value || '0', 10),
+        adoptions: parseInt(document.getElementById('impact-adoptions-offset').value || '0', 10),
+        cities: parseInt(document.getElementById('impact-cities-offset').value || '0', 10)
+      },
+      flags: {
+        show_trust: document.getElementById('impact-show-trust').checked
+      }
+    })
+  })
+  .then(r => r.json())
+  .then(data => {
+    if (data.sucesso) {
+      fillSiteImpactForm(data.impact);
+      showToast('Impacto do site atualizado.', 'success');
+    } else {
+      showToast(data.erro || 'Nao foi possivel salvar.', '');
+    }
+  })
+  .catch(e => showToast(`Erro: ${e}`, ''));
+}
+
 function showTab(id, el) {
   document.querySelectorAll('.tab-panel').forEach(p => p.classList.remove('active'));
   document.querySelectorAll('.sidebar-link').forEach(l => l.classList.remove('active'));

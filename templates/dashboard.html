@@ -75,11 +75,17 @@
       <div class="sidebar-link" id="nav-moderation" onclick="showTab('moderation',this)" style="display:none">
         <span class="icon">🛡️</span> Moderação
       </div>
+      <div class="sidebar-link" id="nav-pending-pets" onclick="showTab('moderation',this)" style="display:none">
+        <span class="icon">⏳</span> Pets Pendentes
+      </div>
       <div class="sidebar-link" id="nav-ongs" onclick="showTab('ongs-admin',this)" style="display:none">
         <span class="icon">🏢</span> ONGs
       </div>
       <div class="sidebar-link" id="nav-pending-ongs" onclick="showTab('pending-ongs',this)" style="display:none">
         <span class="icon">⏳</span> ONGs Pendentes
+      </div>
+      <div class="sidebar-link" id="nav-site-impact" onclick="showTab('site-impact',this)" style="display:none">
+        <span class="icon">📈</span> Impacto do site
       </div>
       <div style="border-top:1px solid #f0f4f8;margin:12px 0"></div>
       <div class="sidebar-link" onclick="logout()" style="color:#e74c3c;">
@@ -147,6 +153,7 @@
       <div class="panel-header">
         <div class="panel-title">🛡️ Moderação</div>
       </div>
+      <p class="panel-subtitle">Aprove ou remova pets cadastrados por usuários antes de aparecerem no site.</p>
       <div class="stats-grid mb-24">
         <div class="stat-card gold">
           <div class="stat-value" id="mod-pending">0</div>
@@ -179,6 +186,51 @@
         <h2 class="panel-title">ONGs Pendentes de Aprovação</h2>
       </div>
       <div id="pending-ongs-list"></div>
+    </div>
+
+    <!-- TAB: IMPACTO DO SITE (admin) -->
+    <div class="tab-panel" id="tab-site-impact">
+      <div class="panel-header">
+        <div>
+          <h2 class="panel-title">Impacto do site</h2>
+          <p class="panel-subtitle">Ajuste os numeros exibidos na home sem apagar os dados reais do banco.</p>
+        </div>
+        <button class="btn btn-primary btn-sm" onclick="saveSiteImpact()">Salvar alteracoes</button>
+      </div>
+
+      <div class="impact-admin-grid">
+        <div class="impact-admin-card">
+          <span class="impact-admin-kicker">Pets cadastrados</span>
+          <strong id="impact-pets-total">0</strong>
+          <small>Base real: <span id="impact-pets-base">0</span></small>
+          <label for="impact-pets-offset">Ajuste manual</label>
+          <input id="impact-pets-offset" type="number" class="form-input" value="0">
+        </div>
+
+        <div class="impact-admin-card">
+          <span class="impact-admin-kicker">Adocoes realizadas</span>
+          <strong id="impact-adoptions-total">0</strong>
+          <small>Base real: <span id="impact-adoptions-base">0</span></small>
+          <label for="impact-adoptions-offset">Ajuste manual</label>
+          <input id="impact-adoptions-offset" type="number" class="form-input" value="0">
+        </div>
+
+        <div class="impact-admin-card">
+          <span class="impact-admin-kicker">Cidades atendidas</span>
+          <strong id="impact-cities-total">0</strong>
+          <small>Base real: <span id="impact-cities-base">0</span></small>
+          <label for="impact-cities-offset">Ajuste manual</label>
+          <input id="impact-cities-offset" type="number" class="form-input" value="0">
+        </div>
+      </div>
+
+      <div class="quick-card">
+        <div class="quick-card-title">Itens fixos da faixa</div>
+        <label class="impact-toggle">
+          <input type="checkbox" id="impact-show-trust">
+          <span>Mostrar "Plataforma confiavel"</span>
+        </label>
+      </div>
     </div>
 
   </main>

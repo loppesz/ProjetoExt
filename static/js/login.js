@@ -8,6 +8,7 @@ function togglePwd(){
 document.addEventListener('DOMContentLoaded', () => {
   // Garante que o estado de login "salvo" (mock) no frontend seja resetado ao abrir a tela de login
   localStorage.removeItem('petadopt_user');
+  const nextUrl = new URLSearchParams(window.location.search).get('next');
 
   const form = document.querySelector('.auth-form');
   if (form) {
@@ -24,7 +25,11 @@ document.addEventListener('DOMContentLoaded', () => {
       fetch('/login', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ email: email, password: password })
+        body: JSON.stringify({
+          email: email,
+          password: password,
+          ...(nextUrl ? { next: nextUrl } : {})
+        })
       })
       .then(async response => {
         const body = await response.json();
@@ -50,7 +55,9 @@ document.addEventListener('DOMContentLoaded', () => {
         }));
         
         // Sucesso! Redireciona com base no tipo de usuário
-        if (body.role === 'admin') {
+        if (body.next) {
+          window.location.href = body.next;
+        } else if (body.role === 'admin') {
           window.location.href = '/dashboard'; // Admin vai pro painel
         } else if (body.role === 'ong') {
           window.location.href = '/dashboard-ong'; // ONG vai para o painel dedicado

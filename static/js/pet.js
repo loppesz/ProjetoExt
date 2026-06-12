@@ -362,6 +362,30 @@ function showToast(msg,type=''){
 
 window.setPhoto = setPhoto;
 window.openAdoptModal = openAdoptModal;
-window.confirmAdopt = confirmAdopt;
+function confirmAdoptRequest(){
+  const msg = document.getElementById('adopt-msg').value.trim();
+  if(!msg){showToast('Por favor, escreva uma mensagem!',''); return;}
+  fetch(`/api/pets/${currentPet.id}/adopt`, {
+    method: 'POST',
+    headers: { 'Content-Type': 'application/json' },
+    body: JSON.stringify({ mensagem: msg })
+  })
+    .then(r => r.json().then(data => ({ ok: r.ok, data })))
+    .then(({ ok, data }) => {
+      if (!ok || !data.sucesso) {
+        showToast(data.erro || 'Não foi possível enviar a solicitação.', '');
+        return;
+      }
+      document.getElementById('modal-content').innerHTML = `
+        <div class="success-modal">
+          <div class="success-icon">🎉</div>
+          <div class="success-title">Solicitação enviada!</div>
+          <p class="success-sub">Sua mensagem foi enviada ao responsável. Aguarde o retorno da ONG ou tutor.</p>
+          <button class="btn btn-primary" onclick="closeModal()">Entendido!</button>
+        </div>`;
+    })
+    .catch(() => showToast('Erro de conexão com o servidor.', ''));
+}
+window.confirmAdopt = confirmAdoptRequest;
 window.toggleFav = toggleFav;
 window.closeModal = closeModal;
