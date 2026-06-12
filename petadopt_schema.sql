@@ -1,7 +1,7 @@
 -- ============================================================
 --  PetAdopt — Schema SQL
 --  Banco: MySQL 8+ / MariaDB 10.6+
---  Gerado em: 2025
+--  Gerado em: 2026
 -- ============================================================
 
 CREATE DATABASE IF NOT EXISTS petadopt

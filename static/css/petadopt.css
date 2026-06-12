@@ -187,7 +187,7 @@ button{font:inherit;cursor:pointer;border:none;background:none}
 .btn-sm{padding:8px 20px;font-size:.875rem}.btn-full{width:100%}.btn-danger{color:var(--terra)!important;border-color:rgba(192,106,58,.3)!important}
 
 /* LAYOUT */
-.dashboard-wrap{max-width:1200px;margin:0 auto;padding:36px 28px 80px;display:grid;grid-template-columns:260px 1fr;gap:28px}
+.dashboard-wrap{max-width:1600px;width:100%;margin:0 auto;padding:36px 4% 80px;display:grid;grid-template-columns:260px 1fr;gap:40px;min-height:70vh;}
 
 /* SIDEBAR */
 .sidebar{background:#fff;border-radius:var(--r-lg);padding:24px;box-shadow:var(--sh-sm);height:fit-content;position:sticky;top:86px}

@@ -174,4 +174,4 @@ python -m http.server 8080
 
 ---
 
-*Feito com ❤️ para os animais — PetAdopt 2025*
+*Feito com ❤️ para os animais — PetAdopt 2026*

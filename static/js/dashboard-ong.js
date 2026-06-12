@@ -53,9 +53,6 @@ function loadOngData() {
               <span class="status-pill ${p.status === 'available' ? 'pill-avail' : p.status === 'adopted' ? 'pill-adopted' : 'pill-reserved'}">
                 ${p.status === 'available' ? 'Disponível' : p.status === 'adopted' ? 'Adotado' : 'Reservado'}
               </span>
-              <span class="status-pill ${p.modStatus === 'approved' ? 'pill-approved' : p.modStatus === 'pending' ? 'pill-pending' : 'pill-rejected'}">
-                ${p.modStatus === 'approved' ? 'Aprovado' : p.modStatus === 'pending' ? 'Aguardando admin' : 'Removido'}
-              </span>
             </div>
           </div>
           <div class="item-actions">

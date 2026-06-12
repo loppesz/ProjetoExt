@@ -188,9 +188,6 @@ function renderMyPets() {
                 <option value="reserved"  ${p.status==='reserved'?'selected':''}>⏳ Reservado</option>
                 <option value="adopted"   ${p.status==='adopted'?'selected':''}>🏠 Adotado</option>
               </select>
-              <span class="status-pill ${p.modStatus==='approved'?'pill-avail':p.modStatus==='pending'?'pill-pending':'pill-rejected'}" style="margin-top:0">
-                ${p.modStatus==='approved'?'✅ Aprovado':p.modStatus==='pending'?'⏳ Pendente':'❌ Removido'}
-              </span>
             </div>
           </div>
           <div class="item-actions" style="flex-direction:column">

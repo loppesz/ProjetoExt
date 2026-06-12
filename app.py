@@ -258,7 +258,7 @@ def criar_pet():
             cidade=cidade,
             estado=estado,
             foto_capa=foto_url,
-            mod_status='pending'
+            mod_status='approved'
         )
         
         # Salva no banco
