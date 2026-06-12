@@ -266,48 +266,54 @@
 })();
 
 (function() {
-  function animateCount(el, end) {
-    var start = 0, step = Math.ceil(end / 112);
+  function animateCount(el, end, isImpact = false) {
+    var start = 0, step = Math.ceil(end / (isImpact ? 100 : 112));
+    if (step === 0) step = 1;
+    var suffix = el.dataset.suffix || '';
     var timer = setInterval(function() {
       start += step;
       if (start >= end) { start = end; clearInterval(timer); }
-      el.textContent = start.toLocaleString('pt-BR');
+      el.textContent = start.toLocaleString('pt-BR') + suffix;
     }, 16);
   }
-  var obs = new IntersectionObserver(function(entries) {
-    entries.forEach(function(e) {
-      if (e.isIntersecting) {
-        ['cnt-pets', 'cnt-adopted', 'cnt-cities'].forEach(function(id) {
-          var el = document.getElementById(id);
-          if (el) animateCount(el, parseInt(el.dataset.target || '0', 10));
-        });
-        obs.disconnect();
-      }
-    });
-  }, { threshold: 0.3 });
-  var s = document.querySelector('.hero-stats');
-  if (s) obs.observe(s);
-})();
 
-(function() {
-  var obs = new IntersectionObserver(function(entries) {
-    entries.forEach(function(e) {
-      if (e.isIntersecting) {
-        e.target.querySelectorAll('.impact-num[data-target]').forEach(function(el) {
-          var end = parseInt(el.dataset.target, 10), suffix = el.dataset.suffix || '';
-          var start = 0, step = Math.ceil(end / 100);
-          var timer = setInterval(function() {
-            start += step;
-            if (start >= end) { start = end; clearInterval(timer); }
-            el.textContent = start.toLocaleString('pt-BR') + suffix;
-          }, 16);
-        });
-        obs.unobserve(e.target);
-      }
-    });
-  }, { threshold: 0.3 });
-  var s = document.getElementById('impact');
-  if (s) obs.observe(s);
+  fetch('/api/site-impact').then(r => r.json()).then(data => {
+    const t = data.totals;
+    
+    const fC = document.getElementById('float-cities');
+    if (fC) fC.innerHTML = `🏠 ${t.cities} cidades`;
+    
+    ['cnt-pets', 'impact-pets'].forEach(id => { let e = document.getElementById(id); if (e) e.dataset.target = t.pets; });
+    ['cnt-adopted', 'impact-adopted'].forEach(id => { let e = document.getElementById(id); if (e) e.dataset.target = t.adoptions; });
+    ['cnt-cities', 'impact-cities'].forEach(id => { let e = document.getElementById(id); if (e) e.dataset.target = t.cities; });
+
+    var obsHero = new IntersectionObserver(function(entries) {
+      entries.forEach(function(e) {
+        if (e.isIntersecting) {
+          ['cnt-pets', 'cnt-adopted', 'cnt-cities'].forEach(function(id) {
+            var el = document.getElementById(id);
+            if (el) animateCount(el, parseInt(el.dataset.target || '0', 10), false);
+          });
+          obsHero.disconnect();
+        }
+      });
+    }, { threshold: 0.3 });
+    var sHero = document.querySelector('.hero-stats');
+    if (sHero) obsHero.observe(sHero);
+
+    var obsImpact = new IntersectionObserver(function(entries) {
+      entries.forEach(function(e) {
+        if (e.isIntersecting) {
+          e.target.querySelectorAll('.impact-num[data-target]').forEach(function(el) {
+            animateCount(el, parseInt(el.dataset.target || '0', 10), true);
+          });
+          obsImpact.unobserve(e.target);
+        }
+      });
+    }, { threshold: 0.3 });
+    var sImpact = document.getElementById('impact');
+    if (sImpact) obsImpact.observe(sImpact);
+  }).catch(e => console.error('Erro ao buscar dados de impacto:', e));
 })();
 
 (function() {

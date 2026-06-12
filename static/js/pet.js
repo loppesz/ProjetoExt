@@ -11,13 +11,17 @@ let currentPet = null;
 let favState = false;
 
 document.addEventListener('DOMContentLoaded', () => {
-  fetch('/api/pets')
-    .then(r => r.json())
-    .then(data => {
-      ALL_PETS = data.pets || [];
+  const id = getPetId();
+  Promise.all([
+    fetch(`/api/pets/${id}`).then(r => r.ok ? r.json() : null).catch(() => null),
+    fetch('/api/pets').then(r => r.json())
+  ]).then(([petData, listData]) => {
+      ALL_PETS = listData.pets || [];
+      if (petData && !ALL_PETS.find(p => p.id === petData.id)) {
+        ALL_PETS.push(petData);
+      }
       render();
-    })
-    .catch(err => console.error('Erro ao carregar pets:', err));
+  }).catch(err => console.error('Erro ao carregar pets:', err));
 });
 
 function render(){
@@ -103,7 +107,11 @@ function render(){
          </div>`;
     }
   } else if (pet.status === 'adopted') {
-    adoptHtml = `<div class="adopted-box">✅ ${pet.name} já foi adotado!<br><span style="font-size:.85rem;font-weight:400">Mas há outros pets esperando por você.</span></div>
+    let adocaoDetalhes = '';
+    if (pet.adocao) {
+        adocaoDetalhes = `<div style="margin-top:8px; font-size:0.9rem; color:#065f46; background:#d1fae5; padding:8px 12px; border-radius:6px; border:1px solid #a7f3d0;">🏠 Adotado por <strong>${pet.adocao.solicitante}</strong> em ${pet.adocao.data}</div>`;
+    }
+    adoptHtml = `<div class="adopted-box">✅ ${pet.name} já foi adotado!${adocaoDetalhes}<br><span style="font-size:.85rem;font-weight:400; display:block; margin-top:8px;">Mas há outros pets esperando por você.</span></div>
        <div style="margin-top:12px"><a href="/pets" class="btn btn-primary btn-full">Ver outros pets →</a></div>`;
   } else {
     adoptHtml = `<div class="adopted-box" style="background:#fff8e1;color:#b8860b">⏳ ${pet.name} está reservado.<br><span style="font-size:.85rem;font-weight:400">Outro adotante está em processo. Aguarde ou veja outros pets.</span></div>

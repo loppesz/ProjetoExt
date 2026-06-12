@@ -98,19 +98,19 @@
     <h2 class="impact-numbers-title reveal">Nosso impacto em números</h2>
     <div class="impact-numbers-grid">
       <div class="impact-number-card reveal reveal-delay-1">
-        <span class="impact-number-value">1.247</span>
+        <span class="impact-number-value" id="sobre-pets">...</span>
         <span class="impact-number-label">Pets cadastrados</span>
       </div>
       <div class="impact-number-card reveal reveal-delay-2">
-        <span class="impact-number-value">843</span>
+        <span class="impact-number-value" id="sobre-adopted">...</span>
         <span class="impact-number-label">Adoções realizadas</span>
       </div>
       <div class="impact-number-card reveal reveal-delay-3">
-        <span class="impact-number-value">92</span>
+        <span class="impact-number-value" id="sobre-cities">...</span>
         <span class="impact-number-label">Cidades atendidas</span>
       </div>
       <div class="impact-number-card reveal reveal-delay-4">
-        <span class="impact-number-value">3.400+</span>
+        <span class="impact-number-value" id="sobre-users">...</span>
         <span class="impact-number-label">Usuários</span>
       </div>
     </div>
@@ -225,6 +225,16 @@
 
 <!-- REVEAL ANIMATION -->
 <script>
+(function() {
+  fetch('/api/site-impact').then(r => r.json()).then(data => {
+    const t = data.totals;
+    const p = document.getElementById('sobre-pets'); if (p) p.textContent = t.pets.toLocaleString('pt-BR');
+    const a = document.getElementById('sobre-adopted'); if (a) a.textContent = t.adoptions.toLocaleString('pt-BR');
+    const c = document.getElementById('sobre-cities'); if (c) c.textContent = t.cities.toLocaleString('pt-BR');
+    const u = document.getElementById('sobre-users'); if (u && t.users) u.textContent = t.users.toLocaleString('pt-BR') + '+';
+  }).catch(e => console.error('Erro ao buscar impacto:', e));
+})();
+
 (function () {
   var observer = new IntersectionObserver(function (entries) {
     entries.forEach(function (entry) {

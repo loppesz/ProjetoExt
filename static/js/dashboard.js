@@ -42,7 +42,9 @@ function initDashboard() {
     if (quickActions) {
         quickActions.innerHTML = `
           <button class="btn btn-primary" onclick="showTab('pending-ongs', document.getElementById('nav-pending-ongs'))">Avaliar ONGs pendentes</button>
-          <a href="/pets" class="btn btn-outline">🔍 Ver site público</a>
+          <button class="btn btn-outline" onclick="openAdminPetsTab()">🐾 Gerenciar Pets</button>
+          <button class="btn btn-outline" onclick="openAdminOngsTab()">🏢 Gerenciar ONGs</button>
+          <button class="btn btn-outline" onclick="openAdminUsersTab()">🧑 Gerenciar Usuários</button>
         `;
     }
 
@@ -130,7 +132,7 @@ function initDashboard() {
     });
 
     if (user.role === 'admin' && statCards.length >= 3) {
-      statCards[0].onclick = () => { window.location.href = '/pets'; };
+      statCards[0].onclick = () => { openAdminPetsTab(); };
       statCards[1].onclick = () => { const l = document.querySelector('[onclick*="ongs-admin"]'); if(l) showTab('ongs-admin', l); };
       statCards[2].onclick = () => { const l = document.querySelector('[onclick*="pending-ongs"]'); if(l) showTab('pending-ongs', l); };
     } else {
@@ -229,7 +231,7 @@ function changeStatus(id, newStatus) {
 
 // ── Editar Pet ────────────────────────────────────────────────────────────────
 function openEditTab(id) {
-  const p = MY_PETS.find(x => x.id === id);
+  const p = MY_PETS.find(x => x.id == id) || (typeof ADMIN_ALL_PETS !== 'undefined' ? ADMIN_ALL_PETS.find(x => x.id == id) : null);
   if (!p) return;
 
   document.querySelectorAll('.sidebar-link').forEach(l => l.classList.remove('active'));
@@ -325,8 +327,14 @@ function saveEdit(id) {
     console.log('DEBUG: Response data', data);
     if (data.sucesso) {
       showToast(`✅ ${data.mensagem}`, 'success');
-      renderMyPets();
-      showTab('my-pets');
+      if (document.getElementById('tab-admin-pets') && user.role === 'admin') {
+        fetch('/api/admin/pets').then(r => r.json()).then(d => { ADMIN_ALL_PETS = d.pets || []; renderAdminPetsList(); });
+        document.querySelectorAll('.tab-panel').forEach(p => p.classList.remove('active'));
+        document.getElementById('tab-admin-pets').classList.add('active');
+      } else {
+        renderMyPets();
+        showTab('my-pets');
+      }
     } else {
       err.textContent = `⚠️ ${data.erro}`;
       err.style.display = 'block';
@@ -785,6 +793,12 @@ function renderFavorites() {
       const favs = data.favorites || [];
       const el = document.getElementById('favorites-list');
       if (!el) return;
+
+      const statFav = document.getElementById('stat-favorites');
+      if (statFav && user.role !== 'admin') {
+        statFav.textContent = favs.length;
+      }
+
       if (!favs.length) {
         el.innerHTML = `<div class="empty"><div class="empty-icon">🤍</div><div class="empty-title">Nenhum pet favoritado</div><p class="empty-desc">Você ainda não adicionou nenhum pet aos favoritos.</p><a href="/pets" class="btn btn-primary">Buscar pets</a></div>`;
         return;
@@ -965,6 +979,313 @@ function moderateOngReject(id) {
         renderAdminOngs();
       } else { showToast(data.erro, ''); }
     });
+}
+
+// ── Gerenciar Pets (admin) ───────────────────────────────────────────────────
+let ADMIN_ALL_PETS = [];
+let adminPetFilters = { species: '', gender: '', breed: '' };
+
+window.openAdminPetsTab = function() {
+  document.querySelectorAll('.sidebar-link').forEach(l => l.classList.remove('active'));
+  document.querySelectorAll('.tab-panel').forEach(p => p.classList.remove('active'));
+
+  let tab = document.getElementById('tab-admin-pets');
+  if (!tab) {
+    tab = document.createElement('div');
+    tab.id = 'tab-admin-pets';
+    tab.className = 'tab-panel';
+    document.querySelector('.content').appendChild(tab);
+  }
+  tab.classList.add('active');
+
+  tab.innerHTML = `
+    <div class="fade-in">
+      <div class="panel-header" style="margin-bottom: 8px;">
+        <div class="panel-title">🐾 Todos os Pets da Plataforma</div>
+      </div>
+      <p style="color: var(--muted); margin-bottom: 24px; font-size: 0.95rem;">Visualize e filtre todos os animais cadastrados para moderação.</p>
+
+      <!-- Filtros -->
+      <div style="display:flex; gap:10px; margin-bottom: 20px; background: #fff; padding: 16px; border-radius: 12px; border: 1px solid #e5e7eb; flex-wrap: wrap;">
+        <div>
+          <label class="form-label" style="font-size:0.8rem;margin-bottom:4px">Espécie</label>
+          <select class="form-input" id="admin-f-species" onchange="adminPetFilters.species=this.value; renderAdminPetsList()">
+            <option value="">Todas as espécies</option>
+            <option value="dog">🐶 Cachorro</option>
+            <option value="cat">🐱 Gato</option>
+            <option value="other">Outros</option>
+          </select>
+        </div>
+        <div>
+          <label class="form-label" style="font-size:0.8rem;margin-bottom:4px">Gênero</label>
+          <select class="form-input" id="admin-f-gender" onchange="adminPetFilters.gender=this.value; renderAdminPetsList()">
+            <option value="">Todos os gêneros</option>
+            <option value="male">Macho</option>
+            <option value="female">Fêmea</option>
+            <option value="unknown">Não informado</option>
+          </select>
+        </div>
+        <div style="flex: 1; min-width: 200px;">
+          <label class="form-label" style="font-size:0.8rem;margin-bottom:4px">Buscar Raça, Nome do Pet ou Adotante</label>
+          <input type="text" class="form-input" id="admin-f-breed" placeholder="Ex: Poodle, Luna, Maria..." onkeyup="adminPetFilters.breed=this.value.toLowerCase(); renderAdminPetsList()">
+        </div>
+      </div>
+
+      <div id="admin-pets-list" style="display: flex; flex-direction: column; gap: 12px;"></div>
+    </div>
+  `;
+  
+  fetch('/api/admin/pets').then(r => r.json()).then(data => {
+    ADMIN_ALL_PETS = data.pets || [];
+    renderAdminPetsList();
+  });
+}
+
+window.renderAdminPetsList = function() {
+  const el = document.getElementById('admin-pets-list');
+  if (!el) return;
+
+  let filtered = ADMIN_ALL_PETS.filter(p => {
+    if (adminPetFilters.species && p.species !== adminPetFilters.species) return false;
+    if (adminPetFilters.gender && p.sex !== adminPetFilters.gender) return false;
+    if (adminPetFilters.breed) {
+      const search = adminPetFilters.breed;
+      const matchName = p.name.toLowerCase().includes(search);
+      const matchBreed = (p.breed || '').toLowerCase().includes(search);
+      const matchAdopter = (p.adocao && p.adocao.solicitante) ? p.adocao.solicitante.toLowerCase().includes(search) : false;
+      if (!matchName && !matchBreed && !matchAdopter) return false;
+    }
+    return true;
+  });
+
+  if (!filtered.length) {
+    el.innerHTML = '<div class="empty" style="border: 1px dashed #e2e8f0;"><div class="empty-icon">🐾</div><div class="empty-title">Nenhum pet encontrado</div><p class="empty-desc">Tente limpar os filtros acima.</p></div>';
+    return;
+  }
+
+  el.innerHTML = filtered.map(p => `
+    <div class="item-card" style="box-shadow: none; border: 1px solid #e2e8f0;">
+      <img class="item-img" src="${p.photo || 'https://images.unsplash.com/photo-1548199973-03cce0bbc87b?w=300'}" alt="${p.name}" style="width:70px; height:70px;">
+      <div class="item-info">
+        <div class="item-name">${p.name} <span style="font-size:0.8rem; color:var(--muted); font-weight:normal">(${p.sex === 'male' ? 'Macho' : p.sex === 'female' ? 'Fêmea' : 'Gênero N/I'})</span></div>
+        <div class="item-meta">${p.breed || 'Sem raça'} · 📍 ${p.city}/${p.state}</div>
+        <div style="margin-top:8px; display:flex; gap:6px;">
+          <span class="status-pill ${p.status === 'available' ? 'pill-avail' : p.status === 'adopted' ? 'pill-adopted' : 'pill-reserved'}">${p.status === 'available' ? 'Disponível' : p.status === 'adopted' ? 'Adotado' : 'Reservado'}</span>
+          <span class="status-pill" style="background:#f1f5f9; color:#475569; border:1px solid #e2e8f0;">Moderação: ${p.mod_status}</span>
+        </div>
+        ${p.adocao ? `<div style="margin-top: 10px; font-size: 0.85rem; color: #065f46; background: #d1fae5; padding: 6px 12px; border-radius: 6px; border: 1px solid #a7f3d0; display: inline-block;">🏠 Adotado por <strong>${p.adocao.solicitante}</strong> em ${p.adocao.data}</div>` : ''}
+      </div>
+      <div class="item-actions">
+        <button class="btn btn-outline btn-sm" onclick="openEditTab('${p.id}')">✏️ Editar</button>
+        <a href="/pet/${p.id}" class="btn btn-outline btn-sm">👁️ Ver</a>
+        <button class="btn btn-outline btn-sm btn-danger" onclick="adminConfirmRemove('${p.id}')">🗑️ Excluir</button>
+      </div>
+    </div>
+  `).join('');
+}
+
+window.adminConfirmRemove = function(id) {
+  if(!confirm('Atenção: Você está como Administrador. Deseja realmente excluir este pet definitivamente da plataforma?')) return;
+  fetch(`/api/pets/${id}`, { method: 'DELETE', headers: { 'Content-Type': 'application/json' } })
+  .then(r => r.json())
+  .then(data => {
+    if (data.sucesso) {
+      showToast(`✅ ${data.mensagem}`, 'success');
+      fetch('/api/admin/pets').then(r => r.json()).then(d => { ADMIN_ALL_PETS = d.pets || []; renderAdminPetsList(); });
+    } else {
+      showToast(`❌ ${data.erro}`, '');
+    }
+  });
+}
+
+// ── Gerenciar ONGs Aba Completa (admin) ──────────────────────────────────────
+let ADMIN_ALL_ONGS = [];
+let adminOngFilters = { search: '' };
+
+window.openAdminOngsTab = function() {
+  document.querySelectorAll('.sidebar-link').forEach(l => l.classList.remove('active'));
+  document.querySelectorAll('.tab-panel').forEach(p => p.classList.remove('active'));
+
+  let tab = document.getElementById('tab-admin-ongs');
+  if (!tab) {
+    tab = document.createElement('div');
+    tab.id = 'tab-admin-ongs';
+    tab.className = 'tab-panel';
+    document.querySelector('.content').appendChild(tab);
+  }
+  tab.classList.add('active');
+
+  tab.innerHTML = `
+    <div class="fade-in">
+      <div class="panel-header" style="margin-bottom: 8px;">
+        <div class="panel-title">🏢 Todas as ONGs da Plataforma</div>
+        <button class="btn btn-primary" onclick="openNewOngModal()">+ Nova ONG</button>
+      </div>
+      <p style="color: var(--muted); margin-bottom: 24px; font-size: 0.95rem;">Gerencie todas as organizações parceiras aprovadas.</p>
+
+      <!-- Filtros -->
+      <div style="display:flex; gap:10px; margin-bottom: 20px; background: #fff; padding: 16px; border-radius: 12px; border: 1px solid #e5e7eb; flex-wrap: wrap;">
+        <div style="flex: 1; min-width: 200px;">
+          <label class="form-label" style="font-size:0.8rem;margin-bottom:4px">Buscar por Nome, Cidade ou Estado</label>
+          <input type="text" class="form-input" id="admin-f-ong" placeholder="Ex: Patinhas, São Paulo..." onkeyup="adminOngFilters.search=this.value.toLowerCase(); renderAdminOngsList()">
+        </div>
+      </div>
+
+      <div id="admin-ongs-list-full" style="display: flex; flex-direction: column; gap: 12px;"></div>
+    </div>
+  `;
+  
+  fetch('/api/ongs').then(r => r.json()).then(data => {
+    ADMIN_ALL_ONGS = data.ongs || [];
+    renderAdminOngsList();
+  });
+}
+
+window.renderAdminOngsList = function() {
+  const el = document.getElementById('admin-ongs-list-full');
+  if (!el) return;
+
+  let filtered = ADMIN_ALL_ONGS.filter(o => {
+    if (adminOngFilters.search) {
+      const search = adminOngFilters.search;
+      const matchName = o.name.toLowerCase().includes(search);
+      const matchCity = (o.city || '').toLowerCase().includes(search);
+      const matchState = (o.state || '').toLowerCase().includes(search);
+      if (!matchName && !matchCity && !matchState) return false;
+    }
+    return true;
+  });
+
+  if (!filtered.length) {
+    el.innerHTML = '<div class="empty" style="border: 1px dashed #e2e8f0;"><div class="empty-icon">🏢</div><div class="empty-title">Nenhuma ONG encontrada</div><p class="empty-desc">Tente limpar os filtros acima.</p></div>';
+    return;
+  }
+
+  el.innerHTML = filtered.map(o => `
+    <div class="item-card" style="box-shadow: none; border: 1px solid #e2e8f0;">
+      <img class="item-img" src="${o.photo || 'https://images.unsplash.com/photo-1601758124096-7093b3fef44d?w=300'}" alt="${o.name}" style="width:70px; height:70px;">
+      <div class="item-info">
+        <div class="item-name">${o.name}</div>
+        <div class="item-meta">📍 ${o.city}/${o.state} · 📞 ${o.whatsapp}</div>
+        <div style="margin-top:8px; display:flex; gap:12px; font-size: 0.85rem; color: var(--muted);">
+          <span>🐾 <strong>${o.pets}</strong> pets reais</span>
+          <span>🏠 <strong>${o.adopted}</strong> adoções reais</span>
+        </div>
+      </div>
+      <div class="item-actions">
+        <a href="/ong/${o.id}" class="btn btn-outline btn-sm">👁️ Perfil</a>
+        <button class="btn btn-outline btn-sm btn-danger" onclick="adminConfirmRemoveOng('${o.id}')">🗑️ Excluir</button>
+      </div>
+    </div>
+  `).join('');
+}
+
+window.adminConfirmRemoveOng = function(id) {
+  if(!confirm('Atenção: Deseja realmente excluir esta ONG e ocultá-la do sistema?')) return;
+  fetch(`/api/admin/ongs/${id}`, { method: 'DELETE' })
+  .then(r => r.json())
+  .then(data => {
+    if (data.sucesso) {
+      showToast(`✅ ${data.mensagem}`, 'success');
+      fetch('/api/ongs').then(r => r.json()).then(d => { ADMIN_ALL_ONGS = d.ongs || []; renderAdminOngsList(); renderAdminOngs(); });
+    } else {
+      showToast(`❌ ${data.erro}`, '');
+    }
+  });
+}
+
+// ── Gerenciar Usuários Aba (admin) ───────────────────────────────────────────
+let ADMIN_ALL_USERS = [];
+let adminUserFilters = { search: '' };
+
+window.openAdminUsersTab = function() {
+  document.querySelectorAll('.sidebar-link').forEach(l => l.classList.remove('active'));
+  document.querySelectorAll('.tab-panel').forEach(p => p.classList.remove('active'));
+
+  let tab = document.getElementById('tab-admin-users');
+  if (!tab) {
+    tab = document.createElement('div');
+    tab.id = 'tab-admin-users';
+    tab.className = 'tab-panel';
+    document.querySelector('.content').appendChild(tab);
+  }
+  tab.classList.add('active');
+
+  tab.innerHTML = `
+    <div class="fade-in">
+      <div class="panel-header" style="margin-bottom: 8px;">
+        <div class="panel-title">🧑 Todos os Usuários (Adotantes)</div>
+      </div>
+      <p style="color: var(--muted); margin-bottom: 24px; font-size: 0.95rem;">Visualize todos os adotantes comuns cadastrados na plataforma.</p>
+
+      <!-- Filtros -->
+      <div style="display:flex; gap:10px; margin-bottom: 20px; background: #fff; padding: 16px; border-radius: 12px; border: 1px solid #e5e7eb; flex-wrap: wrap;">
+        <div style="flex: 1; min-width: 200px;">
+          <label class="form-label" style="font-size:0.8rem;margin-bottom:4px">Buscar por Nome, E-mail ou Telefone</label>
+          <input type="text" class="form-input" id="admin-f-user" placeholder="Ex: Maria, maria@email.com..." onkeyup="adminUserFilters.search=this.value.toLowerCase(); renderAdminUsersList()">
+        </div>
+      </div>
+
+      <div id="admin-users-list" style="display: flex; flex-direction: column; gap: 12px;"></div>
+    </div>
+  `;
+  
+  fetch('/api/admin/users').then(r => r.json()).then(data => {
+    ADMIN_ALL_USERS = data.users || [];
+    renderAdminUsersList();
+  });
+}
+
+window.renderAdminUsersList = function() {
+  const el = document.getElementById('admin-users-list');
+  if (!el) return;
+
+  let filtered = ADMIN_ALL_USERS.filter(u => {
+    if (adminUserFilters.search) {
+      const search = adminUserFilters.search;
+      const matchName = u.name.toLowerCase().includes(search);
+      const matchEmail = u.email.toLowerCase().includes(search);
+      const matchPhone = (u.phone || '').toLowerCase().includes(search);
+      if (!matchName && !matchEmail && !matchPhone) return false;
+    }
+    return true;
+  });
+
+  if (!filtered.length) {
+    el.innerHTML = '<div class="empty" style="border: 1px dashed #e2e8f0;"><div class="empty-icon">🧑</div><div class="empty-title">Nenhum usuário encontrado</div><p class="empty-desc">Tente limpar os filtros acima.</p></div>';
+    return;
+  }
+
+  el.innerHTML = filtered.map(u => `
+    <div class="item-card" style="box-shadow: none; border: 1px solid #e2e8f0;">
+      <div style="width:52px;height:52px;border-radius:50%;background:var(--blush);display:flex;align-items:center;justify-content:center;font-size:1.4rem;flex-shrink:0;margin-right:12px;">🧑</div>
+      <div class="item-info">
+        <div class="item-name">${u.name}</div>
+        <div class="item-meta">✉️ ${u.email} · 📞 ${u.phone}</div>
+        <div style="margin-top:8px; display:flex; gap:6px;">
+          <span class="status-pill" style="background:#f1f5f9; color:#475569; border:1px solid #e2e8f0;">📍 ${u.city}/${u.state}</span>
+        </div>
+      </div>
+      <div class="item-actions">
+        ${u.phone !== 'Não informado' ? `<a href="https://wa.me/55${String(u.phone).replace(/\D/g,'')}" target="_blank" class="btn btn-whatsapp btn-sm" style="background:#25d366;color:#fff;border:none;text-decoration:none;display:flex;align-items:center;gap:6px;"><span style="font-size:1.1rem;">💬</span> Mensagem</a>` : ''}
+        <button class="btn btn-outline btn-sm btn-danger" onclick="adminConfirmRemoveUser('${u.id}')">🗑️ Excluir</button>
+      </div>
+    </div>
+  `).join('');
+}
+
+window.adminConfirmRemoveUser = function(id) {
+  if(!confirm('Atenção: Deseja realmente excluir este usuário (adotante) e todos os seus dados da plataforma?')) return;
+  fetch(`/api/admin/users/${id}`, { method: 'DELETE' })
+  .then(r => r.json())
+  .then(data => {
+    if (data.sucesso) {
+      showToast(`✅ ${data.mensagem}`, 'success');
+      fetch('/api/admin/users').then(r => r.json()).then(d => { ADMIN_ALL_USERS = d.users || []; renderAdminUsersList(); });
+    } else {
+      showToast(`❌ ${data.erro}`, '');
+    }
+  });
 }
 
 // ── Tabs ──────────────────────────────────────────────────────────────────────

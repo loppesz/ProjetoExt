@@ -165,10 +165,12 @@ def build_site_impact_payload():
     pets_base = Pet.query.filter_by(mod_status='approved').count()
     adoptions_base = Pet.query.filter_by(status='adopted', mod_status='approved').count()
     cities_base = db.session.query(Pet.cidade, Pet.estado).filter_by(mod_status='approved').distinct().count()
+    users_base = Usuario.query.count()
 
     pets_total = max(0, pets_base + (config.pets_offset or 0))
     adoptions_total = max(0, adoptions_base + (config.adoptions_offset or 0))
     cities_total = max(0, cities_base + (config.cities_offset or 0))
+    users_total = users_base
 
     highlights = [
         {'icon': '🐾', 'label': f'{pets_total} pets cadastrados'},
@@ -182,7 +184,8 @@ def build_site_impact_payload():
         'base': {
             'pets': pets_base,
             'adoptions': adoptions_base,
-            'cities': cities_base
+            'cities': cities_base,
+            'users': users_base
         },
         'offsets': {
             'pets': config.pets_offset or 0,
@@ -192,7 +195,8 @@ def build_site_impact_payload():
         'totals': {
             'pets': pets_total,
             'adoptions': adoptions_total,
-            'cities': cities_total
+            'cities': cities_total,
+            'users': users_total
         },
         'flags': {
             'show_trust': bool(config.show_trust)
@@ -340,29 +344,80 @@ def listar_pets():
         ]
     })
 
+# GET - Detalhes de um pet específico
+@app.route('/api/pets/<int:pet_id>', methods=['GET'])
+def get_pet(pet_id):
+    pet = Pet.query.get(pet_id)
+    if not pet or pet.mod_status != 'approved':
+        return jsonify({'erro': 'Pet não encontrado'}), 404
+        
+    favorito = False
+    if current_user.is_authenticated:
+        favorito = Favorito.query.filter_by(usuario_id=current_user.id, pet_id=pet.id).first() is not None
+        
+    size_labels = {'small': 'Pequeno', 'medium': 'Médio', 'large': 'Grande', 'giant': 'Gigante'}
+    
+    adocao_info = None
+    if pet.status == 'adopted':
+        adocao = SolicitacaoAdocao.query.filter_by(pet_id=pet.id, status='approved').first()
+        if adocao:
+            adocao_info = {
+                'solicitante': adocao.solicitante.name,
+                'data': adocao.criado_em.strftime('%d/%m/%Y') if adocao.criado_em else 'Desconhecida'
+            }
+
+    owner_name = 'Tutor Parceiro'
+    if pet.usuario:
+        if pet.usuario.role == 'ong':
+            ong = Ong.query.filter_by(usuario_id=pet.usuario.id).first()
+            if ong:
+                owner_name = ong.nome
+        else:
+            owner_name = pet.usuario.name
+
+    return jsonify({
+        'id': pet.id,
+        'name': pet.nome,
+        'species': pet.especie,
+        'breed': pet.raca,
+        'age': f'{pet.idade_anos} anos' if pet.idade_anos else ('filhote' if pet.idade_meses else 'filhote'),
+        'size': pet.porte,
+        'sizeLabel': size_labels.get(pet.porte, pet.porte),
+        'color': pet.cor,
+        'city': pet.cidade,
+        'state': pet.estado,
+        'photo': pet.foto_capa,
+        'status': pet.status,
+        'description': pet.descricao,
+        'fav': favorito,
+        'ownerName': owner_name,
+        'adocao': adocao_info
+    })
+
 ## ROTA QUE RETORNA AS ONGS
 @app.route('/api/ongs', methods=['GET'])
 def listar_ongs():
     ongs = Ong.query.filter_by(status='approved').all()
-    return jsonify({
-        'ongs': [
-            {
-                'id': str(o.id),
-                'name': o.nome,
-                'city': o.cidade,
-                'state': o.estado,
-                'desc': o.descricao,
-                'descFull': o.descricao_completa,
-                'whatsapp': o.whatsapp,
-                'pets': o.pets_count,
-                'adopted': o.adopted_count,
-                'donations': o.donations_count,
-                'photo': o.foto_url,
-                'pix': o.chave_pix,
-                'vakinha': o.link_vakinha
-            } for o in ongs
-        ]
-    })
+    ongs_data = []
+    for o in ongs:
+        real_pets_count = Pet.query.filter_by(usuario_id=o.usuario_id).filter(Pet.status.in_(['available', 'reserved']), Pet.mod_status=='approved').count() if o.usuario_id else 0
+        real_adopted_count = Pet.query.filter_by(usuario_id=o.usuario_id, status='adopted', mod_status='approved').count() if o.usuario_id else 0
+        ongs_data.append({
+            'id': str(o.id),
+            'name': o.nome,
+            'city': o.cidade,
+            'state': o.estado,
+            'desc': o.descricao,
+            'descFull': o.descricao_completa,
+            'whatsapp': o.whatsapp,
+            'pets': real_pets_count,
+            'adopted': real_adopted_count,
+            'donations': o.donations_count,
+            'photo': o.foto_url,
+            'pix': o.chave_pix,
+            'vakinha': o.link_vakinha
+        })
+    return jsonify({'ongs': ongs_data})
 
 ## ═════════════════════════════════════════════════════════════════════════════
 ## ROTAS DE MODERAÇÃO (ADMIN)
@@ -421,6 +476,40 @@ def stats_pets():
     except Exception as e:
         return jsonify({'erro': str(e)}), 500
 
+# GET - Todos os pets (Admin)
+@app.route('/api/admin/pets', methods=['GET'])
+@login_required
+@admin_required
+def admin_listar_pets():
+    try:
+        pets = Pet.query.order_by(Pet.id.desc()).all()
+        pets_data = []
+        for p in pets:
+            adocao_info = None
+            if p.status == 'adopted':
+                adocao = SolicitacaoAdocao.query.filter_by(pet_id=p.id, status='approved').first()
+                if adocao:
+                    adocao_info = {
+                        'solicitante': adocao.solicitante.name,
+                        'data': adocao.criado_em.strftime('%d/%m/%Y') if adocao.criado_em else 'Desconhecida'
+                    }
+            pets_data.append({
+                'id': p.id,
+                'name': p.nome,
+                'species': p.especie,
+                'breed': p.raca,
+                'sex': p.sexo,
+                'status': p.status,
+                'mod_status': p.mod_status,
+                'city': p.cidade,
+                'state': p.estado,
+                'photo': p.foto_capa,
+                'desc': p.descricao or '',
+                'adocao': adocao_info
+            })
+        return jsonify({'pets': pets_data})
+    except Exception as e:
+        return jsonify({'erro': str(e)}), 500
 
 
 # GET - Listar ONGs pendentes
@@ -463,6 +552,63 @@ def recusar_ong(ong_id):
     ong.status = 'rejected'
     db.session.commit()
     return jsonify({'sucesso': True, 'mensagem': f'ONG "{ong.nome}" foi recusada.'})
+
+# DELETE - Remover ONG
+@app.route('/api/admin/ongs/<int:ong_id>', methods=['DELETE'])
+@login_required
+@admin_required
+def delete_ong(ong_id):
+    try:
+        ong = Ong.query.get_or_404(ong_id)
+        nome_ong = ong.nome
+        db.session.delete(ong)
+        db.session.commit()
+        return jsonify({'sucesso': True, 'mensagem': f'ONG {nome_ong} removida com sucesso!'})
+    except Exception as e:
+        db.session.rollback()
+        return jsonify({'erro': str(e)}), 500
+
+# GET - Todos os usuários (Admin)
+@app.route('/api/admin/users', methods=['GET'])
+@login_required
+@admin_required
+def admin_listar_users():
+    try:
+        users = Usuario.query.filter_by(role='user').order_by(Usuario.id.desc()).all()
+        return jsonify({
+            'users': [{
+                'id': u.id,
+                'name': u.name,
+                'email': u.email,
+                'phone': u.telefone or 'Não informado',
+                'city': u.cidade or 'Não informada',
+                'state': u.estado or 'N/I'
+            } for u in users]
+        })
+    except Exception as e:
+        return jsonify({'erro': str(e)}), 500
+
+# DELETE - Remover Usuário
+@app.route('/api/admin/users/<int:user_id>', methods=['DELETE'])
+@login_required
+@admin_required
+def admin_delete_user(user_id):
+    try:
+        user_obj = Usuario.query.get_or_404(user_id)
+        if user_obj.role == 'admin':
+            return jsonify({'erro': 'Não é possível excluir um administrador.'}), 400
+        
+        nome = user_obj.name
+        # Remove solicitações e favoritos associados para evitar erro de banco
+        Favorito.query.filter_by(usuario_id=user_obj.id).delete()
+        SolicitacaoAdocao.query.filter_by(solicitante_id=user_obj.id).delete()
+        
+        db.session.delete(user_obj)
+        db.session.commit()
+        return jsonify({'sucesso': True, 'mensagem': f'Usuário {nome} removido com sucesso!'})
+    except Exception as e:
+        db.session.rollback()
+        return jsonify({'erro': str(e)}), 500
 
 # POST - Criar Nova ONG (Apenas Admin)
 @app.route('/api/ongs', methods=['POST'])
@@ -598,8 +744,8 @@ def update_pet(pet_id):
         if not pet:
             return jsonify({'erro': 'Pet não encontrado'}), 404
         
-        # Verificar se é o dono
-        if pet.usuario_id != current_user.id:
+        # Verificar se é o dono ou admin
+        if pet.usuario_id != current_user.id and current_user.role != 'admin':
             return jsonify({'erro': 'Você não pode modificar este pet'}), 403
         
         # Atualizar campos
@@ -633,8 +779,8 @@ def delete_pet(pet_id):
         if not pet:
             return jsonify({'erro': 'Pet não encontrado'}), 404
         
-        # Verificar se é o dono
-        if pet.usuario_id != current_user.id:
+        # Verificar se é o dono ou administrador
+        if pet.usuario_id != current_user.id and current_user.role != 'admin':
             return jsonify({'erro': 'Você não pode remover este pet'}), 403
         
         pet_name = pet.nome
@@ -919,8 +1065,16 @@ def ongs():
 @app.route('/ong/<int:ong_id>')
 def ong_perfil(ong_id):
     ong = Ong.query.get_or_404(ong_id)
-    pets = Pet.query.filter_by(usuario_id=ong.usuario_id, status='available', mod_status='approved').all() if ong.usuario_id else []
-    return render_template('ong-perfil.html', ong=ong, pets=pets)
+    if ong.usuario_id:
+        pets = Pet.query.filter_by(usuario_id=ong.usuario_id).filter(Pet.status.in_(['available', 'reserved']), Pet.mod_status=='approved').all()
+        adopted_pets = Pet.query.filter_by(usuario_id=ong.usuario_id, status='adopted', mod_status='approved').order_by(Pet.id.desc()).limit(4).all()
+        # Sobrescreve contadores estáticos com a realidade do banco de dados
+        ong.pets_count = len(pets)
+        ong.adopted_count = Pet.query.filter_by(usuario_id=ong.usuario_id, status='adopted', mod_status='approved').count()
+    else:
+        pets = []
+        adopted_pets = []
+    return render_template('ong-perfil.html', ong=ong, pets=pets, adopted_pets=adopted_pets)
 
 @app.route('/dashboard')
 @login_required

@@ -16,11 +16,14 @@ function updateOngMetrics() {
   const totalAdopted = ALL_ONGS.reduce((s,o)=>s+o.adopted,0);
   const totalDonations = ALL_ONGS.reduce((s,o)=>s+o.donations,0);
   
+  const mOngs = document.getElementById('m-ongs');
+  if(mOngs) mOngs.textContent = ALL_ONGS.length.toLocaleString('pt-BR');
+
   const mPets = document.getElementById('m-pets');
   if(mPets) mPets.textContent = totalPets;
   
   const mAdopted = document.getElementById('m-adopted');
-  if(mAdopted) mAdopted.textContent = totalAdopted + '+';
+  if(mAdopted) mAdopted.textContent = totalAdopted.toLocaleString('pt-BR');
   
   const mDonations = document.getElementById('m-donations');
   if(mDonations) mDonations.textContent = 'R$ ' + totalDonations.toLocaleString('pt-BR');
