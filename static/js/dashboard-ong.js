@@ -1,4 +1,5 @@
 let ALL_SOLICITACOES = [];
+let ONG_PETS = [];
 let ongFilterDate = 'today';
 let ongSpecificDate = '';
 let ongStartDate = '';
@@ -27,14 +28,20 @@ function showTab(id, el) {
   document.querySelectorAll('.tab-panel').forEach(p => p.classList.remove('active'));
   document.querySelectorAll('.sidebar-link').forEach(l => l.classList.remove('active'));
   document.getElementById('tab-' + id).classList.add('active');
-  if (el) el.classList.add('active');
+  if (el) {
+    el.classList.add('active');
+  } else {
+    const link = document.querySelector(`.sidebar-link[onclick*="${id}"]`);
+    if (link) link.classList.add('active');
+  }
 }
 
 function loadOngData() {
   fetch('/api/ong/meus-pets')
     .then(r => r.json())
     .then(data => {
-      const pets = data.pets || [];
+      ONG_PETS = data.pets || [];
+      const pets = ONG_PETS;
       document.getElementById('total-pets').textContent = pets.length;
 
       const listaPets = document.getElementById('lista-pets');
@@ -55,19 +62,153 @@ function loadOngData() {
               </span>
             </div>
           </div>
-          <div class="item-actions">
+          <div class="item-actions" style="flex-direction:column; gap:8px;">
+            <button class="btn btn-outline btn-sm" onclick="openEditPetTab('${p.id}')">✏️ Editar</button>
             ${p.status !== 'adopted' ? `<button class="btn btn-sage btn-sm" onclick="marcarAdotado(${p.id})">Marcar como adotado</button>` : ''}
           </div>
         </div>
       `).join('');
     });
 
-  fetch('/api/ong/solicitacoes')
+  fetch('/api/ong/solicitacoes?t=' + Date.now())
     .then(r => r.json())
     .then(data => {
+      if (data.erro) {
+        const listaSol = document.getElementById('lista-solicitacoes');
+        if (listaSol) listaSol.innerHTML = `<div class="empty"><div class="empty-icon">⚠️</div><div class="empty-title">Erro do Servidor</div><p class="empty-desc">${data.erro}</p></div>`;
+        return;
+      }
       ALL_SOLICITACOES = data.solicitacoes || [];
       updateOngSolicitacoesUI();
     });
+}
+
+// ── Editar Pet (ONG) ──────────────────────────────────────────────────────────
+function openEditPetTab(id) {
+  const p = ONG_PETS.find(x => x.id == id);
+  if (!p) return;
+
+  document.querySelectorAll('.sidebar-link').forEach(l => l.classList.remove('active'));
+  document.querySelectorAll('.tab-panel').forEach(panel => panel.classList.remove('active'));
+
+  let tab = document.getElementById('tab-edit-pet');
+  if (!tab) {
+    tab = document.createElement('div');
+    tab.id = 'tab-edit-pet';
+    tab.className = 'tab-panel';
+    document.querySelector('.content').appendChild(tab);
+  }
+  tab.classList.add('active');
+
+  tab.innerHTML = `
+    <div class="fade-in">
+      <div class="panel-header" style="margin-bottom: 8px;">
+        <div class="panel-title">✏️ Editar ${p.name}</div>
+      </div>
+      <p style="color: var(--muted); margin-bottom: 24px; font-size: 0.95rem;">Atualize as informações do pet</p>
+      <div id="edit-error" class="modal-error-banner" style="display:none; padding:12px; border-radius:8px; margin-bottom:16px; background:#fff0f0; color:#c0392b;"></div>
+      
+      <!-- Dados do Pet -->
+      <div style="background:#fff; border: 1px solid #e5e7eb; border-left: 4px solid var(--blue); padding: 18px; border-radius: 12px; box-shadow: 0 4px 14px rgba(46, 134, 193, 0.08); margin-bottom: 16px;">
+        <div style="display:grid;grid-template-columns:1fr 1fr;gap:14px;margin-bottom:14px">
+          <div>
+                <label class="form-label">Nome <span style="color:var(--terra)">*</span></label>
+                <input id="edit-name" class="form-input" value="${p.name}">
+          </div>
+          <div>
+                <label class="form-label">Raça</label>
+                <input id="edit-breed" class="form-input" value="${p.breed || ''}">
+          </div>
+        </div>
+        <div style="display:grid;grid-template-columns:1fr 1fr;gap:14px;margin-bottom:0">
+          <div>
+                <label class="form-label">Cidade <span style="color:var(--terra)">*</span></label>
+                <input id="edit-city" class="form-input" value="${p.city}">
+          </div>
+          <div>
+                <label class="form-label">Estado <span style="color:var(--terra)">*</span></label>
+                <input id="edit-state" class="form-input" value="${p.state}" maxlength="2">
+          </div>
+        </div>
+      </div>
+      
+      <!-- Descrição -->
+      <div style="background:#fff; border: 1px solid #e5e7eb; border-left: 4px solid var(--yellow); padding: 18px; border-radius: 12px; box-shadow: 0 4px 14px rgba(46, 134, 193, 0.08); margin-bottom: 18px;">
+        <div style="margin-bottom:0">
+              <label class="form-label">Descrição</label>
+              <textarea id="edit-desc" class="form-textarea" rows="3" placeholder="Carregando..."></textarea>
+        </div>
+      </div>
+      
+      <div style="margin-top: 28px; display:flex; gap:10px;">
+        <button class="btn btn-primary" onclick="saveEditPet('${p.id}')" style="padding: 12px 24px;">💾 Salvar alterações</button>
+        <button class="btn btn-ghost" onclick="showTab('pets')" style="padding: 12px 24px;">Voltar</button>
+      </div>
+    </div>
+  `;
+  
+  fetch(`/api/pets/${id}`)
+    .then(r => r.json())
+    .then(data => {
+      const descEl = document.getElementById('edit-desc');
+      if(descEl && data.description !== undefined) {
+         descEl.value = data.description;
+      }
+    })
+    .catch(e => console.error('Erro ao carregar descrição', e));
+}
+
+function saveEditPet(id) {
+  const name  = document.getElementById('edit-name').value.trim();
+  const city  = document.getElementById('edit-city').value.trim();
+  const state = document.getElementById('edit-state').value.trim();
+  const err   = document.getElementById('edit-error');
+
+  err.style.display = 'none';
+
+  if (!name || !city || !state) {
+    err.textContent = '⚠️ Nome, cidade e estado são obrigatórios.';
+    err.style.display = 'block';
+    return;
+  }
+  
+  fetch(`/api/pets/${id}`, {
+    method: 'PUT',
+    headers: { 'Content-Type': 'application/json' },
+    body: JSON.stringify({
+      name: name,
+      breed: document.getElementById('edit-breed').value.trim(),
+      city: city,
+      state: state.toUpperCase(),
+      description: document.getElementById('edit-desc').value.trim()
+    })
+  })
+  .then(r => r.json())
+  .then(data => {
+    if (data.sucesso) {
+      showToast('✅ Pet atualizado com sucesso!', 'success');
+      loadOngData();
+      showTab('pets');
+    } else {
+      err.textContent = `⚠️ ${data.erro}`;
+      err.style.display = 'block';
+    }
+  })
+  .catch(e => {
+    err.textContent = `⚠️ Erro: ${e}`;
+    err.style.display = 'block';
+  });
+}
+
+// ── Toast ─────────────────────────────────────────────────────────────────────
+function showToast(msg, type = '') {
+  const t = document.getElementById('toast');
+  if(!t) return;
+  t.textContent = msg;
+  t.className = 'toast' + (type ? ' ' + type : '');
+  t.classList.add('show');
+  clearTimeout(t._t);
+  t._t = setTimeout(() => t.classList.remove('show'), 3200);
 }
 
 function updateOngSolicitacoesUI() {
@@ -213,7 +354,11 @@ function updateOngSolicitacoesUI() {
               `<button class="btn btn-sm" disabled style="display:flex; justify-content:center; background-color: #d1fae5; color: #065f46; border: 2px solid #a7f3d0; opacity: 1; font-weight: 700;">🏠 Adoção Confirmada</button>` : 
               (s.petStatus === 'adopted' ? 
                 `<button class="btn btn-sm" disabled style="display:flex; justify-content:center; background-color: var(--cream-d); color: var(--muted); border: 2px solid var(--sand); opacity: 1;">Pet adotado por outro</button>` : 
-                (s.status === 'rejected' ? `<button class="btn btn-sm" disabled style="display:flex; justify-content:center; background-color: var(--cream-d); color: var(--muted); border: 2px solid var(--sand); opacity: 1;">❌ Dispensado</button>` : `<button class="btn btn-primary btn-sm" id="btn-adopt-${s.id}" onclick="confirmarAdocao(${s.id})" style="display:flex; justify-content:center; background-color: var(--sage); border-color: var(--sage);">🏆 Confirmar Adoção</button>`)
+                (s.status === 'rejected' ? `<button class="btn btn-sm" disabled style="display:flex; justify-content:center; background-color: var(--cream-d); color: var(--muted); border: 2px solid var(--sand); opacity: 1;">❌ Dispensado</button>` : 
+                `<div style="display:flex; gap:8px; width:100%; margin-top: 8px;">
+                  <button class="btn btn-primary btn-sm" id="btn-adopt-${s.id}" onclick="confirmarAdocao(${s.id})" style="flex:1; display:flex; justify-content:center; background-color: var(--sage); border-color: var(--sage);">🏆 Confirmar</button>
+                  <button class="btn btn-outline btn-sm btn-danger" id="btn-reject-${s.id}" onclick="recusarAdocao(${s.id})" style="flex:1; display:flex; justify-content:center;">❌ Recusar</button>
+                </div>`)
               )
             }
           </div>
@@ -225,6 +370,11 @@ function updateOngSolicitacoesUI() {
 function confirmarAdocao(reqId) {
   if (!confirm('Deseja confirmar a adoção para este adotante? O pet será marcado como Adotado e a solicitação será aprovada.')) return;
   mudarStatusSolicitacao(reqId, 'approved');
+}
+
+function recusarAdocao(reqId) {
+  if (!confirm('Tem certeza que deseja recusar esta solicitação de adoção? O usuário adotante será notificado no painel dele.')) return;
+  mudarStatusSolicitacao(reqId, 'rejected');
 }
 
 function marcarAdotado(petId) {
@@ -239,14 +389,23 @@ function marcarAdotado(petId) {
 
 function mudarStatusSolicitacao(reqId, novoStatus) {
   const btn = document.getElementById(`btn-adopt-${reqId}`);
+  const btnReject = document.getElementById(`btn-reject-${reqId}`);
   if(btn) {
     btn.disabled = true;
+    if(btnReject) btnReject.disabled = true;
     if (novoStatus === 'approved') {
       btn.textContent = '🏠 Adoção Confirmada';
       btn.style.backgroundColor = '#d1fae5';
       btn.style.color = '#065f46';
       btn.style.borderColor = '#a7f3d0';
       btn.style.fontWeight = '700';
+      if(btnReject) btnReject.style.display = 'none';
+    } else if (novoStatus === 'rejected') {
+      btn.textContent = '❌ Dispensado';
+      btn.style.backgroundColor = 'var(--cream-d)';
+      btn.style.color = 'var(--muted)';
+      btn.style.borderColor = 'var(--sand)';
+      if(btnReject) btnReject.style.display = 'none';
     } else {
       btn.textContent = 'Processando...';
     }
@@ -265,8 +424,9 @@ function mudarStatusSolicitacao(reqId, novoStatus) {
         showToast('❌ Erro: ' + (data.erro || 'Não foi possível confirmar.'), '');
         if(btn) {
           btn.disabled = false;
-          btn.textContent = '🏆 Confirmar Adoção';
+          btn.textContent = '🏆 Confirmar';
           btn.style = 'display:flex; justify-content:center; background-color: var(--sage); border-color: var(--sage);';
+          if(btnReject) btnReject.disabled = false;
         }
       }
     })
@@ -274,8 +434,9 @@ function mudarStatusSolicitacao(reqId, novoStatus) {
       showToast('Erro de conexão', '');
       if(btn) {
         btn.disabled = false;
-        btn.textContent = '🏆 Confirmar Adoção';
+        btn.textContent = '🏆 Confirmar';
         btn.style = 'display:flex; justify-content:center; background-color: var(--sage); border-color: var(--sage);';
+        if(btnReject) btnReject.disabled = false;
       }
     });
 }

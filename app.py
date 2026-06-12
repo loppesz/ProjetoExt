@@ -1,6 +1,7 @@
 from flask import Flask, render_template, request, redirect, url_for, flash, jsonify
 from flask_sqlalchemy import SQLAlchemy
 from flask_login import LoginManager, UserMixin, login_user, logout_user, login_required, current_user
+from sqlalchemy import text
 from werkzeug.security import generate_password_hash, check_password_hash
 from werkzeug.utils import secure_filename
 import os
@@ -363,7 +364,7 @@ def get_pet(pet_id):
         if adocao:
             adocao_info = {
                 'solicitante': adocao.solicitante.name,
-                'data': adocao.criado_em.strftime('%d/%m/%Y') if adocao.criado_em else 'Desconhecida'
+                'data': adocao.criado_em.strftime('%d/%m/%Y') if hasattr(adocao.criado_em, 'strftime') else "/".join(str(adocao.criado_em).split()[0].split('-')[::-1]) if adocao.criado_em else 'Desconhecida'
             }
 
     owner_name = 'Tutor Parceiro'
@@ -491,7 +492,7 @@ def admin_listar_pets():
                 if adocao:
                     adocao_info = {
                         'solicitante': adocao.solicitante.name,
-                        'data': adocao.criado_em.strftime('%d/%m/%Y') if adocao.criado_em else 'Desconhecida'
+                        'data': adocao.criado_em.strftime('%d/%m/%Y') if hasattr(adocao.criado_em, 'strftime') else "/".join(str(adocao.criado_em).split()[0].split('-')[::-1]) if adocao.criado_em else 'Desconhecida'
                     }
             pets_data.append({
                 'id': p.id,
@@ -796,49 +797,59 @@ def delete_pet(pet_id):
 @app.route('/api/user/solicitacoes', methods=['GET'])
 @login_required
 def get_user_solicitacoes():
-    pets = Pet.query.filter_by(usuario_id=current_user.id).all()
-    pet_ids = [p.id for p in pets]
-    solicitacoes = SolicitacaoAdocao.query.filter(SolicitacaoAdocao.pet_id.in_(pet_ids)).all()
-    return jsonify({'solicitacoes': [{
-        'id': s.id,
-        'petName': s.pet.nome,
-        'petId': s.pet.id,
-        'from': s.solicitante.name,
-        'phone': s.solicitante.telefone or '',
-        'city': f"{s.solicitante.cidade}/{s.solicitante.estado}" if s.solicitante.cidade else '',
-        'msg': s.mensagem,
-        'status': s.status,
-        'petStatus': s.pet.status,
-        'data': s.criado_em.strftime('%Y-%m-%d') if s.criado_em else ''
-    } for s in solicitacoes]})
+    try:
+        pets = Pet.query.filter_by(usuario_id=current_user.id).all()
+        pet_ids = [p.id for p in pets]
+        solicitacoes = SolicitacaoAdocao.query.filter(SolicitacaoAdocao.pet_id.in_(pet_ids)).order_by(SolicitacaoAdocao.id.desc()).all()
+        return jsonify({'solicitacoes': [{
+            'id': s.id,
+            'petName': s.pet.nome,
+            'petId': s.pet.id,
+            'from': s.solicitante.name,
+            'phone': s.solicitante.telefone or '',
+            'city': f"{s.solicitante.cidade}/{s.solicitante.estado}" if s.solicitante.cidade else '',
+            'msg': s.mensagem,
+            'status': s.status,
+            'petStatus': s.pet.status,
+            'data': s.criado_em.strftime('%Y-%m-%d') if hasattr(s.criado_em, 'strftime') else str(s.criado_em).split()[0] if s.criado_em else ''
+        } for s in solicitacoes if s.pet]})
+    except Exception as e:
+        print(f"Erro em /api/user/solicitacoes: {e}")
+        return jsonify({'erro': str(e)}), 500
 
 # GET - Minhas Adoções (Pedidos feitos pelo usuário)
 @app.route('/api/user/adocoes', methods=['GET'])
 @login_required
 def get_user_adocoes():
-    solicitacoes = SolicitacaoAdocao.query.filter_by(solicitante_id=current_user.id).all()
-    adocoes = []
-    for s in solicitacoes:
-        tutor = s.pet.usuario
-        ong = Ong.query.filter_by(usuario_id=tutor.id).first() if tutor and tutor.role == 'ong' else None
-        contato = (ong.whatsapp if ong and ong.whatsapp else tutor.telefone) if tutor else ''
-        
-        adocoes.append({
-            'id': s.id,
-            'petId': s.pet.id,
-            'petName': s.pet.nome,
-            'petBreed': s.pet.raca,
-            'city': s.pet.cidade,
-            'state': s.pet.estado,
-            'photo': s.pet.foto_capa,
-            'date': s.criado_em.strftime('%d/%m/%Y'),
-            'status': s.status,
-            'msg': s.mensagem,
-            'ongName': ong.nome if ong else (tutor.name if tutor else 'Tutor'),
-            'whatsapp': contato,
-            'has_feedback': Feedback.query.filter_by(solicitacao_id=s.id).first() is not None
-        })
-    return jsonify({'adocoes': adocoes})
+    try:
+        solicitacoes = SolicitacaoAdocao.query.filter_by(solicitante_id=current_user.id).order_by(SolicitacaoAdocao.id.desc()).all()
+        adocoes = []
+        for s in solicitacoes:
+            if not s.pet:
+                continue
+            tutor = s.pet.usuario
+            ong = Ong.query.filter_by(usuario_id=tutor.id).first() if tutor and tutor.role == 'ong' else None
+            contato = (ong.whatsapp if ong and ong.whatsapp else tutor.telefone) if tutor else ''
+            
+            adocoes.append({
+                'id': s.id,
+                'petId': s.pet.id,
+                'petName': s.pet.nome,
+                'petBreed': s.pet.raca,
+                'city': s.pet.cidade,
+                'state': s.pet.estado,
+                'photo': s.pet.foto_capa,
+                'date': s.criado_em.strftime('%d/%m/%Y') if hasattr(s.criado_em, 'strftime') else "/".join(str(s.criado_em).split()[0].split('-')[::-1]) if s.criado_em else '',
+                'status': s.status,
+                'msg': s.mensagem,
+                'ongName': ong.nome if ong else (tutor.name if tutor else 'Tutor'),
+                'whatsapp': contato,
+                'has_feedback': Feedback.query.filter_by(solicitacao_id=s.id).first() is not None
+            })
+        return jsonify({'adocoes': adocoes})
+    except Exception as e:
+        print(f"Erro em /api/user/adocoes: {e}")
+        return jsonify({'erro': str(e)}), 500
 
 # POST - Cancelar solicitação
 @app.route('/api/user/solicitacao/<int:req_id>/cancel', methods=['POST'])
@@ -847,7 +858,7 @@ def cancel_solicitacao(req_id):
     solicitacao = SolicitacaoAdocao.query.get_or_404(req_id)
     if solicitacao.solicitante_id != current_user.id:
         return jsonify({'erro': 'Acesso negado'}), 403
-    db.session.delete(solicitacao)
+    solicitacao.status = 'cancelled'
     db.session.commit()
     return jsonify({'sucesso': True})
 
@@ -981,7 +992,11 @@ def register():
         
     if request.method == 'POST':
         try:
-            data = request.get_json()
+            if request.is_json:
+                data = request.get_json()
+            else:
+                data = request.form
+
             nome = data.get('name')
             email = data.get('email')
             senha = data.get('password')
@@ -1008,12 +1023,27 @@ def register():
             db.session.flush() # Gerar ID do usuário antes do commit
             
             if novo_usuario.role == 'ong':
+                foto_url = 'https://images.unsplash.com/photo-1601758124096-7093b3fef44d?w=600&q=80'
+                if 'ong_foto' in request.files:
+                    arquivo = request.files['ong_foto']
+                    if arquivo and arquivo.filename:
+                        ext_permitidas = {'png', 'jpg', 'jpeg', 'webp'}
+                        ext = arquivo.filename.rsplit('.', 1)[1].lower() if '.' in arquivo.filename else ''
+                        if ext in ext_permitidas:
+                            timestamp = int(time.time())
+                            filename = secure_filename(f"ong_{timestamp}_{arquivo.filename}")
+                            arquivo.save(os.path.join(app.config['UPLOAD_FOLDER'], filename))
+                            foto_url = f'/static/uploads/{filename}'
+
                 nova_ong = Ong(
                     usuario_id=novo_usuario.id,
                     nome=data.get('ong_nome') or nome,
                     cidade=data.get('city'),
                     estado=data.get('state'),
-                    whatsapp=data.get('phone', '')
+                    whatsapp=data.get('phone', ''),
+                    descricao=data.get('ong_desc', ''),
+                    descricao_completa=data.get('ong_desc_full', ''),
+                    foto_url=foto_url
                 )
                 db.session.add(nova_ong)
                 
@@ -1171,19 +1201,23 @@ def api_ong_profile():
 def api_ong_solicitacoes():
     if current_user.role != 'ong':
         return jsonify({'erro': 'Acesso negado'}), 403
-    pets = Pet.query.filter_by(usuario_id=current_user.id).all()
-    pet_ids = [p.id for p in pets]
-    solicitacoes = SolicitacaoAdocao.query.filter(SolicitacaoAdocao.pet_id.in_(pet_ids)).all()
-    return jsonify({'solicitacoes': [{
-        'id': s.id, 'petName': s.pet.nome, 'solicitanteName': s.solicitante.name,
-        'email': s.solicitante.email,
-        'telefone': s.solicitante.telefone,
-        'cidade': s.solicitante.cidade,
-        'estado': s.solicitante.estado,
-        'mensagem': s.mensagem, 'status': s.status,
-        'petStatus': s.pet.status,
-        'data': s.criado_em.strftime('%Y-%m-%d') if s.criado_em else ''
-    } for s in solicitacoes]})
+    try:
+        pets = Pet.query.filter_by(usuario_id=current_user.id).all()
+        pet_ids = [p.id for p in pets]
+        solicitacoes = SolicitacaoAdocao.query.filter(SolicitacaoAdocao.pet_id.in_(pet_ids)).order_by(SolicitacaoAdocao.id.desc()).all()
+        return jsonify({'solicitacoes': [{
+            'id': s.id, 'petName': s.pet.nome, 'solicitanteName': s.solicitante.name,
+            'email': s.solicitante.email,
+            'telefone': s.solicitante.telefone,
+            'cidade': s.solicitante.cidade,
+            'estado': s.solicitante.estado,
+            'mensagem': s.mensagem, 'status': s.status,
+            'petStatus': s.pet.status,
+            'data': s.criado_em.strftime('%Y-%m-%d') if hasattr(s.criado_em, 'strftime') else str(s.criado_em).split()[0] if s.criado_em else ''
+        } for s in solicitacoes if s.pet]})
+    except Exception as e:
+        print(f"Erro em /api/ong/solicitacoes: {e}")
+        return jsonify({'erro': str(e)}), 500
 
 @app.route('/api/ong/pet/<int:pet_id>/marcar-adotado', methods=['POST'])
 @login_required
@@ -1272,11 +1306,19 @@ def sobre():
 @app.after_request
 def add_header(response):
     # Força o navegador a sempre recarregar o HTML para atualizar o status de login
-    if 'text/html' in response.headers.get('Content-Type', ''):
+    if 'text/html' in response.headers.get('Content-Type', '') or 'application/json' in response.headers.get('Content-Type', ''):
         response.headers['Cache-Control'] = 'no-store, no-cache, must-revalidate, max-age=0'
         response.headers['Pragma'] = 'no-cache'
         response.headers['Expires'] = '-1'
     return response
+
+# Resolve o erro injetando a coluna que faltava no banco de dados antigo
+with app.app_context():
+    try:
+        db.session.execute(text('ALTER TABLE feedback ADD COLUMN aprovado BOOLEAN DEFAULT 1'))
+        db.session.commit()
+    except Exception:
+        db.session.rollback()
 
 if __name__ == '__main__':
     app.run(debug=True)

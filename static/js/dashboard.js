@@ -197,7 +197,6 @@ function renderMyPets() {
           </div>
           <div class="item-actions" style="flex-direction:column">
             <button class="btn btn-ghost btn-sm" onclick="openEditTab('${p.id}')">✏️ Editar</button>
-            <button class="btn btn-outline btn-sm btn-danger" onclick="confirmRemove('${p.id}')">🗑️ Remover</button>
           </div>
         </div>`).join('');
       updateStats();
@@ -347,41 +346,18 @@ function saveEdit(id) {
   });
 }
 
-// ── Remover Pet ───────────────────────────────────────────────────────────────
-function confirmRemove(id) {
-  if(!confirm('Esta ação não pode ser desfeita. Deseja realmente remover o pet da plataforma?')) return;
-  
-  fetch(`/api/pets/${id}`, {
-    method: 'DELETE',
-    headers: { 'Content-Type': 'application/json' }
-  })
-  .then(r => {
-    console.log('DEBUG: Response status', r.status);
-    return r.json();
-  })
-  .then(data => {
-    console.log('DEBUG: Response data', data);
-    if (data.sucesso) {
-      closeModal();
-      showToast(`✅ ${data.mensagem}`, 'success');
-      renderMyPets();
-    } else {
-      showToast(`❌ ${data.erro}`, '');
-    }
-  })
-  .catch(e => {
-    console.error('DEBUG: Erro na requisição', e);
-    showToast(`Erro: ${e}`, '');
-  });
-}
-
 // ── Adoções ───────────────────────────────────────────────────────────────────
 function renderAdoptions() {
-  fetch('/api/user/adocoes')
+  fetch('/api/user/adocoes?t=' + Date.now())
     .then(r => r.json())
     .then(data => {
-      const adocoes = data.adocoes || [];
       const el = document.getElementById('adoptions-list');
+      if (data.erro) {
+        if (el) el.innerHTML = `<div class="empty"><div class="empty-icon">⚠️</div><div class="empty-title">Erro do Servidor</div><p class="empty-desc">${data.erro}</p></div>`;
+        return;
+      }
+
+      const adocoes = data.adocoes || [];
       
       if(document.getElementById('stat-adoptions') && user.role !== 'admin') {
         document.getElementById('stat-adoptions').textContent = adocoes.length;
@@ -390,13 +366,15 @@ function renderAdoptions() {
       // ===== ATUALIZAÇÃO DO MENU LATERAL E NOTIFICAÇÃO =====
       const sidebarAdoptions = document.querySelector(`[onclick*="showTab('adoptions'"]`) || document.querySelector(`[onclick*='showTab("adoptions"']`);
       if (sidebarAdoptions) {
-        // Renomeia o texto do menu para "Acompanhar Pedidos"
-        const iconSpan = sidebarAdoptions.querySelector('.icon');
-        if (iconSpan && !sidebarAdoptions.innerText.includes('Acompanhar Pedidos')) {
-          sidebarAdoptions.innerHTML = '';
-          sidebarAdoptions.appendChild(iconSpan);
-          sidebarAdoptions.appendChild(document.createTextNode(' Acompanhar Pedidos'));
+        if (!sidebarAdoptions.textContent.includes('Acompanhar Pedidos')) {
+          sidebarAdoptions.innerHTML = '📋 Acompanhar Pedidos';
         }
+      }
+      
+      const statAdoptions = document.getElementById('stat-adoptions');
+      if (statAdoptions && user.role !== 'admin') {
+         const label = statAdoptions.closest('.stat-card').querySelector('.stat-label');
+         if (label) label.textContent = 'Acompanhar Pedidos';
       }
       
       const panelTitle = document.querySelector('#tab-adoptions .panel-title');
@@ -460,7 +438,7 @@ function renderAdoptions() {
             <div class="item-info" style="flex:1;">
               <div class="item-name" style="font-size: 1.2rem;">${a.petName}</div>
               <div class="item-meta">${a.petBreed} · 📍 ${a.city} · ${a.date}</div>
-              ${a.status==='approved' ? `<div class="status-pill pill-approved" style="margin-top:8px;">✅ Pedido Aceito</div>` : a.status==='rejected' ? `<div class="status-pill" style="margin-top:8px; background:#f3f4f6; color:#4b5563;">❌ Solicitação não aceita</div>` : `<div class="status-pill pill-pending" style="margin-top:8px;">⏳ Aguardando contato do responsável</div>`}
+            ${a.status==='approved' ? `<div class="status-pill pill-approved" style="margin-top:8px;">✅ Pedido Aceito</div>` : a.status==='rejected' ? `<div class="status-pill" style="margin-top:8px; background:#f3f4f6; color:#4b5563;">❌ Infelizmente não foi possível prosseguir com seu pedido</div>` : a.status==='cancelled' ? `<div class="status-pill" style="margin-top:8px; background:#fef2f2; color:#991b1b; border: 1px solid #fecaca;">🚫 Pedido cancelado por você</div>` : `<div class="status-pill pill-pending" style="margin-top:8px;">⏳ Aguardando contato do responsável</div>`}
             </div>
             <div class="item-actions" style="flex-direction:column; align-items: flex-end; min-width: 140px;">
               <a href="/pet/${a.petId}" class="btn btn-outline btn-sm">👁️ Ver pet</a>
@@ -489,6 +467,10 @@ function renderAdoptions() {
           ` : ''}
         </div>`;
       }).join('');
+    })
+    .catch(e => {
+      console.error('Erro ao carregar adoções:', e);
+      document.getElementById('adoptions-list').innerHTML = `<div class="empty"><div class="empty-icon">⚠️</div><div class="empty-title">Erro ao carregar</div><p class="empty-desc">Não foi possível carregar suas solicitações. Tente atualizar a página.</p></div>`;
     });
 }
 
@@ -575,11 +557,21 @@ function submitFeedback(reqId) {
 
 // ── Pedidos Recebidos ─────────────────────────────────────────────────────────
 function renderReceived() {
-  fetch('/api/user/solicitacoes')
+  fetch('/api/user/solicitacoes?t=' + Date.now())
     .then(r => r.json())
     .then(data => {
+      const el = document.getElementById('received-list');
+      if (data.erro) {
+        if (el) el.innerHTML = `<div class="empty"><div class="empty-icon">⚠️</div><div class="empty-title">Erro do Servidor</div><p class="empty-desc">${data.erro}</p></div>`;
+        return;
+      }
+
       ALL_RECEIVED = data.solicitacoes || [];
       updateReceivedUI();
+    })
+    .catch(e => {
+      console.error('Erro ao carregar recebidos:', e);
+      document.getElementById('received-list').innerHTML = `<div class="empty"><div class="empty-icon">⚠️</div><div class="empty-title">Erro ao carregar</div></div>`;
     });
 }
 
@@ -727,7 +719,11 @@ function updateReceivedUI() {
               `<button class="btn btn-sm" disabled style="margin-top:8px; display:flex; justify-content:center; background-color: #d1fae5; color: #065f46; border: 2px solid #a7f3d0; opacity: 1; font-weight: 700;">🏠 Adoção Confirmada</button>` : 
               (r.petStatus === 'adopted' ? 
                 `<button class="btn btn-sm" disabled style="margin-top:8px; display:flex; justify-content:center; background-color: var(--cream-d); color: var(--muted); border: 2px solid var(--sand); opacity: 1;">Pet adotado por outro</button>` : 
-                (r.status === 'rejected' ? `<button class="btn btn-sm" disabled style="margin-top:8px; display:flex; justify-content:center; background-color: var(--cream-d); color: var(--muted); border: 2px solid var(--sand); opacity: 1;">❌ Dispensado</button>` : `<button class="btn btn-primary btn-sm" id="btn-adopt-${r.id}" onclick="confirmarAdocaoUsuario(${r.id})" style="margin-top:8px; display:flex; justify-content:center; background-color: var(--sage); border-color: var(--sage);">🏆 Confirmar Adoção</button>`)
+                (r.status === 'rejected' ? `<button class="btn btn-sm" disabled style="margin-top:8px; display:flex; justify-content:center; background-color: var(--cream-d); color: var(--muted); border: 2px solid var(--sand); opacity: 1;">❌ Dispensado</button>` : 
+                 `<div style="display:flex; gap:8px; width:100%; margin-top:8px;">
+                    <button class="btn btn-primary btn-sm" id="btn-adopt-${r.id}" onclick="confirmarAdocaoUsuario(${r.id})" style="flex:1; display:flex; justify-content:center; background-color: var(--sage); border-color: var(--sage);">🏆 Confirmar</button>
+                    <button class="btn btn-outline btn-sm btn-danger" id="btn-reject-${r.id}" onclick="recusarAdocaoUsuario(${r.id})" style="flex:1; display:flex; justify-content:center;">❌ Recusar</button>
+                  </div>`)
               )
             }
           </div>
@@ -740,16 +736,30 @@ function confirmarAdocaoUsuario(reqId) {
   respondRequest(reqId, 'approved');
 }
 
+function recusarAdocaoUsuario(reqId) {
+  if (!confirm('Deseja recusar esta solicitação? O adotante será notificado.')) return;
+  respondRequest(reqId, 'rejected');
+}
+
 function respondRequest(id, status) {
   const btn = document.getElementById(`btn-adopt-${id}`);
+  const btnReject = document.getElementById(`btn-reject-${id}`);
   if(btn) {
     btn.disabled = true;
+    if(btnReject) btnReject.disabled = true;
     if (status === 'approved') {
       btn.textContent = '🏠 Adoção Confirmada';
       btn.style.backgroundColor = '#d1fae5';
       btn.style.color = '#065f46';
       btn.style.borderColor = '#a7f3d0';
       btn.style.fontWeight = '700';
+      if(btnReject) btnReject.style.display = 'none';
+    } else if (status === 'rejected') {
+      btn.textContent = '❌ Dispensado';
+      btn.style.backgroundColor = 'var(--cream-d)';
+      btn.style.color = 'var(--muted)';
+      btn.style.borderColor = 'var(--sand)';
+      if(btnReject) btnReject.style.display = 'none';
     } else {
       btn.textContent = 'Processando...';
     }
@@ -770,8 +780,9 @@ function respondRequest(id, status) {
       showToast('❌ Erro: ' + data.erro, '');
       if(btn) {
         btn.disabled = false;
-        btn.textContent = '🏆 Confirmar Adoção';
+          btn.textContent = '🏆 Confirmar';
         btn.style = 'margin-top:8px; display:flex; justify-content:center; background-color: var(--sage); border-color: var(--sage);';
+          if(btnReject) btnReject.disabled = false;
       }
     }
   })
@@ -779,8 +790,9 @@ function respondRequest(id, status) {
     showToast('Erro de conexão', '');
     if(btn) {
       btn.disabled = false;
-      btn.textContent = '🏆 Confirmar Adoção';
+        btn.textContent = '🏆 Confirmar';
       btn.style = 'margin-top:8px; display:flex; justify-content:center; background-color: var(--sage); border-color: var(--sage);';
+        if(btnReject) btnReject.disabled = false;
     }
   });
 }
@@ -1076,26 +1088,10 @@ window.renderAdminPetsList = function() {
         ${p.adocao ? `<div style="margin-top: 10px; font-size: 0.85rem; color: #065f46; background: #d1fae5; padding: 6px 12px; border-radius: 6px; border: 1px solid #a7f3d0; display: inline-block;">🏠 Adotado por <strong>${p.adocao.solicitante}</strong> em ${p.adocao.data}</div>` : ''}
       </div>
       <div class="item-actions">
-        <button class="btn btn-outline btn-sm" onclick="openEditTab('${p.id}')">✏️ Editar</button>
         <a href="/pet/${p.id}" class="btn btn-outline btn-sm">👁️ Ver</a>
-        <button class="btn btn-outline btn-sm btn-danger" onclick="adminConfirmRemove('${p.id}')">🗑️ Excluir</button>
       </div>
     </div>
   `).join('');
-}
-
-window.adminConfirmRemove = function(id) {
-  if(!confirm('Atenção: Você está como Administrador. Deseja realmente excluir este pet definitivamente da plataforma?')) return;
-  fetch(`/api/pets/${id}`, { method: 'DELETE', headers: { 'Content-Type': 'application/json' } })
-  .then(r => r.json())
-  .then(data => {
-    if (data.sucesso) {
-      showToast(`✅ ${data.mensagem}`, 'success');
-      fetch('/api/admin/pets').then(r => r.json()).then(d => { ADMIN_ALL_PETS = d.pets || []; renderAdminPetsList(); });
-    } else {
-      showToast(`❌ ${data.erro}`, '');
-    }
-  });
 }
 
 // ── Gerenciar ONGs Aba Completa (admin) ──────────────────────────────────────
