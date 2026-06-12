@@ -182,23 +182,42 @@ function renderMyPets() {
         return;
       }
       el.innerHTML = MY_PETS.map(p => `
-        <div class="item-card">
-          <img class="item-img" src="${p.photo}" alt="${p.name}" onclick="location.href='/pet/${p.id}'" style="cursor:pointer">
-          <div class="item-info">
-            <div class="item-name">${p.name}</div>
-            <div class="item-meta">${p.breed} · 📍 ${p.city}/${p.state}</div>
-            <div style="display:flex;align-items:center;gap:10px;margin-top:8px;flex-wrap:wrap">
-              <select class="sort-select" style="padding:6px 10px;font-size:.82rem" onchange="changeStatus('${p.id}',this.value)">
+        <details style="background: #fff; border: 1px solid #e2e8f0; border-radius: 12px; margin-bottom: 12px; overflow: hidden; box-shadow: 0 2px 8px rgba(0,0,0,0.02); transition: border-color 0.3s ease;">
+          <summary style="list-style: none; outline: none; cursor: pointer; padding: 16px; display: flex; justify-content: space-between; align-items: center; gap: 16px; flex-wrap: wrap;">
+            <div style="display: flex; align-items: center; flex: 1; min-width: 250px;">
+              <img src="${p.photo || 'https://images.unsplash.com/photo-1548199973-03cce0bbc87b?w=300'}" alt="${p.name}" style="width:52px;height:52px;border-radius:12px;object-fit:cover;flex-shrink:0;margin-right:16px;">
+              <div>
+                <div class="item-name" style="font-size: 1.1rem; color: var(--navy); font-weight: 700;">${p.name}</div>
+                <div style="font-size: 0.85rem; color: var(--muted); margin-top: 2px;">${p.breed || 'Sem raça'} · 📍 ${p.city || '-'}/${p.state || '-'}</div>
+              </div>
+            </div>
+            <div style="display: flex; align-items: center; gap: 12px;">
+              <span class="status-pill ${p.status === 'available' ? 'pill-avail' : p.status === 'adopted' ? 'pill-adopted' : 'pill-reserved'}" style="margin:0;">
+                ${p.status === 'available' ? 'Disponível' : p.status === 'adopted' ? 'Adotado' : 'Reservado'}
+              </span>
+              <span style="font-size: 0.85rem; color: var(--navy); background: #f8fafc; border: 1px solid #e2e8f0; padding: 6px 14px; border-radius: 20px; font-weight: 600;">Ver detalhes ▾</span>
+            </div>
+          </summary>
+          
+          <div style="padding: 0 16px 16px 84px; border-top: 1px solid #f1f5f9; padding-top: 16px;">
+            ${p.adocao ? `
+              <div style="background: #d1fae5; border: 1px solid #a7f3d0; padding: 12px 16px; border-radius: 8px; margin-bottom: 16px;">
+                <div style="font-size: 0.9rem; color: #065f46; font-weight: 700; margin-bottom: 4px;">🏠 Adotado por ${p.adocao.solicitante} em ${p.adocao.data}</div>
+                <div style="font-size: 0.85rem; color: #065f46; opacity: 0.9;">✉️ ${p.adocao.email} &nbsp;·&nbsp; 📞 ${p.adocao.telefone || 'Não informado'}</div>
+              </div>
+            ` : ''}
+            <div style="display: flex; gap: 8px; flex-wrap: wrap; align-items: center;">
+              <select class="sort-select" style="padding:6px 10px;font-size:.82rem; margin:0;" onchange="changeStatus('${p.id}',this.value)">
                 <option value="available" ${p.status==='available'?'selected':''}>✅ Disponível</option>
                 <option value="reserved"  ${p.status==='reserved'?'selected':''}>⏳ Reservado</option>
                 <option value="adopted"   ${p.status==='adopted'?'selected':''}>🏠 Adotado</option>
               </select>
+              <button class="btn btn-outline btn-sm" onclick="openEditTab('${p.id}')">✏️ Editar informações</button>
+              <a href="/pet/${p.id}" target="_blank" class="btn btn-ghost btn-sm">👁️ Ver pet</a>
             </div>
           </div>
-          <div class="item-actions" style="flex-direction:column">
-            <button class="btn btn-ghost btn-sm" onclick="openEditTab('${p.id}')">✏️ Editar</button>
-          </div>
-        </div>`).join('');
+        </details>
+      `).join('');
       updateStats();
     })
     .catch(e => {
@@ -995,7 +1014,7 @@ function moderateOngReject(id) {
 
 // ── Gerenciar Pets (admin) ───────────────────────────────────────────────────
 let ADMIN_ALL_PETS = [];
-let adminPetFilters = { species: '', gender: '', breed: '' };
+let adminPetFilters = { status: '', species: '', gender: '', breed: '' };
 
 window.openAdminPetsTab = function() {
   document.querySelectorAll('.sidebar-link').forEach(l => l.classList.remove('active'));
@@ -1019,6 +1038,15 @@ window.openAdminPetsTab = function() {
 
       <!-- Filtros -->
       <div style="display:flex; gap:10px; margin-bottom: 20px; background: #fff; padding: 16px; border-radius: 12px; border: 1px solid #e5e7eb; flex-wrap: wrap;">
+        <div>
+          <label class="form-label" style="font-size:0.8rem;margin-bottom:4px">Status</label>
+          <select class="form-input" id="admin-f-status" onchange="adminPetFilters.status=this.value; renderAdminPetsList()">
+            <option value="">Todos os status</option>
+            <option value="available">✅ Disponível</option>
+            <option value="reserved">⏳ Reservado</option>
+            <option value="adopted">🏠 Adotado</option>
+          </select>
+        </div>
         <div>
           <label class="form-label" style="font-size:0.8rem;margin-bottom:4px">Espécie</label>
           <select class="form-input" id="admin-f-species" onchange="adminPetFilters.species=this.value; renderAdminPetsList()">
@@ -1058,6 +1086,7 @@ window.renderAdminPetsList = function() {
   if (!el) return;
 
   let filtered = ADMIN_ALL_PETS.filter(p => {
+    if (adminPetFilters.status && p.status !== adminPetFilters.status) return false;
     if (adminPetFilters.species && p.species !== adminPetFilters.species) return false;
     if (adminPetFilters.gender && p.sex !== adminPetFilters.gender) return false;
     if (adminPetFilters.breed) {
@@ -1085,7 +1114,7 @@ window.renderAdminPetsList = function() {
           <span class="status-pill ${p.status === 'available' ? 'pill-avail' : p.status === 'adopted' ? 'pill-adopted' : 'pill-reserved'}">${p.status === 'available' ? 'Disponível' : p.status === 'adopted' ? 'Adotado' : 'Reservado'}</span>
           <span class="status-pill" style="background:#f1f5f9; color:#475569; border:1px solid #e2e8f0;">Moderação: ${p.mod_status}</span>
         </div>
-        ${p.adocao ? `<div style="margin-top: 10px; font-size: 0.85rem; color: #065f46; background: #d1fae5; padding: 6px 12px; border-radius: 6px; border: 1px solid #a7f3d0; display: inline-block;">🏠 Adotado por <strong>${p.adocao.solicitante}</strong> em ${p.adocao.data}</div>` : ''}
+        ${p.adocao ? `<div style="margin-top: 10px; font-size: 0.85rem; color: #065f46; background: #d1fae5; padding: 6px 12px; border-radius: 6px; border: 1px solid #a7f3d0; display: inline-block;">🏠 Adotado por <strong><button onclick="openAdminUsersTab('${p.adocao.solicitante_id}')" style="background: none; border: none; padding: 0; font: inherit; color: inherit; text-decoration: underline; cursor: pointer;">${p.adocao.solicitante}</button></strong> em ${p.adocao.data}</div>` : ''}
       </div>
       <div class="item-actions">
         <a href="/pet/${p.id}" class="btn btn-outline btn-sm">👁️ Ver</a>
@@ -1194,7 +1223,9 @@ window.adminConfirmRemoveOng = function(id) {
 let ADMIN_ALL_USERS = [];
 let adminUserFilters = { search: '' };
 
-window.openAdminUsersTab = function() {
+window.openAdminUsersTab = function(expandUserId = null) {
+  if (expandUserId) adminUserFilters.search = '';
+
   document.querySelectorAll('.sidebar-link').forEach(l => l.classList.remove('active'));
   document.querySelectorAll('.tab-panel').forEach(p => p.classList.remove('active'));
 
@@ -1228,11 +1259,11 @@ window.openAdminUsersTab = function() {
   
   fetch('/api/admin/users').then(r => r.json()).then(data => {
     ADMIN_ALL_USERS = data.users || [];
-    renderAdminUsersList();
+    renderAdminUsersList(expandUserId);
   });
 }
 
-window.renderAdminUsersList = function() {
+window.renderAdminUsersList = function(expandUserId = null) {
   const el = document.getElementById('admin-users-list');
   if (!el) return;
 
@@ -1253,34 +1284,144 @@ window.renderAdminUsersList = function() {
   }
 
   el.innerHTML = filtered.map(u => `
-    <div class="item-card" style="box-shadow: none; border: 1px solid #e2e8f0;">
-      <div style="width:52px;height:52px;border-radius:50%;background:var(--blush);display:flex;align-items:center;justify-content:center;font-size:1.4rem;flex-shrink:0;margin-right:12px;">🧑</div>
-      <div class="item-info">
-        <div class="item-name">${u.name}</div>
-        <div class="item-meta">✉️ ${u.email} · 📞 ${u.phone}</div>
-        <div style="margin-top:8px; display:flex; gap:6px;">
+    <details id="admin-user-details-${u.id}" ${expandUserId == u.id ? 'open' : ''} style="background: #fff; border: 1px solid ${expandUserId == u.id ? 'var(--blue)' : '#e2e8f0'}; border-radius: 12px; margin-bottom: 12px; overflow: hidden; box-shadow: 0 2px 8px rgba(0,0,0,0.02); transition: border-color 0.3s ease;">
+      <summary style="list-style: none; outline: none; cursor: pointer; padding: 16px; display: flex; justify-content: space-between; align-items: center;">
+        <div style="display: flex; align-items: center;">
+          <div style="width:48px;height:48px;border-radius:50%;background:var(--blush, #fce7f3);display:flex;align-items:center;justify-content:center;font-size:1.4rem;flex-shrink:0;margin-right:16px;">🧑</div>
+          <div class="item-name" style="font-size: 1.1rem; color: var(--navy); font-weight: 700;">${u.name}</div>
+        </div>
+        <span style="font-size: 0.85rem; color: var(--navy); background: #f8fafc; border: 1px solid #e2e8f0; padding: 6px 14px; border-radius: 20px; font-weight: 600;">Ver informações ▾</span>
+      </summary>
+      
+      <div style="padding: 0 16px 16px 80px; border-top: 1px solid #f1f5f9; padding-top: 16px;">
+        <div style="font-size: 0.9rem; color: var(--bark-m); margin-bottom: 12px;">✉️ ${u.email} &nbsp;·&nbsp; 📞 ${u.phone}</div>
+        <div style="margin-bottom: 16px;">
           <span class="status-pill" style="background:#f1f5f9; color:#475569; border:1px solid #e2e8f0;">📍 ${u.city}/${u.state}</span>
         </div>
+        <div style="display: flex; gap: 8px;">
+          ${u.phone !== 'Não informado' ? `<a href="https://wa.me/55${String(u.phone).replace(/\D/g,'')}" target="_blank" class="btn btn-whatsapp btn-sm" style="background:#25d366;color:#fff;border:none;text-decoration:none;display:flex;align-items:center;gap:6px;"><span style="font-size:1.1rem;">💬</span> Mensagem</a>` : ''}
+          <button class="btn btn-outline btn-sm" onclick="openAdminEditUserTab('${u.id}')">✏️ Atualizar cadastro</button>
+        </div>
       </div>
-      <div class="item-actions">
-        ${u.phone !== 'Não informado' ? `<a href="https://wa.me/55${String(u.phone).replace(/\D/g,'')}" target="_blank" class="btn btn-whatsapp btn-sm" style="background:#25d366;color:#fff;border:none;text-decoration:none;display:flex;align-items:center;gap:6px;"><span style="font-size:1.1rem;">💬</span> Mensagem</a>` : ''}
-        <button class="btn btn-outline btn-sm btn-danger" onclick="adminConfirmRemoveUser('${u.id}')">🗑️ Excluir</button>
-      </div>
-    </div>
+    </details>
   `).join('');
+
+  if (expandUserId) {
+    setTimeout(() => {
+      const det = document.getElementById(`admin-user-details-${expandUserId}`);
+      if (det) {
+        det.scrollIntoView({ behavior: 'smooth', block: 'center' });
+      }
+    }, 100);
+  }
 }
 
-window.adminConfirmRemoveUser = function(id) {
-  if(!confirm('Atenção: Deseja realmente excluir este usuário (adotante) e todos os seus dados da plataforma?')) return;
-  fetch(`/api/admin/users/${id}`, { method: 'DELETE' })
+window.openAdminEditUserTab = function(id) {
+  if (ADMIN_ALL_USERS.length === 0) {
+    fetch('/api/admin/users').then(r => r.json()).then(data => {
+      ADMIN_ALL_USERS = data.users || [];
+      window.openAdminEditUserTab(id);
+    });
+    return;
+  }
+
+  const u = ADMIN_ALL_USERS.find(x => x.id == id);
+  if (!u) {
+    showToast('Usuário não encontrado na lista de adotantes.', '');
+    return;
+  }
+
+  document.querySelectorAll('.sidebar-link').forEach(l => l.classList.remove('active'));
+  document.querySelectorAll('.tab-panel').forEach(p => p.classList.remove('active'));
+
+  let tab = document.getElementById('tab-admin-edit-user');
+  if (!tab) {
+    tab = document.createElement('div');
+    tab.id = 'tab-admin-edit-user';
+    tab.className = 'tab-panel';
+    document.querySelector('.content').appendChild(tab);
+  }
+  tab.classList.add('active');
+
+  tab.innerHTML = `
+    <div class="fade-in">
+      <div class="panel-header" style="margin-bottom: 8px;">
+        <div class="panel-title">✏️ Editar Usuário: ${u.name}</div>
+      </div>
+      <p style="color: var(--muted); margin-bottom: 24px; font-size: 0.95rem;">Atualize as informações do adotante</p>
+      <div id="admin-user-error" class="modal-error-banner" style="display:none; padding:12px; border-radius:8px; margin-bottom:16px; background:#fff0f0; color:#c0392b;"></div>
+      
+      <div style="background:#fff; border: 1px solid #e5e7eb; border-left: 4px solid var(--blue); padding: 18px; border-radius: 12px; box-shadow: 0 4px 14px rgba(46, 134, 193, 0.08); margin-bottom: 16px;">
+        <div style="display:grid;grid-template-columns:1fr 1fr;gap:14px;margin-bottom:14px">
+          <div>
+            <label class="form-label">Nome <span style="color:var(--terra)">*</span></label>
+            <input id="admin-user-name" class="form-input" value="${u.name}">
+          </div>
+          <div>
+            <label class="form-label">E-mail <span style="color:var(--terra)">*</span></label>
+            <input id="admin-user-email" type="email" class="form-input" value="${u.email}">
+          </div>
+        </div>
+        <div style="display:grid;grid-template-columns:1fr 1fr;gap:14px;margin-bottom:0">
+          <div>
+            <label class="form-label">Telefone / WhatsApp</label>
+            <input id="admin-user-phone" class="form-input" value="${u.phone === 'Não informado' ? '' : u.phone}">
+          </div>
+          <div style="display:grid;grid-template-columns:1fr 80px;gap:10px">
+            <div>
+              <label class="form-label">Cidade</label>
+              <input id="admin-user-city" class="form-input" value="${u.city === 'Não informada' ? '' : u.city}">
+            </div>
+            <div>
+              <label class="form-label">UF</label>
+              <input id="admin-user-state" class="form-input" maxlength="2" value="${u.state === 'N/I' ? '' : u.state}">
+            </div>
+          </div>
+        </div>
+      </div>
+      
+      <div style="margin-top: 28px; display:flex; gap:10px;">
+        <button class="btn btn-primary" onclick="saveAdminEditUser('${u.id}')" style="padding: 12px 24px;">💾 Salvar alterações</button>
+        <button class="btn btn-ghost" onclick="openAdminUsersTab()" style="padding: 12px 24px;">Voltar</button>
+      </div>
+    </div>
+  `;
+}
+
+window.saveAdminEditUser = function(id) {
+  const name = document.getElementById('admin-user-name').value.trim();
+  const email = document.getElementById('admin-user-email').value.trim();
+  const phone = document.getElementById('admin-user-phone').value.trim();
+  const city = document.getElementById('admin-user-city').value.trim();
+  const state = document.getElementById('admin-user-state').value.trim();
+  const err = document.getElementById('admin-user-error');
+  
+  err.style.display = 'none';
+
+  if (!name || !email) {
+    err.textContent = '⚠️ Nome e E-mail são obrigatórios.';
+    err.style.display = 'block';
+    return;
+  }
+
+  fetch(`/api/admin/users/${id}`, {
+    method: 'PUT',
+    headers: { 'Content-Type': 'application/json' },
+    body: JSON.stringify({ name, email, phone, city, state })
+  })
   .then(r => r.json())
   .then(data => {
     if (data.sucesso) {
-      showToast(`✅ ${data.mensagem}`, 'success');
-      fetch('/api/admin/users').then(r => r.json()).then(d => { ADMIN_ALL_USERS = d.users || []; renderAdminUsersList(); });
+      showToast('✅ ' + data.mensagem, 'success');
+      openAdminUsersTab();
     } else {
-      showToast(`❌ ${data.erro}`, '');
+      err.textContent = '❌ ' + data.erro;
+      err.style.display = 'block';
     }
+  })
+  .catch(e => {
+    err.textContent = '⚠️ Erro de conexão.';
+    err.style.display = 'block';
   });
 }
 
