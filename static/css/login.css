@@ -274,6 +274,8 @@ body {
 .divider::before,
 .divider::after {
   content: '';
+  position: static;
+  inset: auto;
   flex: 1;
   height: 1px;
   background: #e5e7eb;

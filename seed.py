@@ -52,7 +52,7 @@ with app.app_context():
         idade_anos=2, idade_meses=0, cor='Caramelo', vacinado=True, castrado=True,
         descricao='Tarzam é carinhoso e brincalhão. Adora um cafuné e passeios no parque.', 
         cidade='São Paulo', estado='SP', status='available', mod_status='approved', 
-        foto_capa='https://images.unsplash.com/photo-1552053831-71594a27632d?w=800'
+        foto_capa='https://i.ibb.co/q4xNPYt/IMG-20260506-114846-003.jpg'
     )
     
     pet2 = Pet(
@@ -117,7 +117,7 @@ with app.app_context():
         descricao='Resgatamos e reabilitamos cães e gatos em situação de rua desde 2015. Já realizamos mais de 300 adoções responsáveis.',
         descricao_completa='A Patinhas do Bem atua há mais de 9 anos no resgate, reabilitação e adoção responsável de animais em situação de vulnerabilidade na Grande São Paulo. Contamos com uma rede de lares temporários e parceiros veterinários que garantem o bem-estar de cada animal até encontrar um lar definitivo.',
         whatsapp='5511999990001', pets_count=12, adopted_count=320, donations_count=4800,
-        foto_url='https://images.unsplash.com/photo-1601758124096-7093b3fef44d?w=600&q=80',
+        foto_url='https://cdn.pixabay.com/photo/2016/02/18/18/37/puppy-1207816_1280.jpg',
         chave_pix='patinhasdob@gmail.com', link_vakinha='https://www.vakinha.com.br', status='approved'
     )
     
