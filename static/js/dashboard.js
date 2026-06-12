@@ -219,6 +219,7 @@ function changeStatus(id, newStatus) {
     if (data.sucesso) {
       showToast(`✅ ${data.mensagem}`, 'success');
       renderMyPets();
+      renderReceived();
     } else {
       showToast(`❌ ${data.erro}`, '');
     }
@@ -445,19 +446,19 @@ function renderAdoptions() {
         }
 
         return `
-        <div class="item-card" style="flex-direction:column; align-items: stretch; padding: 24px;">
+        <div class="item-card" id="adocao-req-${a.id}" style="flex-direction:column; align-items: stretch; padding: 24px;">
           <div style="display:flex; gap: 16px; width: 100%;">
             <img class="item-img" src="${a.photo}" alt="${a.petName}" style="width: 80px; height: 80px; border-radius: 12px; object-fit: cover;">
             <div class="item-info" style="flex:1;">
               <div class="item-name" style="font-size: 1.2rem;">${a.petName}</div>
               <div class="item-meta">${a.petBreed} · 📍 ${a.city} · ${a.date}</div>
-              <div class="status-pill pill-pending" style="margin-top:8px;">⏳ Aguardando contato do responsável</div>
+              ${a.status==='approved' ? `<div class="status-pill pill-approved" style="margin-top:8px;">✅ Pedido Aceito</div>` : a.status==='rejected' ? `<div class="status-pill" style="margin-top:8px; background:#f3f4f6; color:#4b5563;">❌ Solicitação não aceita</div>` : `<div class="status-pill pill-pending" style="margin-top:8px;">⏳ Aguardando contato do responsável</div>`}
             </div>
             <div class="item-actions" style="flex-direction:column; align-items: flex-end; min-width: 140px;">
               <a href="/pet/${a.petId}" class="btn btn-outline btn-sm">👁️ Ver pet</a>
-              <button class="btn btn-outline btn-sm btn-danger" onclick="cancelRequest(${a.id})">🗑️ Cancelar Pedido</button>
-              ${a.has_feedback ? `<span class="feedback-evaluated-badge">⭐ Avaliado</span>` : ''}
-              ${!a.has_feedback ? `<button class="btn btn-primary btn-sm" onclick="openFeedbackTab(${a.id})" style="margin-top: 4px;">⭐ Avaliar</button>` : ''}
+              ${a.status==='pending' ? `<button class="btn btn-outline btn-sm btn-danger" onclick="cancelRequest(${a.id})">🗑️ Cancelar Pedido</button>` : ''}
+              ${a.has_feedback ? `<span style="font-size: 0.85rem; background: #fef3c7; color: #d97706; padding: 4px 12px; border-radius: 20px; font-weight: 700; margin-top: 4px;">⭐ Avaliado</span>` : ''}
+              ${a.status==='approved' && !a.has_feedback ? `<button class="btn btn-primary btn-sm" onclick="openFeedbackTab(${a.id})" style="margin-top: 4px;">⭐ Avaliar Experiência</button>` : ''}
             </div>
           </div>
           
@@ -486,9 +487,16 @@ function renderAdoptions() {
 function cancelRequest(id) {
   if(!confirm('Deseja realmente cancelar sua solicitação de adoção?')) return;
   fetch(`/api/user/solicitacao/${id}/cancel`, { method: 'POST' })
-    .then(() => {
-      showToast('Solicitação cancelada.', '');
-      renderAdoptions();
+    .then(r => r.json())
+    .then(data => {
+      if(data.sucesso) {
+        const card = document.getElementById(`adocao-req-${id}`);
+        if(card) card.remove();
+        showToast('Solicitação cancelada.', 'success');
+        renderAdoptions(); // Atualiza contador e esconde lista se ficar vazia
+      } else {
+        showToast(data.erro || 'Erro ao cancelar.', 'error');
+      }
     });
 }
 
@@ -799,7 +807,7 @@ function renderModeration() {
           <div class="item-info">
             <div class="item-name">${p.name}</div>
             <div class="item-meta">${p.breed} · 📍 ${p.city}/${p.state}</div>
-            <div class="item-meta">👤 ${p.owner}</div>
+            <div class="item-meta">🏢 Responsável: ${p.owner}</div>
             ${p.description ? `<p style="font-size:.87rem;color:var(--bark-m);margin-top:8px;line-height:1.6">${p.description}</p>` : ''}
             <span class="status-pill pill-pending" style="margin-top:8px">⏳ Pendente de aprovação</span>
           </div>

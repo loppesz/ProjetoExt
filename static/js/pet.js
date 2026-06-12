@@ -154,6 +154,10 @@ function checkUserAdoptionStatus(pet) {
           const container = document.querySelector('.adopt-box');
           if(!container) return;
           
+          let statusText = myReq.status === 'approved' ? '✅ Pedido Aceito' : myReq.status === 'rejected' ? '❌ Não Aceito' : '⏳ Aguardando contato';
+          let statusColor = myReq.status === 'approved' ? '#059669' : myReq.status === 'rejected' ? '#e74c3c' : '#d97706';
+          let statusBg = myReq.status === 'approved' ? '#d1fae5' : myReq.status === 'rejected' ? '#fde8e8' : '#fef3c7';
+
           container.innerHTML = `
             <div class="owner-row">
               <div class="owner-avatar">🧑</div>
@@ -162,9 +166,9 @@ function checkUserAdoptionStatus(pet) {
                 <div class="owner-sub">📍 ${pet.city}/${pet.state} · Responsável pelo pet</div>
               </div>
             </div>
-            <div style="background:#fff; border: 1px solid #e5e7eb; border-left: 4px solid #d97706; padding: 18px; border-radius: 12px; box-shadow: 0 4px 14px rgba(46, 134, 193, 0.05); margin-top: 16px; margin-bottom: 12px;">
+            <div style="background:#fff; border: 1px solid #e5e7eb; border-left: 4px solid ${statusColor}; padding: 18px; border-radius: 12px; box-shadow: 0 4px 14px rgba(46, 134, 193, 0.05); margin-top: 16px; margin-bottom: 12px;">
               <h3 style="color:var(--navy); margin-top:0; margin-bottom:12px; font-size:1.05rem;">Sua Solicitação</h3>
-              <div style="display:inline-block; padding:4px 10px; border-radius:20px; font-size:0.8rem; font-weight:700; background:#fef3c7; color:#d97706; margin-bottom:12px;">⏳ Aguardando contato</div>
+              <div style="display:inline-block; padding:4px 10px; border-radius:20px; font-size:0.8rem; font-weight:700; background:${statusBg}; color:${statusColor}; margin-bottom:12px;">${statusText}</div>
               <p style="font-size:0.88rem; color:var(--bark-m); margin-bottom:16px;">Você já enviou um pedido para este pet. Acompanhe os detalhes e o contato no seu painel.</p>
               <a href="/dashboard#adoptions" class="btn btn-primary btn-full">📋 Acompanhar Pedido</a>
             </div>

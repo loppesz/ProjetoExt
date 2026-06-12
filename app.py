@@ -117,6 +117,24 @@ class Pet(db.Model):
     foto_capa = db.Column(db.String(255), nullable=True)
     criado_em = db.Column(db.DateTime, default=db.func.now())
 
+class Favorito(db.Model):
+    __tablename__ = 'favorito'
+    id = db.Column(db.Integer, primary_key=True)
+    usuario_id = db.Column(db.Integer, db.ForeignKey('usuario.id'), nullable=False)
+    pet_id = db.Column(db.Integer, db.ForeignKey('pet.id', ondelete='CASCADE'), nullable=False)
+    criado_em = db.Column(db.DateTime, default=db.func.now())
+    __table_args__ = (db.UniqueConstraint('usuario_id', 'pet_id', name='_usuario_pet_uc'),)
+
+class Feedback(db.Model):
+    __tablename__ = 'feedback'
+    id = db.Column(db.Integer, primary_key=True)
+    solicitacao_id = db.Column(db.Integer, db.ForeignKey('solicitacao_adocao.id'), nullable=False)
+    mensagem = db.Column(db.Text, nullable=False)
+    nota = db.Column(db.Integer, default=5)
+    criado_em = db.Column(db.DateTime, default=db.func.now())
+    solicitacao = db.relationship('SolicitacaoAdocao', backref=db.backref('feedback', uselist=False))
+
+
 class SiteImpactConfig(db.Model):
     __tablename__ = 'site_impact_config'
     id = db.Column(db.Integer, primary_key=True)
@@ -286,6 +304,10 @@ def listar_pets():
     
     pets = query.all()
     
+    user_favorites = []
+    if current_user.is_authenticated:
+        user_favorites = [f.pet_id for f in Favorito.query.filter_by(usuario_id=current_user.id).all()]
+
     # Mapeamento de porte para label
     size_labels = {
         'small': 'Pequeno',
@@ -308,7 +330,7 @@ def listar_pets():
                 'state': p.estado,
                 'photo': p.foto_capa,
                 'status': p.status,
-                'fav': False
+                'fav': p.id in user_favorites
             }
             for p in pets
         ]
@@ -741,7 +763,7 @@ def get_user_solicitacoes():
         'msg': s.mensagem,
         'status': s.status,
         'data': s.criado_em.strftime('%Y-%m-%d') if s.criado_em else ''
-    } for s in solicitacoes]})
+    } for s in solicitacoes if s.pet.status != 'adopted']})
 
 # GET - Minhas Adoções (Pedidos feitos pelo usuário)
 @app.route('/api/user/adocoes', methods=['GET'])
@@ -767,7 +789,7 @@ def get_user_adocoes():
             'msg': s.mensagem,
             'ongName': ong.nome if ong else (tutor.name if tutor else 'Tutor'),
             'whatsapp': contato,
-            'has_feedback': 'Feedback' in globals() and globals()['Feedback'].query.filter_by(solicitacao_id=s.id).first() is not None
+            'has_feedback': Feedback.query.filter_by(solicitacao_id=s.id).first() is not None
         })
     return jsonify({'adocoes': adocoes})
 
@@ -781,6 +803,69 @@ def cancel_solicitacao(req_id):
     db.session.delete(solicitacao)
     db.session.commit()
     return jsonify({'sucesso': True})
+
+@app.route('/api/pets/<int:pet_id>/favorite', methods=['POST'])
+@login_required
+def toggle_favorite(pet_id):
+    pet = Pet.query.get_or_404(pet_id)
+    favorito = Favorito.query.filter_by(usuario_id=current_user.id, pet_id=pet.id).first()
+
+    if favorito:
+        db.session.delete(favorito)
+        db.session.commit()
+        return jsonify({'sucesso': True, 'fav': False})
+    else:
+        novo_favorito = Favorito(usuario_id=current_user.id, pet_id=pet.id)
+        db.session.add(novo_favorito)
+        db.session.commit()
+        return jsonify({'sucesso': True, 'fav': True})
+
+@app.route('/api/user/favorites', methods=['GET'])
+@login_required
+def get_user_favorites():
+    favoritos = Favorito.query.filter_by(usuario_id=current_user.id).all()
+    pet_ids = [f.pet_id for f in favoritos]
+    pets = Pet.query.filter(Pet.id.in_(pet_ids)).all()
+    
+    return jsonify({'favorites': [{
+        'id': p.id,
+        'name': p.nome,
+        'breed': p.raca,
+        'city': p.cidade,
+        'photo': p.foto_capa,
+        'status': p.status
+    } for p in pets]})
+
+@app.route('/api/feedbacks', methods=['GET'])
+def get_feedbacks():
+    feedbacks = Feedback.query.order_by(Feedback.criado_em.desc()).limit(6).all()
+    return jsonify({'feedbacks': [{
+        'id': f.id,
+        'mensagem': f.mensagem,
+        'nota': f.nota,
+        'tutor': f.solicitacao.solicitante.name,
+        'pet_name': f.solicitacao.pet.nome,
+        'pet_photo': f.solicitacao.pet.foto_capa
+    } for f in feedbacks]})
+
+@app.route('/api/feedbacks', methods=['POST'])
+@login_required
+def create_feedback():
+    data = request.get_json()
+    solicitacao_id = data.get('solicitacao_id')
+    mensagem = data.get('mensagem')
+
+    if not solicitacao_id or not mensagem:
+        return jsonify({'erro': 'Dados incompletos.'}), 400
+
+    solicitacao = SolicitacaoAdocao.query.get_or_404(solicitacao_id)
+    if solicitacao.solicitante_id != current_user.id:
+        return jsonify({'erro': 'Solicitação inválida ou não pertence a você.'}), 403
+    
+    feedback = Feedback(solicitacao_id=solicitacao_id, mensagem=mensagem, nota=data.get('nota', 5))
+    db.session.add(feedback)
+    db.session.commit()
+    return jsonify({'sucesso': True, 'mensagem': 'Obrigado pelo seu feedback!'}), 201
 
 @app.route('/')
 def index():
@@ -1024,7 +1109,7 @@ def api_ong_solicitacoes():
         'estado': s.solicitante.estado,
         'mensagem': s.mensagem, 'status': s.status,
         'data': s.criado_em.strftime('%Y-%m-%d') if s.criado_em else ''
-    } for s in solicitacoes]})
+    } for s in solicitacoes if s.pet.status != 'adopted']})
 
 @app.route('/api/ong/pet/<int:pet_id>/marcar-adotado', methods=['POST'])
 @login_required

@@ -155,7 +155,7 @@ function renderHomeOngs(ongs) {
         <div class="ong-name">${o.name}</div>
         <div class="ong-city">📍 ${o.city}, ${o.state}</div>
         <div class="ong-stats"><span>🐾 ${o.pets || 0} pets</span><span>🏠 ${o.adopted || 0} adoções</span></div>
-        <a href="/ongs" class="btn-ong">Conhecer ONG</a>
+        <a href="/ong/${o.id}" class="btn-ong">Conhecer ONG</a>
       </div>
     </div>
   `).join('');

@@ -202,25 +202,25 @@ CREATE TABLE pedido_resgate (
 INSERT INTO usuario (nome, email, senha_hash, telefone, cidade, estado, role) VALUES
   ('Admin PetAdopt',  'admin@petadopt.com',  '$2b$10$hash_admin',  '11999990000', 'São Paulo',      'SP', 'admin'),
   ('Maria Silva',     'maria@email.com',     '$2b$10$hash_maria',  '11988880001', 'São Paulo',      'SP', 'user'),
-  ('Carlos Lima',     'carlos@email.com',    '$2b$10$hash_carlos', '21977770002', 'Rio de Janeiro', 'RJ', 'user'),
-  ('Juliana Alves',   'juliana@email.com',   '$2b$10$hash_juli',   '41966660003', 'Curitiba',       'PR', 'user');
+  ('Patinhas do Bem', 'ong1@petadopt.com',   '$2b$10$hash_carlos', '11999990001', 'São Paulo',      'SP', 'ong'),
+  ('Lar dos Bichos',  'ong2@petadopt.com',   '$2b$10$hash_juli',   '21999990002', 'Rio de Janeiro', 'RJ', 'ong');
 
 -- ONGs
-INSERT INTO ong (nome, descricao, cidade, estado, whatsapp, chave_pix, link_vakinha, foto_url) VALUES
-  ('Patinhas do Bem',  'Resgatamos e reabilitamos cães e gatos desde 2015.',          'São Paulo',      'SP', '5511999990001', 'patinhasdob@gmail.com',    'https://www.vakinha.com.br', 'https://images.unsplash.com/photo-1601758124096-7093b3fef44d?w=600'),
-  ('Lar dos Bichos',   'ONG dedicada ao resgate de animais no Rio de Janeiro.',       'Rio de Janeiro', 'RJ', '5521999990002', 'lardosbichos@gmail.com',   'https://www.vakinha.com.br', 'https://images.unsplash.com/photo-1587300003388-59208cc962cb?w=600'),
-  ('Amigos de Patas',  'Cuidamos de animais especiais — idosos e com deficiência.',   'Belo Horizonte', 'MG', '5531999990003', 'amigospatinhas@gmail.com', 'https://www.vakinha.com.br', 'https://images.unsplash.com/photo-1548199973-03cce0bbc87b?w=600'),
-  ('Refúgio Animal Sul','O maior abrigo de animais do Rio Grande do Sul.',            'Porto Alegre',   'RS', '5551999990004', 'refugioanimalsul@gmail.com','https://www.vakinha.com.br','https://images.unsplash.com/photo-1552053831-71594a27632d?w=600');
+INSERT INTO ong (usuario_id, nome, descricao, cidade, estado, whatsapp, chave_pix, link_vakinha, foto_url) VALUES
+  (3, 'Patinhas do Bem',  'Resgatamos e reabilitamos cães e gatos desde 2015.',          'São Paulo',      'SP', '5511999990001', 'patinhasdob@gmail.com',    'https://www.vakinha.com.br', 'https://images.unsplash.com/photo-1601758124096-7093b3fef44d?w=600'),
+  (4, 'Lar dos Bichos',   'ONG dedicada ao resgate de animais no Rio de Janeiro.',       'Rio de Janeiro', 'RJ', '5521999990002', 'lardosbichos@gmail.com',   'https://www.vakinha.com.br', 'https://images.unsplash.com/photo-1587300003388-59208cc962cb?w=600'),
+  (NULL, 'Amigos de Patas',  'Cuidamos de animais especiais — idosos e com deficiência.',   'Belo Horizonte', 'MG', '5531999990003', 'amigospatinhas@gmail.com', 'https://www.vakinha.com.br', 'https://images.unsplash.com/photo-1548199973-03cce0bbc87b?w=600'),
+  (NULL, 'Refúgio Animal Sul','O maior abrigo de animais do Rio Grande do Sul.',            'Porto Alegre',   'RS', '5551999990004', 'refugioanimalsul@gmail.com','https://www.vakinha.com.br','https://images.unsplash.com/photo-1552053831-71594a27632d?w=600');
 
 -- Pets
 INSERT INTO pet (usuario_id, ong_id, nome, especie, raca, porte, sexo, idade_anos, idade_meses, cor, vacinado, castrado, descricao, cidade, estado, status, mod_status) VALUES
-  (2, NULL, 'Tarzam',  'dog', 'SRD (Vira-lata)', 'small',  'male',   2, 0, 'Caramelo',            1, 1, 'Tarzam é carinhoso e brincalhão.',          'Rosário da Limeira',      'MG', 'available', 'approved'),
-  (3, NULL, 'Luna',  'cat', 'Siamês',           'small',  'female', 1, 6, 'Creme com pontas',   1, 0, 'Luna é elegante e independente. Ideal para apartamento.', 'Rio de Janeiro', 'RJ', 'available', 'approved'),
-  (2, NULL, 'Bob',   'dog', 'SRD (Vira-lata)',  'medium', 'male',   3, 0, 'Caramelo',           1, 1, 'Bob foi resgatado da rua. Muito dócil e obediente.',      'Belo Horizonte', 'MG', 'available', 'approved'),
+  (3, NULL, 'Tarzam',  'dog', 'SRD (Vira-lata)', 'small',  'male',   2, 0, 'Caramelo',            1, 1, 'Tarzam é carinhoso e brincalhão.',          'Rosário da Limeira',      'MG', 'available', 'approved'),
+  (4, NULL, 'Luna',  'cat', 'Siamês',           'small',  'female', 1, 6, 'Creme com pontas',   1, 0, 'Luna é elegante e independente. Ideal para apartamento.', 'Rio de Janeiro', 'RJ', 'available', 'approved'),
+  (3, NULL, 'Bob',   'dog', 'SRD (Vira-lata)',  'medium', 'male',   3, 0, 'Caramelo',           1, 1, 'Bob foi resgatado da rua. Muito dócil e obediente.',      'Belo Horizonte', 'MG', 'available', 'approved'),
   (4, NULL, 'Mia',   'cat', 'Persa',            'small',  'female', 0, 8, 'Branco',             1, 0, 'Mia é tranquila e adora colos.',                         'Curitiba',       'PR', 'available', 'approved'),
-  (2, NULL, 'Rex',   'dog', 'Pastor Alemão',    'large',  'male',   4, 0, 'Preto e marrom',     1, 1, 'Rex foi adotado com sucesso!',                           'Porto Alegre',   'RS', 'adopted',   'approved'),
-  (2, NULL, 'Nina',  'dog', 'Poodle',           'small',  'female', 1, 0, 'Branco',             0, 0, 'Nina é cheia de energia e alegria.',                     'São Paulo',      'SP', 'available', 'approved'),
-  (3, NULL, 'Mel',   'cat', 'Maine Coon',       'small',  'female', 3, 0, 'Cinza rajado',       1, 1, 'Mel é dócil e convive bem com crianças.',                'Florianópolis',  'SC', 'available', 'pending'),
+  (3, NULL, 'Rex',   'dog', 'Pastor Alemão',    'large',  'male',   4, 0, 'Preto e marrom',     1, 1, 'Rex foi adotado com sucesso!',                           'Porto Alegre',   'RS', 'adopted',   'approved'),
+  (3, NULL, 'Nina',  'dog', 'Poodle',           'small',  'female', 1, 0, 'Branco',             0, 0, 'Nina é cheia de energia e alegria.',                     'São Paulo',      'SP', 'available', 'approved'),
+  (4, NULL, 'Mel',   'cat', 'Maine Coon',       'small',  'female', 3, 0, 'Cinza rajado',       1, 1, 'Mel é dócil e convive bem com crianças.',                'Florianópolis',  'SC', 'available', 'pending'),
   (4, NULL, 'Duque', 'dog', 'Labrador',         'large',  'male',   2, 0, 'Caramelo',           1, 0, 'Duque é jovem e muito brincalhão.',                      'Recife',         'PE', 'available', 'pending');
 
 -- Fotos dos pets
@@ -235,19 +235,19 @@ INSERT INTO foto_pet (pet_id, url, is_capa, ordem) VALUES
 -- Solicitações de adoção
 INSERT INTO solicitacao_adocao (pet_id, solicitante_id, mensagem, status) VALUES
   (2, 2, 'Olá! Tenho apartamento e muito amor para dar. A Luna seria perfeita!', 'pending'),
-  (1, 3, 'Tenho quintal grande e experiência com Golden. Adoraria adotar o Thor.', 'approved');
+  (1, 2, 'Tenho quintal grande e experiência com Golden. Adoraria adotar o Thor.', 'approved');
 
 -- Favoritos
 INSERT INTO favorito (usuario_id, pet_id) VALUES
   (2, 2),
   (2, 6),
-  (3, 1);
+  (2, 1);
 
 -- Doações
 INSERT INTO doacao (usuario_id, ong_id, valor, metodo, status) VALUES
   (2, 1, 50.00,  'pix',          'confirmada'),
-  (3, 2, 25.00,  'pix',          'confirmada'),
-  (4, 1, 100.00, 'link_externo', 'pendente');
+  (2, 2, 25.00,  'pix',          'confirmada'),
+  (NULL, 1, 100.00, 'link_externo', 'pendente');
 
 -- Log de moderação
 INSERT INTO moderacao_log (admin_id, pet_id, acao, motivo) VALUES
