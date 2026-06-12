@@ -28,13 +28,6 @@ function initDashboard() {
     document.getElementById('sb-badge').style.background = 'rgba(192,106,58,.12)';
     document.getElementById('sb-badge').style.color = 'var(--terra)';
     
-    // Exibe aba de moderação na sidebar
-    const modNav = document.getElementById('nav-moderation');
-    if(modNav) modNav.style.display = 'none';
-
-    const pendingPetsNav = document.getElementById('nav-pending-pets');
-    if(pendingPetsNav) pendingPetsNav.style.display = 'flex';
-    
     const ongNav = document.getElementById('nav-ongs');
     if(ongNav) ongNav.style.display = 'flex';
     
@@ -48,25 +41,36 @@ function initDashboard() {
     const quickActions = document.querySelector('.quick-actions');
     if (quickActions) {
         quickActions.innerHTML = `
-          <button class="btn btn-primary" onclick="showTab('moderation', document.getElementById('nav-pending-pets'))">Avaliar pets pendentes</button>
+          <button class="btn btn-primary" onclick="showTab('pending-ongs', document.getElementById('nav-pending-ongs'))">Avaliar ONGs pendentes</button>
           <a href="/pets" class="btn btn-outline">🔍 Ver site público</a>
         `;
     }
 
     // Adapta as estatísticas da aba de resumo para o Admin
-    const labels = document.querySelectorAll('#tab-overview .stat-label');
-    if (labels.length >= 3) {
-      labels[0].textContent = 'Total de Pets';
-      labels[1].textContent = 'ONGs Cadastradas';
-      labels[2].textContent = 'Pets Pendentes';
-      
+    const statsGrid = document.querySelector('.stats-grid');
+    if (statsGrid) {
+      statsGrid.innerHTML = `
+        <div class="stat-card">
+          <div class="stat-value" id="stat-mypets">0</div>
+          <div class="stat-label">Total de Pets</div>
+        </div>
+        <div class="stat-card blue">
+          <div class="stat-value" id="stat-adoptions">0</div>
+          <div class="stat-label">ONGs Cadastradas</div>
+        </div>
+        <div class="stat-card gold">
+          <div class="stat-value" id="stat-received">0</div>
+          <div class="stat-label">ONGs Pendentes</div>
+        </div>
+      `;
+
       // Busca os números reais no backend
       fetch('/api/admin/pets/stats')
         .then(r => r.json())
         .then(stats => {
           document.getElementById('stat-mypets').textContent = stats.total_pets || 0;
           document.getElementById('stat-adoptions').textContent = stats.total_ongs || 0;
-          document.getElementById('stat-received').textContent = stats.pending || 0;
+          document.getElementById('stat-received').textContent = stats.pending_ongs || 0;
         });
     }
 
@@ -82,7 +86,6 @@ function initDashboard() {
   renderReceived();
   renderFavorites();
   if (user.role === 'admin') {
-    renderModeration();
     renderAdminOngs();
     renderPendingOngs();
     renderSiteImpact();
@@ -127,9 +130,9 @@ function initDashboard() {
     });
 
     if (user.role === 'admin' && statCards.length >= 3) {
-      statCards[0].onclick = () => { const l = document.querySelector('[onclick*="my-pets"]'); if(l) showTab('my-pets', l); };
-      statCards[1].onclick = () => { const l = document.querySelector('[onclick*="ongs"]'); if(l) showTab('admin-ongs', l); };
-      statCards[2].onclick = () => { const l = document.querySelector('[onclick*="moderation"]'); if(l) showTab('moderation', l); };
+      statCards[0].onclick = () => { window.location.href = '/pets'; };
+      statCards[1].onclick = () => { const l = document.querySelector('[onclick*="ongs-admin"]'); if(l) showTab('ongs-admin', l); };
+      statCards[2].onclick = () => { const l = document.querySelector('[onclick*="pending-ongs"]'); if(l) showTab('pending-ongs', l); };
     } else {
       const cMyPets = document.getElementById('stat-mypets')?.closest('.stat-card');
       const cAdoptions = document.getElementById('stat-adoptions')?.closest('.stat-card');
@@ -147,9 +150,6 @@ function initDashboard() {
 
 let MY_PETS = [];
 
-// Todos os pets da plataforma (para moderação)
-let ALL_PLATFORM_PETS = [];
-let PENDING_PETS = [];
 let ALL_RECEIVED = [];
 let receivedFilterDate = 'today';
 let receivedSpecificDate = '';
@@ -158,8 +158,11 @@ let receivedEndDate = '';
 
 // ── Stats ─────────────────────────────────────────────────────────────────────
 function updateStats() {
-  document.getElementById('stat-mypets').textContent = MY_PETS.length;
-  document.getElementById('badge-mypets').textContent = MY_PETS.length;
+  if (user.role === 'admin') return; // Impede que os números do Admin sejam sobrescritos
+  const statMyPets = document.getElementById('stat-mypets');
+  if (statMyPets) statMyPets.textContent = MY_PETS.length;
+  const badgeMyPets = document.getElementById('badge-mypets');
+  if (badgeMyPets) badgeMyPets.textContent = MY_PETS.length;
 }
 
 // ── Meus Pets ─────────────────────────────────────────────────────────────────
@@ -372,7 +375,7 @@ function renderAdoptions() {
       const adocoes = data.adocoes || [];
       const el = document.getElementById('adoptions-list');
       
-      if(document.getElementById('stat-adoptions')) {
+      if(document.getElementById('stat-adoptions') && user.role !== 'admin') {
         document.getElementById('stat-adoptions').textContent = adocoes.length;
       }
 
@@ -576,8 +579,10 @@ function updateReceivedUI() {
       const recebidas = ALL_RECEIVED;
       const el = document.getElementById('received-list');
       
-      const pendentes = recebidas.filter(s => s.status === 'pending').length;
-      if(document.getElementById('stat-received')) document.getElementById('stat-received').textContent = pendentes;
+      const pendentes = recebidas.filter(s => s.status === 'pending' && s.petStatus !== 'adopted').length;
+      if(document.getElementById('stat-received') && user.role !== 'admin') {
+        document.getElementById('stat-received').textContent = pendentes;
+      }
       
       const today = new Date();
       today.setHours(0,0,0,0);
@@ -710,12 +715,37 @@ function updateReceivedUI() {
           </div>
           <div class="item-actions" style="flex-direction:column; min-width: 220px;">
             ${derivedPhone ? `<a href="https://wa.me/55${String(derivedPhone).replace(/\D/g,'')}" target="_blank" class="btn btn-whatsapp btn-sm" style="background:#25d366;color:#fff;border:none;text-decoration:none;display:flex;justify-content:center;">💬 Entrar em contato</a>` : `<div style="font-size: 0.8rem; color: var(--muted); text-align: center; padding: 4px;">Sem WhatsApp</div>`}
+            ${r.status === 'approved' ? 
+              `<button class="btn btn-sm" disabled style="margin-top:8px; display:flex; justify-content:center; background-color: #d1fae5; color: #065f46; border: 2px solid #a7f3d0; opacity: 1; font-weight: 700;">🏠 Adoção Confirmada</button>` : 
+              (r.petStatus === 'adopted' ? 
+                `<button class="btn btn-sm" disabled style="margin-top:8px; display:flex; justify-content:center; background-color: var(--cream-d); color: var(--muted); border: 2px solid var(--sand); opacity: 1;">Pet adotado por outro</button>` : 
+                (r.status === 'rejected' ? `<button class="btn btn-sm" disabled style="margin-top:8px; display:flex; justify-content:center; background-color: var(--cream-d); color: var(--muted); border: 2px solid var(--sand); opacity: 1;">❌ Dispensado</button>` : `<button class="btn btn-primary btn-sm" id="btn-adopt-${r.id}" onclick="confirmarAdocaoUsuario(${r.id})" style="margin-top:8px; display:flex; justify-content:center; background-color: var(--sage); border-color: var(--sage);">🏆 Confirmar Adoção</button>`)
+              )
+            }
           </div>
         </div>`;
       }).join('');
 }
 
+function confirmarAdocaoUsuario(reqId) {
+  if (!confirm('Deseja confirmar a adoção para este adotante? O pet será marcado como Adotado e a solicitação será aprovada.')) return;
+  respondRequest(reqId, 'approved');
+}
+
 function respondRequest(id, status) {
+  const btn = document.getElementById(`btn-adopt-${id}`);
+  if(btn) {
+    btn.disabled = true;
+    if (status === 'approved') {
+      btn.textContent = '🏠 Adoção Confirmada';
+      btn.style.backgroundColor = '#d1fae5';
+      btn.style.color = '#065f46';
+      btn.style.borderColor = '#a7f3d0';
+      btn.style.fontWeight = '700';
+    } else {
+      btn.textContent = 'Processando...';
+    }
+  }
   // Reaproveitando a rota que já existia para as ONGs
   fetch(`/api/ong/solicitacao/${id}/status`, {
     method: 'POST',
@@ -725,14 +755,26 @@ function respondRequest(id, status) {
   .then(r => r.json())
   .then(data => {
     if(data.sucesso) {
-      showToast(status === 'approved' ? '✅ Solicitação aceita!' : 'Solicitação dispensada.', status === 'approved' ? 'success' : '');
+      showToast(status === 'approved' ? '✅ Adoção confirmada! O pet foi marcado como Adotado.' : 'Solicitação dispensada.', status === 'approved' ? 'success' : '');
       renderReceived();
       renderMyPets(); // Atualiza a aba de pets para refletir que foi adotado
     } else {
       showToast('❌ Erro: ' + data.erro, '');
+      if(btn) {
+        btn.disabled = false;
+        btn.textContent = '🏆 Confirmar Adoção';
+        btn.style = 'margin-top:8px; display:flex; justify-content:center; background-color: var(--sage); border-color: var(--sage);';
+      }
     }
   })
-  .catch(e => showToast('Erro de conexão', ''));
+  .catch(e => {
+    showToast('Erro de conexão', '');
+    if(btn) {
+      btn.disabled = false;
+      btn.textContent = '🏆 Confirmar Adoção';
+      btn.style = 'margin-top:8px; display:flex; justify-content:center; background-color: var(--sage); border-color: var(--sage);';
+    }
+  });
 }
 
 // ── Favoritos ─────────────────────────────────────────────────────────────────
@@ -760,175 +802,7 @@ function renderFavorites() {
     .catch(e => console.error('Erro ao buscar favoritos', e));
 }
 
-// ── Moderação (admin) ─────────────────────────────────────────────────────────
-function renderModeration() {
-  // Carrega todos os pets para contar status
-  fetch('/api/admin/pets/pending')
-    .then(r => r.json())
-    .then(data => {
-      const pets = data.pets || [];
-      PENDING_PETS = pets;
-      
-      // Contar pets por status
-      const pending = pets.length;
-      
-      // Buscar contadores totais
-      fetch('/api/admin/pets/stats')
-        .then(r => r.json())
-        .then(stats => {
-          document.getElementById('mod-pending').textContent = stats.pending || pending;
-          document.getElementById('mod-approved').textContent = stats.approved || 0;
-          document.getElementById('mod-removed').textContent = stats.removed || 0;
-        })
-        .catch(e => {
-          // Se rota não existir, mostrar só o pending
-          document.getElementById('mod-pending').textContent = pending;
-          document.getElementById('mod-approved').textContent = '0';
-          document.getElementById('mod-removed').textContent = '0';
-        });
-      
-      const el = document.getElementById('moderation-list');
-      
-      if (!pets.length) {
-        el.innerHTML = `<div class="empty" style="grid-column:1/-1">
-          <div class="empty-icon">✅</div>
-          <div class="empty-title">Todos os pets foram aprovados!</div>
-          <p class="empty-desc">Não há pets pendentes de moderação.</p>
-        </div>`;
-        return;
-      }
-      
-      el.innerHTML = pets.map(p => `
-        <div class="item-card" id="mod-pet-${p.id}">
-          <img class="item-img" src="${p.photo}" alt="${p.name}" style="cursor:pointer">
-          <div class="item-info">
-            <div class="item-name">${p.name}</div>
-            <div class="item-meta">${p.breed} · 📍 ${p.city}/${p.state}</div>
-            <div class="item-meta">🏢 Responsável: ${p.owner}</div>
-            ${p.description ? `<p style="font-size:.87rem;color:var(--bark-m);margin-top:8px;line-height:1.6">${p.description}</p>` : ''}
-            <span class="status-pill pill-pending" style="margin-top:8px">⏳ Pendente de aprovação</span>
-          </div>
-          <div class="item-actions" style="flex-direction:column">
-            <button class="btn btn-ghost btn-sm" onclick="openAdminPetEdit(${p.id})">Editar</button>
-            <button class="btn btn-sage btn-sm" onclick="moderateApprove(${p.id})">✅ Aprovar</button>
-            <button class="btn btn-outline btn-sm btn-danger" onclick="moderateRemove(${p.id})">🗑️ Remover</button>
-          </div>
-        </div>`).join('');
-    })
-    .catch(e => {
-      console.error('Erro ao carregar pets pendentes:', e);
-      document.getElementById('moderation-list').innerHTML = `<div class="empty"><div class="empty-icon">⚠️</div><div class="empty-title">Erro ao carregar</div></div>`;
-    });
-}
-
-function moderateApprove(petId) {
-  fetch(`/api/admin/pets/${petId}/approve`, {
-    method: 'POST',
-    headers: { 'Content-Type': 'application/json' }
-  })
-  .then(r => r.json())
-  .then(data => {
-    if (data.sucesso) {
-      document.getElementById(`mod-pet-${petId}`)?.remove();
-      showToast(`✅ ${data.mensagem}`, 'success');
-      renderModeration(); // Recarrega lista
-    } else {
-      showToast(`❌ ${data.erro}`, '');
-    }
-  })
-  .catch(e => showToast(`Erro: ${e}`, ''));
-}
-
-function moderateRemove(petId) {
-  if (!confirm('Tem certeza que deseja remover este pet?')) return;
-  
-  fetch(`/api/admin/pets/${petId}/remove`, {
-    method: 'POST',
-    headers: { 'Content-Type': 'application/json' }
-  })
-  .then(r => r.json())
-  .then(data => {
-    if (data.sucesso) {
-      document.getElementById(`mod-pet-${petId}`)?.remove();
-      showToast(`${data.mensagem}`, 'success');
-      renderModeration(); // Recarrega lista
-    } else {
-      showToast(`❌ ${data.erro}`, '');
-    }
-  })
-  .catch(e => showToast(`Erro: ${e}`, ''));
-}
-
 // ── Gerenciar ONGs (admin) ───────────────────────────────────────────────────
-function openAdminPetEdit(petId) {
-  const p = PENDING_PETS.find(x => x.id == petId);
-  if (!p) return;
-  document.getElementById('modal-content').innerHTML = `
-    <div class="modal-title">Editar cadastro pendente</div>
-    <p class="modal-sub">Corrija informações incoerentes antes de aprovar o pet.</p>
-    <div id="admin-pet-error" style="display:none;background:#fff0f0;color:#c0392b;padding:10px;border-radius:10px;margin-bottom:14px;font-size:.9rem"></div>
-    <div class="admin-edit-grid">
-      <label>Nome<input id="admin-pet-name" class="form-input" value="${escapeAttr(p.name || '')}"></label>
-      <label>Espécie<select id="admin-pet-species" class="form-input"><option value="dog" ${p.species==='dog'?'selected':''}>Cachorro</option><option value="cat" ${p.species==='cat'?'selected':''}>Gato</option><option value="other" ${p.species==='other'?'selected':''}>Outro</option></select></label>
-      <label>Raça<input id="admin-pet-breed" class="form-input" value="${escapeAttr(p.breed || '')}"></label>
-      <label>Porte<select id="admin-pet-size" class="form-input"><option value="small" ${p.size==='small'?'selected':''}>Pequeno</option><option value="medium" ${p.size==='medium'?'selected':''}>Médio</option><option value="large" ${p.size==='large'?'selected':''}>Grande</option><option value="giant" ${p.size==='giant'?'selected':''}>Gigante</option></select></label>
-      <label>Cidade<input id="admin-pet-city" class="form-input" value="${escapeAttr(p.city || '')}"></label>
-      <label>UF<input id="admin-pet-state" class="form-input" maxlength="2" value="${escapeAttr(p.state || '')}"></label>
-    </div>
-    <label class="admin-edit-desc">Descrição<textarea id="admin-pet-description" class="form-input" rows="4">${escapeHtml(p.description || '')}</textarea></label>
-    <div style="display:flex;gap:10px;margin-top:18px">
-      <button class="btn btn-primary" style="flex:1" onclick="saveAdminPetEdit(${p.id})">Salvar correções</button>
-      <button class="btn btn-ghost" onclick="closeModal()">Cancelar</button>
-    </div>`;
-  document.getElementById('modal').classList.add('open');
-}
-
-function saveAdminPetEdit(petId) {
-  const err = document.getElementById('admin-pet-error');
-  fetch(`/api/admin/pets/${petId}`, {
-    method: 'PUT',
-    headers: { 'Content-Type': 'application/json' },
-    body: JSON.stringify({
-      name: document.getElementById('admin-pet-name').value.trim(),
-      species: document.getElementById('admin-pet-species').value,
-      breed: document.getElementById('admin-pet-breed').value.trim(),
-      size: document.getElementById('admin-pet-size').value,
-      city: document.getElementById('admin-pet-city').value.trim(),
-      state: document.getElementById('admin-pet-state').value.trim().toUpperCase(),
-      description: document.getElementById('admin-pet-description').value.trim()
-    })
-  })
-  .then(r => r.json())
-  .then(data => {
-    if (data.sucesso) {
-      closeModal();
-      showToast(data.mensagem, 'success');
-      renderModeration();
-    } else {
-      err.textContent = data.erro || 'Não foi possível salvar.';
-      err.style.display = 'block';
-    }
-  })
-  .catch(e => {
-    err.textContent = `Erro: ${e}`;
-    err.style.display = 'block';
-  });
-}
-
-function escapeHtml(value) {
-  return String(value).replace(/[&<>"']/g, char => ({
-    '&': '&amp;',
-    '<': '&lt;',
-    '>': '&gt;',
-    '"': '&quot;',
-    "'": '&#39;'
-  }[char]));
-}
-
-function escapeAttr(value) {
-  return escapeHtml(value);
-}
-
 function renderAdminOngs() {
   fetch('/api/ongs')
     .then(r => r.json())
@@ -976,10 +850,11 @@ window.openNewOngModal = function() {
           <div><label class="form-label">Nome da ONG <span style="color:var(--terra)">*</span></label><input id="ong-nome" class="form-input"></div>
           <div><label class="form-label">WhatsApp</label><input id="ong-whatsapp" class="form-input"></div>
         </div>
-        <div style="display:grid;grid-template-columns:1fr 1fr;gap:14px;margin-bottom:0">
+        <div style="display:grid;grid-template-columns:1fr 1fr;gap:14px;margin-bottom:14px">
           <div><label class="form-label">Cidade <span style="color:var(--terra)">*</span></label><input id="ong-city" class="form-input"></div>
           <div><label class="form-label">Estado <span style="color:var(--terra)">*</span></label><input id="ong-state" class="form-input" maxlength="2"></div>
         </div>
+        <div style="margin-bottom:0"><label class="form-label">Logo / Foto da ONG</label><input type="file" id="ong-foto" accept="image/*" class="form-input" style="padding: 10px;"></div>
       </div>
 
       <div style="background:#fff; border: 1px solid #e5e7eb; border-left: 4px solid var(--yellow); padding: 18px; border-radius: 12px; box-shadow: 0 4px 14px rgba(46, 134, 193, 0.08); margin-bottom: 16px;">
@@ -989,7 +864,7 @@ window.openNewOngModal = function() {
 
       <div style="margin-top: 28px; display:flex; gap:10px;">
         <button class="btn btn-primary" onclick="saveNewOng()" style="padding: 12px 24px;">Cadastrar ONG</button>
-        <button class="btn btn-ghost" onclick="location.reload()" style="padding: 12px 24px;">Voltar</button>
+        <button class="btn btn-ghost" onclick="showTab('ongs-admin')" style="padding: 12px 24px;">Voltar</button>
       </div>
     </div>
   `;
@@ -1006,23 +881,30 @@ function saveNewOng() {
     err.style.display = 'block';
     return;
   }
+
+  const formData = new FormData();
+  formData.append('nome', nome);
+  formData.append('cidade', cidade);
+  formData.append('estado', estado);
+  formData.append('whatsapp', document.getElementById('ong-whatsapp').value.trim());
+  formData.append('chave_pix', document.getElementById('ong-pix').value.trim());
+  formData.append('descricao', document.getElementById('ong-desc').value.trim());
+
+  const photoInput = document.getElementById('ong-foto');
+  if (photoInput && photoInput.files.length > 0) {
+    formData.append('foto_url', photoInput.files[0]);
+  }
   
   fetch('/api/ongs', {
     method: 'POST',
-    headers: {'Content-Type': 'application/json'},
-    body: JSON.stringify({
-      nome, cidade, estado,
-      whatsapp: document.getElementById('ong-whatsapp').value.trim(),
-      chave_pix: document.getElementById('ong-pix').value.trim(),
-      descricao: document.getElementById('ong-desc').value.trim()
-    })
+    body: formData
   })
   .then(r => r.json())
   .then(data => {
     if(data.sucesso) {
       showToast(data.mensagem, 'success');
       renderAdminOngs();
-      location.reload();
+      showTab('ongs-admin');
     } else {
       err.textContent = data.erro; err.style.display = 'block';
     }

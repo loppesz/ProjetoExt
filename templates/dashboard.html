@@ -72,12 +72,6 @@
       <div class="sidebar-link" onclick="showTab('favorites',this)">
         <span class="icon">❤️</span> Favoritos
       </div>
-      <div class="sidebar-link" id="nav-moderation" onclick="showTab('moderation',this)" style="display:none">
-        <span class="icon">🛡️</span> Moderação
-      </div>
-      <div class="sidebar-link" id="nav-pending-pets" onclick="showTab('moderation',this)" style="display:none">
-        <span class="icon">⏳</span> Pets Pendentes
-      </div>
       <div class="sidebar-link" id="nav-ongs" onclick="showTab('ongs-admin',this)" style="display:none">
         <span class="icon">🏢</span> ONGs
       </div>
@@ -146,29 +140,6 @@
         <div class="panel-title">Favoritos</div>
       </div>
       <div class="mini-pets-grid" id="favorites-list"></div>
-    </div>
-
-    <!-- TAB: MODERAÇÃO (admin) -->
-    <div class="tab-panel" id="tab-moderation">
-      <div class="panel-header">
-        <div class="panel-title">🛡️ Moderação</div>
-      </div>
-      <p class="panel-subtitle">Aprove ou remova pets cadastrados por usuários antes de aparecerem no site.</p>
-      <div class="stats-grid mb-24">
-        <div class="stat-card gold">
-          <div class="stat-value" id="mod-pending">0</div>
-          <div class="stat-label">Pendentes</div>
-        </div>
-        <div class="stat-card">
-          <div class="stat-value" id="mod-approved">0</div>
-          <div class="stat-label">Aprovados</div>
-        </div>
-        <div class="stat-card red">
-          <div class="stat-value" id="mod-removed">0</div>
-          <div class="stat-label">Removidos</div>
-        </div>
-      </div>
-      <div id="moderation-list"></div>
     </div>
 
     <!-- TAB: GERENCIAR ONGS (admin) -->

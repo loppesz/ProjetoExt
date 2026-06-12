@@ -72,7 +72,7 @@ function loadOngData() {
 
 function updateOngSolicitacoesUI() {
       const solicitacoes = ALL_SOLICITACOES;
-      const pendentes = solicitacoes.filter(s => s.status === 'pending');
+      const pendentes = solicitacoes.filter(s => s.status === 'pending' && s.petStatus !== 'adopted');
       document.getElementById('total-solicitacoes').textContent = pendentes.length;
 
       const listaSol = document.getElementById('lista-solicitacoes');
@@ -209,10 +209,22 @@ function updateOngSolicitacoesUI() {
           </div>
           <div class="item-actions flex-column" style="min-width: 220px;">
             ${derivedPhone ? `<a href="https://wa.me/55${String(derivedPhone).replace(/\D/g,'')}" target="_blank" class="btn btn-whatsapp btn-sm" style="background:#25d366;color:#fff;border:none;text-decoration:none;display:flex;justify-content:center;margin-bottom:8px;">💬 Entrar em contato</a>` : ''}
+            ${s.status === 'approved' ? 
+              `<button class="btn btn-sm" disabled style="display:flex; justify-content:center; background-color: #d1fae5; color: #065f46; border: 2px solid #a7f3d0; opacity: 1; font-weight: 700;">🏠 Adoção Confirmada</button>` : 
+              (s.petStatus === 'adopted' ? 
+                `<button class="btn btn-sm" disabled style="display:flex; justify-content:center; background-color: var(--cream-d); color: var(--muted); border: 2px solid var(--sand); opacity: 1;">Pet adotado por outro</button>` : 
+                (s.status === 'rejected' ? `<button class="btn btn-sm" disabled style="display:flex; justify-content:center; background-color: var(--cream-d); color: var(--muted); border: 2px solid var(--sand); opacity: 1;">❌ Dispensado</button>` : `<button class="btn btn-primary btn-sm" id="btn-adopt-${s.id}" onclick="confirmarAdocao(${s.id})" style="display:flex; justify-content:center; background-color: var(--sage); border-color: var(--sage);">🏆 Confirmar Adoção</button>`)
+              )
+            }
           </div>
         </div>
       `;
       }).join('');
+}
+
+function confirmarAdocao(reqId) {
+  if (!confirm('Deseja confirmar a adoção para este adotante? O pet será marcado como Adotado e a solicitação será aprovada.')) return;
+  mudarStatusSolicitacao(reqId, 'approved');
 }
 
 function marcarAdotado(petId) {
@@ -226,6 +238,19 @@ function marcarAdotado(petId) {
 }
 
 function mudarStatusSolicitacao(reqId, novoStatus) {
+  const btn = document.getElementById(`btn-adopt-${reqId}`);
+  if(btn) {
+    btn.disabled = true;
+    if (novoStatus === 'approved') {
+      btn.textContent = '🏠 Adoção Confirmada';
+      btn.style.backgroundColor = '#d1fae5';
+      btn.style.color = '#065f46';
+      btn.style.borderColor = '#a7f3d0';
+      btn.style.fontWeight = '700';
+    } else {
+      btn.textContent = 'Processando...';
+    }
+  }
   fetch(`/api/ong/solicitacao/${reqId}/status`, {
     method: 'POST',
     headers: { 'Content-Type': 'application/json' },
@@ -233,7 +258,25 @@ function mudarStatusSolicitacao(reqId, novoStatus) {
   })
     .then(r => r.json())
     .then(data => {
-      if (data.sucesso) loadOngData();
+      if (data.sucesso) {
+        showToast(novoStatus === 'approved' ? '✅ Adoção confirmada! O pet foi marcado como Adotado.' : 'Status atualizado.', 'success');
+        loadOngData();
+      } else {
+        showToast('❌ Erro: ' + (data.erro || 'Não foi possível confirmar.'), '');
+        if(btn) {
+          btn.disabled = false;
+          btn.textContent = '🏆 Confirmar Adoção';
+          btn.style = 'display:flex; justify-content:center; background-color: var(--sage); border-color: var(--sage);';
+        }
+      }
+    })
+    .catch(e => {
+      showToast('Erro de conexão', '');
+      if(btn) {
+        btn.disabled = false;
+        btn.textContent = '🏆 Confirmar Adoção';
+        btn.style = 'display:flex; justify-content:center; background-color: var(--sage); border-color: var(--sage);';
+      }
     });
 }
 

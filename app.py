@@ -405,140 +405,18 @@ def admin_site_impact():
 @admin_required
 def stats_pets():
     try:
-        pending = Pet.query.filter_by(mod_status='pending').count()
-        approved = Pet.query.filter_by(mod_status='approved').count()
-        removed = Pet.query.filter_by(mod_status='removed').count()
         total_pets = Pet.query.count()
-        total_ongs = Ong.query.count()
+        total_ongs = Ong.query.filter_by(status='approved').count()
+        pending_ongs = Ong.query.filter_by(status='pending').count()
         
         return jsonify({
-            'pending': pending,
-            'approved': approved,
-            'removed': removed,
             'total_pets': total_pets,
-            'total_ongs': total_ongs
+            'total_ongs': total_ongs,
+            'pending_ongs': pending_ongs
         }), 200
     except Exception as e:
         return jsonify({'erro': str(e)}), 500
 
-
-# GET - Listar pets pendentes de aprovação
-@app.route('/api/admin/pets/pending', methods=['GET'])
-@login_required
-@admin_required
-def listar_pets_pendentes():
-    try:
-        pets = Pet.query.filter_by(mod_status='pending').all()
-        
-        size_labels = {
-            'small': 'Pequeno',
-            'medium': 'Médio',
-            'large': 'Grande',
-            'giant': 'Gigante'
-        }
-        
-        return jsonify({
-            'pets': [
-                {
-                    'id': p.id,
-                    'name': p.nome,
-                    'species': p.especie,
-                    'breed': p.raca,
-                    'age': f'{p.idade_anos} anos' if p.idade_anos else 'filhote',
-                    'size': p.porte,
-                    'sizeLabel': size_labels.get(p.porte, p.porte),
-                    'city': p.cidade,
-                    'state': p.estado,
-                    'photo': p.foto_capa,
-                    'description': p.descricao,
-                    'owner': p.usuario.name if p.usuario_id and p.usuario else 'Sem usuário',
-                    'mod_status': p.mod_status
-                }
-                for p in pets
-            ]
-        })
-    except Exception as e:
-        print(f"Erro em listar_pets_pendentes: {e}")
-        return jsonify({'erro': str(e)}), 500
-
-
-# POST - Aprovar pet
-@app.route('/api/admin/pets/<int:pet_id>/approve', methods=['POST'])
-@login_required
-@admin_required
-def aprovar_pet(pet_id):
-    try:
-        pet = Pet.query.get(pet_id)
-        if not pet:
-            return jsonify({'erro': 'Pet não encontrado'}), 404
-        
-        pet.mod_status = 'approved'
-        db.session.commit()
-        
-        return jsonify({
-            'sucesso': True,
-            'mensagem': f'Pet "{pet.nome}" foi aprovado!'
-        }), 200
-    
-    except Exception as e:
-        db.session.rollback()
-        return jsonify({'erro': str(e)}), 500
-
-@app.route('/api/admin/pets/<int:pet_id>', methods=['PUT'])
-@login_required
-@admin_required
-def admin_update_pet(pet_id):
-    try:
-        pet = Pet.query.get(pet_id)
-        if not pet:
-            return jsonify({'erro': 'Pet não encontrado'}), 404
-
-        data = request.get_json() or {}
-        nome = data.get('name', '').strip()
-        especie = data.get('species', '').strip()
-        porte = data.get('size', '').strip()
-        cidade = data.get('city', '').strip()
-        estado = data.get('state', '').strip().upper()
-
-        if not nome or especie not in ['dog', 'cat', 'other'] or not porte or not cidade or not estado:
-            return jsonify({'erro': 'Nome, espécie, porte, cidade e estado são obrigatórios.'}), 400
-
-        pet.nome = nome
-        pet.especie = especie
-        pet.raca = data.get('breed', '').strip()
-        pet.porte = porte
-        pet.cidade = cidade
-        pet.estado = estado[:2]
-        pet.descricao = data.get('description', '').strip()
-        db.session.commit()
-
-        return jsonify({'sucesso': True, 'mensagem': f'Pet "{pet.nome}" atualizado.'}), 200
-    except Exception as e:
-        db.session.rollback()
-        return jsonify({'erro': str(e)}), 500
-
-
-# POST - Remover/Rejeitar pet
-@app.route('/api/admin/pets/<int:pet_id>/remove', methods=['POST'])
-@login_required
-@admin_required
-def remover_pet(pet_id):
-    try:
-        pet = Pet.query.get(pet_id)
-        if not pet:
-            return jsonify({'erro': 'Pet não encontrado'}), 404
-        
-        pet.mod_status = 'removed'
-        db.session.commit()
-        
-        return jsonify({
-            'sucesso': True,
-            'mensagem': f'Pet "{pet.nome}" foi removido.'
-        }), 200
-    
-    except Exception as e:
-        db.session.rollback()
-        return jsonify({'erro': str(e)}), 500
 
 
 # GET - Listar ONGs pendentes
@@ -588,13 +466,30 @@ def recusar_ong(ong_id):
 @admin_required
 def criar_ong():
     try:
-        data = request.get_json()
+        if request.is_json:
+            data = request.get_json()
+        else:
+            data = request.form
+            
         nome = data.get('nome')
         cidade = data.get('cidade')
         estado = data.get('estado')
         
         if not nome or not cidade or not estado:
             return jsonify({'erro': 'Nome, cidade e estado são obrigatórios'}), 400
+            
+        foto_url = data.get('foto_url') or 'https://images.unsplash.com/photo-1601758124096-7093b3fef44d?w=600&q=80'
+        
+        if 'foto_url' in request.files:
+            arquivo = request.files['foto_url']
+            if arquivo and arquivo.filename:
+                ext_permitidas = {'png', 'jpg', 'jpeg', 'webp'}
+                ext = arquivo.filename.rsplit('.', 1)[1].lower() if '.' in arquivo.filename else ''
+                if ext in ext_permitidas:
+                    timestamp = int(time.time())
+                    filename = secure_filename(f"ong_{timestamp}_{arquivo.filename}")
+                    arquivo.save(os.path.join(app.config['UPLOAD_FOLDER'], filename))
+                    foto_url = f'/static/uploads/{filename}'
             
         nova_ong = Ong(
             nome=nome,
@@ -603,7 +498,8 @@ def criar_ong():
             descricao=data.get('descricao', ''),
             whatsapp=data.get('whatsapp', ''),
             chave_pix=data.get('chave_pix', ''),
-            foto_url=data.get('foto_url') or 'https://images.unsplash.com/photo-1601758124096-7093b3fef44d?w=600&q=80'
+            foto_url=foto_url,
+            status='approved'
         )
         db.session.add(nova_ong)
         db.session.commit()
@@ -762,8 +658,9 @@ def get_user_solicitacoes():
         'city': f"{s.solicitante.cidade}/{s.solicitante.estado}" if s.solicitante.cidade else '',
         'msg': s.mensagem,
         'status': s.status,
+        'petStatus': s.pet.status,
         'data': s.criado_em.strftime('%Y-%m-%d') if s.criado_em else ''
-    } for s in solicitacoes if s.pet.status != 'adopted']})
+    } for s in solicitacoes]})
 
 # GET - Minhas Adoções (Pedidos feitos pelo usuário)
 @app.route('/api/user/adocoes', methods=['GET'])
@@ -1108,8 +1005,9 @@ def api_ong_solicitacoes():
         'cidade': s.solicitante.cidade,
         'estado': s.solicitante.estado,
         'mensagem': s.mensagem, 'status': s.status,
+        'petStatus': s.pet.status,
         'data': s.criado_em.strftime('%Y-%m-%d') if s.criado_em else ''
-    } for s in solicitacoes if s.pet.status != 'adopted']})
+    } for s in solicitacoes]})
 
 @app.route('/api/ong/pet/<int:pet_id>/marcar-adotado', methods=['POST'])
 @login_required
@@ -1134,6 +1032,19 @@ def api_ong_solicitacao_status(req_id):
     if novo_status not in ['approved', 'rejected', 'pending']:
         return jsonify({'erro': 'Status inválido'}), 400
     solicitacao.status = novo_status
+    
+    if novo_status == 'approved':
+        solicitacao.pet.status = 'adopted'
+        
+        # Dispensar/Rejeitar automaticamente os outros pedidos para este mesmo pet
+        outras = SolicitacaoAdocao.query.filter(
+            SolicitacaoAdocao.pet_id == solicitacao.pet_id,
+            SolicitacaoAdocao.id != solicitacao.id,
+            SolicitacaoAdocao.status == 'pending'
+        ).all()
+        for o in outras:
+            o.status = 'rejected'
+            
     db.session.commit()
     return jsonify({'sucesso': True})
 

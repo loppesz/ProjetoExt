@@ -95,7 +95,12 @@ function submitPet(){
   .then(data => {
     if (!data) return;
     if (data.sucesso) {
-      window.location.href = `/pet-submitted?pet_id=${data.pet_id}`;
+      document.getElementById('form-wrap').style.display = 'none';
+      const sc = document.getElementById('success-card');
+      sc.classList.add('show');
+      const btnView = sc.querySelector('.btn-success-primary');
+      if(btnView) btnView.href = `/pet/${data.pet_id}`;
+      window.scrollTo({top: 0, behavior: 'smooth'});
     } else {
       showError(data.erro || 'Erro ao cadastrar o pet.');
     }
@@ -105,3 +110,18 @@ function submitPet(){
     console.error('Erro:', err);
   });
 }
+
+window.resetForm = function() {
+  document.querySelectorAll('.form-input, .form-textarea, .form-select').forEach(el => el.value = '');
+  document.querySelectorAll('.form-check input').forEach(el => el.checked = false);
+  document.getElementById('char-count').textContent = '0/800';
+  
+  selectedFiles = [];
+  document.getElementById('photo-previews').innerHTML = '';
+  selectedSpecies = '';
+  document.querySelectorAll('.species-opt').forEach(o => o.classList.remove('selected'));
+  
+  document.getElementById('success-card').classList.remove('show');
+  document.getElementById('form-wrap').style.display = 'block';
+  window.scrollTo({top: 0, behavior: 'smooth'});
+};
