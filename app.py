@@ -491,6 +491,7 @@ def admin_listar_pets():
                 adocao = SolicitacaoAdocao.query.filter_by(pet_id=p.id, status='approved').first()
                 if adocao:
                     adocao_info = {
+                        'solicitante_id': adocao.solicitante.id,
                         'solicitante': adocao.solicitante.name,
                         'data': adocao.criado_em.strftime('%d/%m/%Y') if hasattr(adocao.criado_em, 'strftime') else "/".join(str(adocao.criado_em).split()[0].split('-')[::-1]) if adocao.criado_em else 'Desconhecida'
                     }
@@ -587,6 +588,40 @@ def admin_listar_users():
             } for u in users]
         })
     except Exception as e:
+        return jsonify({'erro': str(e)}), 500
+
+# PUT - Editar Usuário
+@app.route('/api/admin/users/<int:user_id>', methods=['PUT'])
+@login_required
+@admin_required
+def admin_edit_user(user_id):
+    try:
+        user_obj = Usuario.query.get_or_404(user_id)
+        data = request.get_json()
+        
+        name = data.get('name', '').strip()
+        email = data.get('email', '').strip()
+        phone = data.get('phone', '').strip()
+        city = data.get('city', '').strip()
+        state = data.get('state', '').strip().upper()
+        
+        if not name or not email:
+            return jsonify({'erro': 'Nome e E-mail são obrigatórios.'}), 400
+            
+        existente = Usuario.query.filter_by(email=email).first()
+        if existente and existente.id != user_obj.id:
+            return jsonify({'erro': 'Este e-mail já está em uso.'}), 400
+            
+        user_obj.name = name
+        user_obj.email = email
+        user_obj.telefone = phone
+        user_obj.cidade = city
+        user_obj.estado = state[:2]
+        
+        db.session.commit()
+        return jsonify({'sucesso': True, 'mensagem': 'Usuário atualizado com sucesso!'})
+    except Exception as e:
+        db.session.rollback()
         return jsonify({'erro': str(e)}), 500
 
 # DELETE - Remover Usuário
@@ -690,24 +725,35 @@ def get_my_pets():
             'giant': 'Gigante'
         }
         
-        return jsonify({
-            'pets': [
-                {
-                    'id': p.id,
-                    'name': p.nome,
-                    'breed': p.raca,
-                    'species': p.especie,
-                    'size': p.porte,
-                    'sizeLabel': size_labels.get(p.porte, p.porte),
-                    'city': p.cidade,
-                    'state': p.estado,
-                    'photo': p.foto_capa,
-                    'status': p.status,
-                    'modStatus': p.mod_status
-                }
-                for p in pets
-            ]
-        }), 200
+        pets_data = []
+        for p in pets:
+            adocao_info = None
+            if p.status == 'adopted':
+                adocao = SolicitacaoAdocao.query.filter_by(pet_id=p.id, status='approved').first()
+                if adocao:
+                    adocao_info = {
+                        'solicitante_id': adocao.solicitante.id,
+                        'solicitante': adocao.solicitante.name,
+                        'email': adocao.solicitante.email,
+                        'telefone': adocao.solicitante.telefone,
+                        'data': adocao.criado_em.strftime('%d/%m/%Y') if hasattr(adocao.criado_em, 'strftime') else "/".join(str(adocao.criado_em).split()[0].split('-')[::-1]) if adocao.criado_em else 'Desconhecida'
+                    }
+            pets_data.append({
+                'id': p.id,
+                'name': p.nome,
+                'breed': p.raca,
+                'species': p.especie,
+                'size': p.porte,
+                'sizeLabel': size_labels.get(p.porte, p.porte),
+                'city': p.cidade,
+                'state': p.estado,
+                'photo': p.foto_capa,
+                'status': p.status,
+                'modStatus': p.mod_status,
+                'adocao': adocao_info
+            })
+        
+        return jsonify({'pets': pets_data}), 200
     except Exception as e:
         return jsonify({'erro': str(e)}), 500
 
@@ -1138,17 +1184,32 @@ def api_ong_meus_pets():
         'large': 'Grande',
         'giant': 'Gigante'
     }
-    return jsonify({'pets': [{
-        'id': p.id,
-        'name': p.nome,
-        'breed': p.raca,
-        'status': p.status,
-        'modStatus': p.mod_status,
-        'city': p.cidade,
-        'state': p.estado,
-        'photo': p.foto_capa,
-        'sizeLabel': size_labels.get(p.porte, p.porte)
-    } for p in pets]})
+    pets_data = []
+    for p in pets:
+        adocao_info = None
+        if p.status == 'adopted':
+            adocao = SolicitacaoAdocao.query.filter_by(pet_id=p.id, status='approved').first()
+            if adocao:
+                adocao_info = {
+                    'solicitante_id': adocao.solicitante.id,
+                    'solicitante': adocao.solicitante.name,
+                    'email': adocao.solicitante.email,
+                    'telefone': adocao.solicitante.telefone,
+                    'data': adocao.criado_em.strftime('%d/%m/%Y') if hasattr(adocao.criado_em, 'strftime') else "/".join(str(adocao.criado_em).split()[0].split('-')[::-1]) if adocao.criado_em else 'Desconhecida'
+                }
+        pets_data.append({
+            'id': p.id,
+            'name': p.nome,
+            'breed': p.raca,
+            'status': p.status,
+            'modStatus': p.mod_status,
+            'city': p.cidade,
+            'state': p.estado,
+            'photo': p.foto_capa,
+            'sizeLabel': size_labels.get(p.porte, p.porte),
+            'adocao': adocao_info
+        })
+    return jsonify({'pets': pets_data})
 
 @app.route('/api/ong/profile', methods=['GET', 'PUT'])
 @login_required

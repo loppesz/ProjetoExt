@@ -4,8 +4,43 @@ let ongFilterDate = 'today';
 let ongSpecificDate = '';
 let ongStartDate = '';
 let ongEndDate = '';
+let ongPetFilters = { search: '', status: '' };
 
 document.addEventListener('DOMContentLoaded', () => {
+  // Transferir 'Meus Pets' para a aba Resumo e ocultar a aba original
+  const tabResumo = document.querySelector('.tab-panel');
+  const tabPets = document.getElementById('tab-pets');
+  const linkPets = document.querySelector('.sidebar-link[onclick*="pets"]');
+  
+  if (tabResumo) {
+    const petsSection = document.createElement('div');
+    petsSection.innerHTML = `
+      <div style="margin-top: 40px; display: flex; justify-content: space-between; align-items: flex-end; margin-bottom: 16px;">
+        <h2 style="font-size: 1.4rem; color: var(--navy); margin: 0;">🐾 Meus Pets</h2>
+      </div>
+      <div style="display:flex; gap:10px; margin-bottom: 20px; background: #fff; padding: 16px; border-radius: 12px; border: 1px solid #e5e7eb; flex-wrap: wrap;">
+        <div style="flex: 1; min-width: 200px;">
+          <label class="form-label" style="font-size:0.8rem;margin-bottom:4px">Buscar Pet</label>
+          <input type="text" class="form-input" placeholder="Nome ou raça..." onkeyup="ongPetFilters.search=this.value.toLowerCase(); updateOngPetsUI()">
+        </div>
+        <div>
+          <label class="form-label" style="font-size:0.8rem;margin-bottom:4px">Status</label>
+          <select class="form-input" onchange="ongPetFilters.status=this.value; updateOngPetsUI()">
+            <option value="">Todos os status</option>
+            <option value="available">✅ Disponível</option>
+            <option value="reserved">⏳ Reservado</option>
+            <option value="adopted">🏠 Adotado</option>
+          </select>
+        </div>
+      </div>
+      <div id="lista-pets-resumo"></div>
+    `;
+    tabResumo.appendChild(petsSection);
+  }
+  
+  if (tabPets) tabPets.style.display = 'none';
+  if (linkPets) linkPets.style.display = 'none';
+
   loadOngData();
   loadOngProfile();
 
@@ -19,7 +54,10 @@ document.addEventListener('DOMContentLoaded', () => {
       card.addEventListener('mouseleave', () => { card.style.transform = 'translateY(0)'; });
     });
     
-    statCards[0].onclick = () => { const l = document.querySelector('[onclick*="pets"]'); if(l) showTab('pets', l); };
+    statCards[0].onclick = () => { 
+      const el = document.getElementById('lista-pets-resumo');
+      if(el) el.scrollIntoView({ behavior: 'smooth', block: 'start' });
+    };
     statCards[1].onclick = () => { const l = document.querySelector('[onclick*="solicitacoes"]'); if(l) showTab('solicitacoes', l); };
   }
 });
@@ -42,32 +80,10 @@ function loadOngData() {
     .then(data => {
       ONG_PETS = data.pets || [];
       const pets = ONG_PETS;
-      document.getElementById('total-pets').textContent = pets.length;
+      const tp = document.getElementById('total-pets');
+      if (tp) tp.textContent = pets.length;
 
-      const listaPets = document.getElementById('lista-pets');
-      if (!pets.length) {
-        listaPets.innerHTML = '<div class="empty"><div class="empty-icon">🐾</div><div class="empty-title">Nenhum pet cadastrado no momento.</div></div>';
-        return;
-      }
-
-      listaPets.innerHTML = pets.map(p => `
-        <div class="item-card">
-          <img class="item-img" src="${p.photo || 'https://images.unsplash.com/photo-1548199973-03cce0bbc87b?w=300'}" alt="${p.name}">
-          <div class="item-info">
-            <div class="item-name">${p.name}</div>
-            <div class="item-meta">${p.breed || 'Sem raça definida'} · 📍 ${p.city || '-'}/${p.state || '-'}</div>
-            <div style="display:flex;gap:8px;flex-wrap:wrap">
-              <span class="status-pill ${p.status === 'available' ? 'pill-avail' : p.status === 'adopted' ? 'pill-adopted' : 'pill-reserved'}">
-                ${p.status === 'available' ? 'Disponível' : p.status === 'adopted' ? 'Adotado' : 'Reservado'}
-              </span>
-            </div>
-          </div>
-          <div class="item-actions" style="flex-direction:column; gap:8px;">
-            <button class="btn btn-outline btn-sm" onclick="openEditPetTab('${p.id}')">✏️ Editar</button>
-            ${p.status !== 'adopted' ? `<button class="btn btn-sage btn-sm" onclick="marcarAdotado(${p.id})">Marcar como adotado</button>` : ''}
-          </div>
-        </div>
-      `).join('');
+      updateOngPetsUI();
     });
 
   fetch('/api/ong/solicitacoes?t=' + Date.now())
@@ -81,6 +97,61 @@ function loadOngData() {
       ALL_SOLICITACOES = data.solicitacoes || [];
       updateOngSolicitacoesUI();
     });
+}
+
+function updateOngPetsUI() {
+  const listaPets = document.getElementById('lista-pets-resumo') || document.getElementById('lista-pets');
+  if (!listaPets) return;
+
+  let filtered = ONG_PETS.filter(p => {
+    if (ongPetFilters.status && p.status !== ongPetFilters.status) return false;
+    if (ongPetFilters.search) {
+      const s = ongPetFilters.search;
+      if (!p.name.toLowerCase().includes(s) && !(p.breed || '').toLowerCase().includes(s)) return false;
+    }
+    return true;
+  });
+
+  if (!filtered.length) {
+    listaPets.innerHTML = '<div class="empty"><div class="empty-icon">🐾</div><div class="empty-title">Nenhum pet encontrado.</div><p class="empty-desc">Ajuste os filtros ou cadastre um novo pet.</p></div>';
+    return;
+  }
+
+  listaPets.innerHTML = filtered.map(p => `
+    <details style="background: #fff; border: 1px solid #e2e8f0; border-radius: 12px; margin-bottom: 12px; overflow: hidden; box-shadow: 0 2px 8px rgba(0,0,0,0.02); transition: border-color 0.3s ease;">
+      <summary style="list-style: none; outline: none; cursor: pointer; padding: 16px; display: flex; justify-content: space-between; align-items: center; gap: 16px; flex-wrap: wrap;">
+        <div style="display: flex; align-items: center; flex: 1; min-width: 250px;">
+          <img src="${p.photo || 'https://images.unsplash.com/photo-1548199973-03cce0bbc87b?w=300'}" alt="${p.name}" style="width:52px;height:52px;border-radius:12px;object-fit:cover;flex-shrink:0;margin-right:16px;">
+          <div>
+            <div class="item-name" style="font-size: 1.1rem; color: var(--navy); font-weight: 700;">${p.name}</div>
+            <div style="font-size: 0.85rem; color: var(--muted); margin-top: 2px;">${p.breed || 'Sem raça'} · 📍 ${p.city || '-'}/${p.state || '-'}</div>
+          </div>
+        </div>
+        <div style="display: flex; align-items: center; gap: 12px;">
+          <span class="status-pill ${p.status === 'available' ? 'pill-avail' : p.status === 'adopted' ? 'pill-adopted' : 'pill-reserved'}" style="margin:0;">
+            ${p.status === 'available' ? 'Disponível' : p.status === 'adopted' ? 'Adotado' : 'Reservado'}
+          </span>
+          <span style="font-size: 0.85rem; color: var(--navy); background: #f8fafc; border: 1px solid #e2e8f0; padding: 6px 14px; border-radius: 20px; font-weight: 600;">Ver detalhes ▾</span>
+        </div>
+      </summary>
+      
+      <div style="padding: 0 16px 16px 84px; border-top: 1px solid #f1f5f9; padding-top: 16px;">
+        ${p.adocao ? `
+          <div style="background: #d1fae5; border: 1px solid #a7f3d0; padding: 12px 16px; border-radius: 8px; margin-bottom: 16px;">
+            <div style="font-size: 0.9rem; color: #065f46; font-weight: 700; margin-bottom: 4px;">🏠 Adotado por ${p.adocao.solicitante} em ${p.adocao.data}</div>
+            <div style="font-size: 0.85rem; color: #065f46; opacity: 0.9;">✉️ ${p.adocao.email} &nbsp;·&nbsp; 📞 ${p.adocao.telefone || 'Não informado'}</div>
+          </div>
+        ` : ''}
+        
+        <div style="display: flex; gap: 8px; flex-wrap: wrap;">
+          <button class="btn btn-outline btn-sm" onclick="openEditPetTab('${p.id}')">✏️ Editar informações</button>
+          ${p.status !== 'adopted' ? `<button class="btn btn-sage btn-sm" onclick="marcarAdotado(${p.id})">Marcar como adotado</button>` : ''}
+          <a href="/pet/${p.id}" target="_blank" class="btn btn-ghost btn-sm">👁️ Ver na página pública</a>
+          <button class="btn btn-outline btn-sm btn-danger" onclick="deleteOngPet('${p.id}')">🗑️ Excluir</button>
+        </div>
+      </div>
+    </details>
+  `).join('');
 }
 
 // ── Editar Pet (ONG) ──────────────────────────────────────────────────────────
@@ -198,6 +269,20 @@ function saveEditPet(id) {
     err.textContent = `⚠️ Erro: ${e}`;
     err.style.display = 'block';
   });
+}
+
+function deleteOngPet(id) {
+  if (!confirm('Atenção: Deseja realmente excluir este pet da plataforma? Esta ação não pode ser desfeita.')) return;
+  fetch(`/api/pets/${id}`, { method: 'DELETE' })
+    .then(r => r.json())
+    .then(data => {
+      if (data.sucesso) {
+        showToast(`✅ ${data.mensagem}`, 'success');
+        loadOngData();
+      } else {
+        showToast(`❌ ${data.erro}`, '');
+      }
+    });
 }
 
 // ── Toast ─────────────────────────────────────────────────────────────────────
