@@ -1,7 +1,12 @@
-document.addEventListener('DOMContentLoaded', () => {
-  carregarResumo();
-  carregarPets(); // Já carrega os pets ao abrir
+let ALL_SOLICITACOES = [];
+let ongFilterDate = 'today';
+let ongSpecificDate = '';
+let ongStartDate = '';
+let ongEndDate = '';
 
+document.addEventListener('DOMContentLoaded', () => {
+  loadOngData();
+  loadOngProfile();
 
   // Torna os cards de estatísticas clicáveis para navegar para as abas
   const statCards = document.querySelectorAll('.stat-card');
@@ -63,123 +68,163 @@ function loadOngData() {
   fetch('/api/ong/solicitacoes')
     .then(r => r.json())
     .then(data => {
-      const solicitacoes = data.solicitacoes || [];
+      ALL_SOLICITACOES = data.solicitacoes || [];
+      updateOngSolicitacoesUI();
+    });
+}
+
+function updateOngSolicitacoesUI() {
+      const solicitacoes = ALL_SOLICITACOES;
       const pendentes = solicitacoes.filter(s => s.status === 'pending');
       document.getElementById('total-solicitacoes').textContent = pendentes.length;
 
       const listaSol = document.getElementById('lista-solicitacoes');
-      if (!solicitacoes.length) {
-        listaSol.innerHTML = '<div class="empty"><div class="empty-icon">💌</div><div class="empty-title">Nenhuma solicitação até o momento.</div></div>';
-        return;
-      }
+      
+      const today = new Date();
+      today.setHours(0,0,0,0);
+      
+      let filtered = solicitacoes.filter(s => {
+        if (ongFilterDate === 'all') return true;
+        if (!s.data) return true;
+        const [y, m, d] = s.data.split('-');
+        const dt = new Date(y, m - 1, d);
+        
+        if (ongFilterDate === 'today') {
+           return dt.getTime() === today.getTime();
+        }
+        if (ongFilterDate === 'week') {
+           const diff = today.getTime() - dt.getTime();
+           return diff <= 7 * 24 * 60 * 60 * 1000 && diff >= 0;
+        }
+        if (ongFilterDate === 'month') {
+           return dt.getMonth() === today.getMonth() && dt.getFullYear() === today.getFullYear();
+        }
+        if (ongFilterDate === 'specific') {
+           if (!ongSpecificDate) return true;
+           return s.data === ongSpecificDate;
+        }
+        if (ongFilterDate === 'range') {
+           if (!ongStartDate && !ongEndDate) return true;
+           const reqDate = new Date(y, m - 1, d).getTime();
+           let startValid = true, endValid = true;
+           
+           if (ongStartDate) {
+             const [sy, sm, sd] = ongStartDate.split('-');
+             startValid = reqDate >= new Date(sy, sm - 1, sd).getTime();
+           }
+           if (ongEndDate) {
+             const [ey, em, ed] = ongEndDate.split('-');
+             endValid = reqDate <= new Date(ey, em - 1, ed).getTime();
+           }
+           return startValid && endValid;
+        }
+        return true;
+      });
 
-      listaSol.innerHTML = solicitacoes.map(s => `
-        <div class="item-card">
-          <div class="req-avatar">👤</div>
-          <div class="item-info">
-            <div class="item-name">${s.solicitanteName}</div>
-            <div class="item-meta">Quer adotar: <strong>${s.petName}</strong></div>
-            <div class="item-meta">${s.email || ''}${s.telefone ? ' · ' + s.telefone : ''}</div>
-            <div class="item-meta">${s.cidade || ''}${s.estado ? '/' + s.estado : ''}</div>
-            <div class="req-quote">"${s.mensagem}"</div>
-            <div class="mt-10">
-              <span class="status-pill ${s.status === 'pending' ? 'pill-pending' : s.status === 'approved' ? 'pill-approved' : 'pill-rejected'}">
-                ${s.status === 'pending' ? 'Aguardando' : s.status === 'approved' ? 'Aprovado' : 'Recusado'}
-              </span>
-            </div>
-          </div>
-          <div class="item-actions flex-column">
-            ${s.status === 'pending' ? `
-              <button class="btn btn-sage btn-sm" onclick="mudarStatusSolicitacao(${s.id}, 'approved')">Aprovar</button>
-              <button class="btn btn-outline btn-sm btn-danger" onclick="mudarStatusSolicitacao(${s.id}, 'rejected')">Recusar</button>
+      const filterHtml = `
+        <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom: 16px; background: #fff; padding: 12px 16px; border-radius: 12px; border: 1px solid #e5e7eb; flex-wrap: wrap; gap: 10px;">
+          <span style="font-weight:600; color:var(--navy);">Filtrar solicitações:</span>
+          <div style="display:flex; gap:10px; flex-wrap: wrap;">
+            <select class="form-input" style="width:auto; min-width: 200px; padding: 6px 12px; margin: 0;" onchange="ongFilterDate=this.value; updateOngSolicitacoesUI()">
+              <option value="today" ${ongFilterDate==='today'?'selected':''}>📅 Apenas Hoje</option>
+              <option value="week" ${ongFilterDate==='week'?'selected':''}>📅 Últimos 7 dias</option>
+              <option value="month" ${ongFilterDate==='month'?'selected':''}>📅 Este Mês</option>
+              <option value="specific" ${ongFilterDate==='specific'?'selected':''}>📅 Data Específica</option>
+              <option value="range" ${ongFilterDate==='range'?'selected':''}>📅 Intervalo de Datas</option>
+              <option value="all" ${ongFilterDate==='all'?'selected':''}>📅 Todas as datas</option>
+            </select>
+            ${ongFilterDate === 'specific' ? `<input type="date" class="form-input" style="width:auto; padding: 6px 12px; margin: 0;" value="${ongSpecificDate}" onchange="ongSpecificDate=this.value; updateOngSolicitacoesUI()">` : ''}
+            ${ongFilterDate === 'range' ? `
+              <input type="date" class="form-input" style="width:auto; padding: 6px 12px; margin: 0;" value="${ongStartDate}" onchange="ongStartDate=this.value; updateOngSolicitacoesUI()">
+              <span style="color:var(--muted); font-size:0.9rem; font-weight:600; display:flex; align-items:center;">até</span>
+              <input type="date" class="form-input" style="width:auto; padding: 6px 12px; margin: 0;" value="${ongEndDate}" onchange="ongEndDate=this.value; updateOngSolicitacoesUI()">
             ` : ''}
           </div>
         </div>
-      `).join('');
-    });
+      `;
+
+      if (!filtered.length) {
+        listaSol.innerHTML = filterHtml + '<div class="empty"><div class="empty-icon">💌</div><div class="empty-title">Nenhuma solicitação encontrada.</div><p class="empty-desc">Nenhum pedido para o período selecionado.</p></div>';
+        return;
+      }
+
+      listaSol.innerHTML = filterHtml + filtered.map(s => {
+        let msgFormatted = '';
+        if (s.mensagem && s.mensagem.includes('📞 Contato:')) {
+          const parts = s.mensagem.split('\n\n💬 Mensagem:');
+          const infoList = parts[0].split('\n').filter(l => l.trim() !== '');
+          const obs = parts.length > 1 ? parts[1].trim() : '';
+          
+          const borderColors = ['var(--blue)', 'var(--yellow)', 'var(--navy)', '#5ba3d4'];
+          const gridItems = infoList.map((item, index) => {
+            const colonIdx = item.indexOf(':');
+            let label = item, val = '';
+            if (colonIdx > -1) {
+              label = item.substring(0, colonIdx + 1);
+              val = item.substring(colonIdx + 1).trim();
+            }
+            return `<div style="background:#fff; border: 1px solid #e5e7eb; border-left: 4px solid ${borderColors[index % borderColors.length]}; padding: 12px 16px; border-radius: 12px; font-size: 0.88rem; color: #374151; box-shadow: 0 4px 14px rgba(46, 134, 193, 0.08);"><strong style="color:var(--navy); font-weight:700; display:block; margin-bottom:2px;">${label}</strong> ${val}</div>`;
+          }).join('');
+          
+          msgFormatted = `
+            <details style="margin-top: 12px; border: 1px solid #e5e7eb; border-radius: 10px; background: #fff; box-shadow: 0 2px 8px rgba(0,0,0,0.02);">
+              <summary style="list-style: none; outline: none; cursor: pointer;">
+                <div style="padding: 12px 16px; display: flex; justify-content: space-between; align-items: center; font-size: 0.9rem; font-weight: 600; color: var(--navy);">
+                  <span style="display: flex; align-items: center; gap: 8px;">📋 <span>Detalhes da solicitação</span></span>
+                  <span style="font-size: 0.8rem; background: #f1f5f9; border: 1px solid #e2e8f0; padding: 4px 10px; border-radius: 20px; color: #475569;">Ver informações ▾</span>
+                </div>
+              </summary>
+              <div style="padding: 0 16px 16px 16px; border-top: 1px solid #f1f5f9; margin-top: 4px; padding-top: 16px;">
+                <div style="display:grid; grid-template-columns: repeat(auto-fit, minmax(200px, 1fr)); gap: 12px;">${gridItems}</div>
+                ${obs ? `<div style="background:#f8fafc; border: 1px solid #e5e7eb; border-left: 4px solid var(--blue); padding: 14px 18px; border-radius: 10px; font-size:.87rem; color:var(--bark-m); margin-top:12px; line-height:1.6;"><strong style="color:var(--navy); display:block; margin-bottom:4px; font-weight:700;">💬 Mensagem do Adotante:</strong>${obs}</div>` : ''}
+              </div>
+            </details>`;
+        } else if (s.mensagem) {
+          msgFormatted = `
+            <details style="margin-top: 12px; border: 1px solid #e5e7eb; border-radius: 10px; background: #fff; box-shadow: 0 2px 8px rgba(0,0,0,0.02);">
+              <summary style="list-style: none; outline: none; cursor: pointer;">
+                <div style="padding: 12px 16px; display: flex; justify-content: space-between; align-items: center; font-size: 0.9rem; font-weight: 600; color: var(--navy);">
+                  <span style="display: flex; align-items: center; gap: 8px;">📋 <span>Mensagem do Adotante</span></span>
+                  <span style="font-size: 0.8rem; background: #f1f5f9; border: 1px solid #e2e8f0; padding: 4px 10px; border-radius: 20px; color: #475569;">Ver informações ▾</span>
+                </div>
+              </summary>
+              <div style="padding: 0 16px 16px 16px; border-top: 1px solid #f1f5f9; margin-top: 4px; padding-top: 16px;">
+                <div style="background:#f8fafc; border: 1px solid #e5e7eb; border-left: 4px solid var(--blue); padding: 14px 18px; border-radius: 10px; font-size:.87rem; color:var(--bark-m); line-height:1.6; white-space:pre-wrap;"><strong style="color:var(--navy); display:block; margin-bottom:4px; font-weight:700;">💬 Mensagem do Adotante:</strong>\n${s.mensagem}</div>
+              </div>
+            </details>`;
+        }
+
+        const phoneMatch = s.mensagem ? s.mensagem.match(/📞 Contato:\s*(.*?)\s*\(/) : null;
+        const derivedPhone = s.telefone || (phoneMatch ? phoneMatch[1] : '');
+
+        return `
+        <div class="item-card">
+          <div style="width:52px;height:52px;border-radius:50%;background:var(--blush, #fce7f3);display:flex;align-items:center;justify-content:center;font-size:1.4rem;flex-shrink:0">🧑</div>
+          <div class="item-info">
+            <div class="item-name">${s.solicitanteName}</div>
+            <div class="item-meta">Interesse em: <strong>${s.petName}</strong></div>
+            ${msgFormatted}
+            <div style="display:flex;gap:8px;margin-top:10px;flex-wrap:wrap;align-items:center;">
+              <span style="font-size:.82rem;color:var(--muted)">📅 ${s.data ? s.data.split('-').reverse().join('/') : 'Recente'}</span>
+              <span style="font-size:.82rem;color:var(--muted)">📍 ${s.cidade || ''}${s.estado ? '/' + s.estado : ''}</span>
+              ${s.email ? `<span style="font-size:.82rem;color:var(--muted)">✉️ ${s.email}</span>` : ''}
+            </div>
+          </div>
+          <div class="item-actions flex-column" style="min-width: 220px;">
+            ${derivedPhone ? `<a href="https://wa.me/55${String(derivedPhone).replace(/\D/g,'')}" target="_blank" class="btn btn-whatsapp btn-sm" style="background:#25d366;color:#fff;border:none;text-decoration:none;display:flex;justify-content:center;margin-bottom:8px;">💬 Entrar em contato</a>` : ''}
+          </div>
+        </div>
+      `;
+      }).join('');
 }
 
 function marcarAdotado(petId) {
   fetch(`/api/ong/pet/${petId}/marcar-adotado`, { method: 'POST' })
     .then(r => r.json())
-    .then(ong => {
-      tab.innerHTML = `
-        <div class="fade-in">
-            <div class="panel-header" style="margin-bottom: 8px;">
-              <div class="panel-title">⚙️ Editar Perfil da ONG</div>
-            </div>
-            <p style="color: var(--muted); margin-bottom: 24px; font-size: 0.95rem;">Mantenha suas informações atualizadas para atrair mais adotantes!</p>
-            
-            <form id="form-edit-ong" onsubmit="saveOngProfile(event)">
-              <!-- 1. Foto de Perfil -->
-              <div style="background:#fff; border: 1px solid #e5e7eb; border-left: 4px solid #5ba3d4; padding: 18px; border-radius: 12px; box-shadow: 0 4px 14px rgba(46, 134, 193, 0.08); margin-bottom: 16px;">
-                <label class="form-label" style="margin-bottom:12px;">📸 Foto de Perfil <span style="font-weight:400;color:var(--muted);text-transform:none;letter-spacing:normal">(Deixe vazio para manter)</span></label>
-                <div style="display:flex; gap:16px; align-items:center;">
-                  <img src="${ong.foto_url || 'https://images.unsplash.com/photo-1601758124096-7093b3fef44d?w=100&q=80'}" style="width:56px; height:56px; border-radius:50%; object-fit:cover; border:2px solid #e5e7eb; box-shadow: var(--sh-sm);">
-                  <input type="file" id="edit-ong-foto" class="form-input" accept="image/*" style="flex:1;">
-                </div>
-              </div>
-
-              <!-- 2. Dados Principais -->
-              <div style="background:#fff; border: 1px solid #e5e7eb; border-left: 4px solid var(--blue); padding: 18px; border-radius: 12px; box-shadow: 0 4px 14px rgba(46, 134, 193, 0.08); margin-bottom: 16px;">
-                <div class="form-group" style="margin-bottom: 14px;">
-                  <label class="form-label">🏢 Nome da ONG <span class="req">*</span></label>
-                  <input type="text" id="edit-ong-nome" class="form-input" value="${ong.nome || ''}" required>
-                </div>
-                <div style="display:grid; grid-template-columns: 1fr 1fr; gap: 14px;">
-                  <div>
-                    <label class="form-label">📍 Cidade <span class="req">*</span></label>
-                    <input type="text" id="edit-ong-cidade" class="form-input" value="${ong.cidade || ''}" required>
-                  </div>
-                  <div>
-                    <label class="form-label">🗺️ Estado <span class="req">*</span></label>
-                    <input type="text" id="edit-ong-estado" class="form-input" value="${ong.estado || ''}" required maxlength="2">
-                  </div>
-                </div>
-              </div>
-
-              <!-- 3. Contatos e Doações -->
-              <div style="background:#fff; border: 1px solid #e5e7eb; border-left: 4px solid var(--yellow); padding: 18px; border-radius: 12px; box-shadow: 0 4px 14px rgba(46, 134, 193, 0.08); margin-bottom: 16px;">
-                <div style="display:grid; grid-template-columns: 1fr 1fr; gap: 14px; margin-bottom: 14px;">
-                  <div>
-                    <label class="form-label">💬 WhatsApp</label>
-                    <input type="text" id="edit-ong-whatsapp" class="form-input" value="${ong.whatsapp || ''}" placeholder="Ex: 11999990000">
-                  </div>
-                  <div>
-                    <label class="form-label">💳 Chave PIX</label>
-                    <input type="text" id="edit-ong-pix" class="form-input" value="${ong.chave_pix || ''}" placeholder="E-mail, CPF, Celular...">
-                  </div>
-                </div>
-                <div style="display:grid; grid-template-columns: 1fr 1fr; gap: 14px;">
-                  <div>
-                    <label class="form-label">❤️ Link da Vakinha</label>
-                    <input type="url" id="edit-ong-vakinha" class="form-input" value="${ong.link_vakinha || ''}" placeholder="https://vakinha.com.br/...">
-                  </div>
-                  <div>
-                    <label class="form-label">✨ Instagram</label>
-                    <input type="url" id="edit-ong-instagram" class="form-input" value="${ong.instagram || ''}" placeholder="https://instagram.com/...">
-                  </div>
-                </div>
-              </div>
-
-              <!-- 4. Sobre a ONG -->
-              <div style="background:#fff; border: 1px solid #e5e7eb; border-left: 4px solid var(--navy); padding: 18px; border-radius: 12px; box-shadow: 0 4px 14px rgba(46, 134, 193, 0.08); margin-bottom: 16px;">
-                <div class="form-group" style="margin-bottom: 14px;">
-                  <label class="form-label">📝 Descrição Curta</label>
-                  <textarea id="edit-ong-desc" class="form-textarea" rows="2" placeholder="Resumo em uma frase sobre o que a ONG faz...">${ong.descricao || ''}</textarea>
-                </div>
-                <div class="form-group" style="margin-bottom: 0;">
-                  <label class="form-label">📖 História Completa</label>
-                  <textarea id="edit-ong-desc-full" class="form-textarea" rows="4" placeholder="Conte a história detalhada da instituição, como surgiu, como ajudam...">${ong.descricao_completa || ''}</textarea>
-                </div>
-              </div>
-
-              <div style="margin-top: 28px;">
-                <button type="submit" class="btn btn-primary" id="btn-save-ong" style="padding: 12px 24px;">💾 Salvar Alterações</button>
-              </div>
-            </form>
-          </div>
-      `;
+    .then(data => {
+      if (data.sucesso) {
+        loadOngData();
+      }
     });
 }
 

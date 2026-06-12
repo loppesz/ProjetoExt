@@ -88,11 +88,32 @@ function initDashboard() {
     renderSiteImpact();
   }
 
+
+  if (user.role === 'user') {
+    // Esconde abas de gerenciamento de pets para usuários comuns
+    ['my-pets', 'received'].forEach(tab => {
+      const link = document.querySelector(`[onclick*="showTab('${tab}'"]`);
+      if (link) link.style.display = 'none';
+    });
+
+    const statMyPets = document.getElementById('stat-mypets');
+    if (statMyPets && statMyPets.closest('.stat-card')) statMyPets.closest('.stat-card').style.display = 'none';
+    
+    const statReceived = document.getElementById('stat-received');
+    if (statReceived && statReceived.closest('.stat-card')) statReceived.closest('.stat-card').style.display = 'none';
+
+    document.querySelectorAll('a[href="/new-pet"]').forEach(btn => btn.style.display = 'none');
+  }
+
   // Se a URL contiver uma hash (ex: /dashboard#adoptions), abre a aba correspondente na hora
   if (window.location.hash) {
     const tabId = window.location.hash.replace('#', '');
     const linkEl = document.querySelector(`[onclick*="'${tabId}'"]`);
     if (document.getElementById('tab-' + tabId)) showTab(tabId, linkEl);
+  } else if (user.role === 'user') {
+    // Se for usuário normal, abre a aba de adoções por padrão (já que Meus Pets está oculto)
+    const adoptionsLink = document.querySelector(`[onclick*="showTab('adoptions'"]`);
+    if (adoptionsLink) showTab('adoptions', adoptionsLink);
   }
 
   // Torna os cards de estatísticas clicáveis e interativos
@@ -109,12 +130,14 @@ function initDashboard() {
       statCards[0].onclick = () => { const l = document.querySelector('[onclick*="my-pets"]'); if(l) showTab('my-pets', l); };
       statCards[1].onclick = () => { const l = document.querySelector('[onclick*="ongs"]'); if(l) showTab('admin-ongs', l); };
       statCards[2].onclick = () => { const l = document.querySelector('[onclick*="moderation"]'); if(l) showTab('moderation', l); };
-    } else if (statCards.length >= 2) {
-      statCards[0].onclick = () => { const l = document.querySelector('[onclick*="adoptions"]'); if(l) showTab('adoptions', l); };
-      statCards[1].onclick = () => { const l = document.querySelector('[onclick*="favorites"]'); if(l) showTab('favorites', l); };
-      if (statCards.length >= 3) {
-        statCards[2].onclick = () => { const l = document.querySelector('[onclick*="received"]'); if(l) showTab('received', l); };
-      }
+    } else {
+      const cMyPets = document.getElementById('stat-mypets')?.closest('.stat-card');
+      const cAdoptions = document.getElementById('stat-adoptions')?.closest('.stat-card');
+      const cReceived = document.getElementById('stat-received')?.closest('.stat-card');
+      
+      if (cMyPets) cMyPets.onclick = () => { const l = document.querySelector('[onclick*="my-pets"]'); if(l) showTab('my-pets', l); };
+      if (cAdoptions) cAdoptions.onclick = () => { const l = document.querySelector('[onclick*="adoptions"]'); if(l) showTab('adoptions', l); };
+      if (cReceived) cReceived.onclick = () => { const l = document.querySelector('[onclick*="received"]'); if(l) showTab('received', l); };
     }
   }
 }
@@ -127,6 +150,11 @@ let MY_PETS = [];
 // Todos os pets da plataforma (para moderação)
 let ALL_PLATFORM_PETS = [];
 let PENDING_PETS = [];
+let ALL_RECEIVED = [];
+let receivedFilterDate = 'today';
+let receivedSpecificDate = '';
+let receivedStartDate = '';
+let receivedEndDate = '';
 
 // ── Stats ─────────────────────────────────────────────────────────────────────
 function updateStats() {
@@ -370,24 +398,88 @@ function renderAdoptions() {
         el.innerHTML = `<div class="empty"><div class="empty-icon">💌</div><div class="empty-title">Nenhuma solicitação enviada</div><p class="empty-desc">Você ainda não enviou nenhum pedido de adoção.</p><a href="/pets" class="btn btn-primary">Encontrar um pet</a></div>`;
         return;
       }
-      el.innerHTML = adocoes.map(a => `
-        <div class="item-card">
-          <img class="item-img" src="${a.photo}" alt="${a.petName}">
-          <div class="item-info">
-            <div class="item-name">${a.petName}</div>
-            <div class="item-meta">${a.petBreed} · 📍 ${a.city} · ${a.date}</div>
-            ${a.status==='pending'?`<div class="status-pill pill-pending" style="margin-top:6px;">⏳ Em análise (Aguarde contato)</div>`:
-              a.status==='approved'?`<div class="status-pill pill-approved" style="margin-top:6px;">🏆 Adoção Confirmada!</div>`:
-              `<div class="status-pill" style="margin-top:6px; background:#f3f4f6; color:#4b5563;">❌ Solicitação não aprovada</div>`}
+        el.innerHTML = adocoes.map(a => {
+        let msgFormatted = '';
+        if (a.msg && a.msg.includes('📞 Contato:')) {
+          const parts = a.msg.split('\n\n💬 Mensagem:');
+          const infoList = parts[0].split('\n').filter(l => l.trim() !== '');
+          const obs = parts.length > 1 ? parts[1].trim() : '';
+          
+          const borderColors = ['var(--blue)', 'var(--yellow)', 'var(--navy)', '#5ba3d4'];
+          const gridItems = infoList.map((item, index) => {
+            const colonIdx = item.indexOf(':');
+            let label = item, val = '';
+            if (colonIdx > -1) {
+              label = item.substring(0, colonIdx + 1);
+              val = item.substring(colonIdx + 1).trim();
+            }
+            return `<div style="background:#fff; border: 1px solid #e5e7eb; border-left: 4px solid ${borderColors[index % borderColors.length]}; padding: 12px 16px; border-radius: 12px; font-size: 0.88rem; color: #374151; box-shadow: 0 4px 14px rgba(46, 134, 193, 0.08);"><strong style="color:var(--navy); font-weight:700; display:block; margin-bottom:2px;">${label}</strong> ${val}</div>`;
+          }).join('');
+          
+          msgFormatted = `
+            <details style="margin-top: 12px; border: 1px solid #e5e7eb; border-radius: 10px; background: #fff; box-shadow: 0 2px 8px rgba(0,0,0,0.02);">
+              <summary style="list-style: none; outline: none; cursor: pointer;">
+                <div style="padding: 12px 16px; display: flex; justify-content: space-between; align-items: center; font-size: 0.9rem; font-weight: 600; color: var(--navy);">
+                  <span style="display: flex; align-items: center; gap: 8px;">📋 <span>Detalhes da sua solicitação</span></span>
+                  <span style="font-size: 0.8rem; background: #f1f5f9; border: 1px solid #e2e8f0; padding: 4px 10px; border-radius: 20px; color: #475569;">Ver informações ▾</span>
+                </div>
+              </summary>
+              <div style="padding: 0 16px 16px 16px; border-top: 1px solid #f1f5f9; margin-top: 4px; padding-top: 16px;">
+                <div style="display:grid; grid-template-columns: repeat(auto-fit, minmax(200px, 1fr)); gap: 12px;">${gridItems}</div>
+                ${obs ? `<div style="background:#f8fafc; border: 1px solid #e5e7eb; border-left: 4px solid var(--blue); padding: 14px 18px; border-radius: 10px; font-size:.87rem; color:var(--bark-m); margin-top:12px; line-height:1.6;"><strong style="color:var(--navy); display:block; margin-bottom:4px; font-weight:700;">💬 Sua Mensagem:</strong>${obs}</div>` : ''}
+              </div>
+            </details>`;
+        } else if (a.msg) {
+          msgFormatted = `
+            <details style="margin-top: 12px; border: 1px solid #e5e7eb; border-radius: 10px; background: #fff; box-shadow: 0 2px 8px rgba(0,0,0,0.02);">
+              <summary style="list-style: none; outline: none; cursor: pointer;">
+                <div style="padding: 12px 16px; display: flex; justify-content: space-between; align-items: center; font-size: 0.9rem; font-weight: 600; color: var(--navy);">
+                  <span style="display: flex; align-items: center; gap: 8px;">📋 <span>Sua Mensagem</span></span>
+                  <span style="font-size: 0.8rem; background: #f1f5f9; border: 1px solid #e2e8f0; padding: 4px 10px; border-radius: 20px; color: #475569;">Ver informações ▾</span>
+                </div>
+              </summary>
+              <div style="padding: 0 16px 16px 16px; border-top: 1px solid #f1f5f9; margin-top: 4px; padding-top: 16px;">
+                <div style="background:#f8fafc; border: 1px solid #e5e7eb; border-left: 4px solid var(--blue); padding: 14px 18px; border-radius: 10px; font-size:.87rem; color:var(--bark-m); line-height:1.6; white-space:pre-wrap;"><strong style="color:var(--navy); display:block; margin-bottom:4px; font-weight:700;">💬 Sua Mensagem:</strong>\n${a.msg}</div>
+              </div>
+            </details>`;
+        }
+
+        return `
+        <div class="item-card" style="flex-direction:column; align-items: stretch; padding: 24px;">
+          <div style="display:flex; gap: 16px; width: 100%;">
+            <img class="item-img" src="${a.photo}" alt="${a.petName}" style="width: 80px; height: 80px; border-radius: 12px; object-fit: cover;">
+            <div class="item-info" style="flex:1;">
+              <div class="item-name" style="font-size: 1.2rem;">${a.petName}</div>
+              <div class="item-meta">${a.petBreed} · 📍 ${a.city} · ${a.date}</div>
+              <div class="status-pill pill-pending" style="margin-top:8px;">⏳ Aguardando contato do responsável</div>
+            </div>
+            <div class="item-actions" style="flex-direction:column; align-items: flex-end; min-width: 140px;">
+              <a href="/pet/${a.petId}" class="btn btn-outline btn-sm">👁️ Ver pet</a>
+              <button class="btn btn-outline btn-sm btn-danger" onclick="cancelRequest(${a.id})">🗑️ Cancelar Pedido</button>
+              ${a.has_feedback ? `<span class="feedback-evaluated-badge">⭐ Avaliado</span>` : ''}
+              ${!a.has_feedback ? `<button class="btn btn-primary btn-sm" onclick="openFeedbackTab(${a.id})" style="margin-top: 4px;">⭐ Avaliar</button>` : ''}
+            </div>
           </div>
-          <div class="item-actions" style="flex-direction:column">
-            <a href="/pet/${a.petId}" class="btn btn-outline btn-sm">👁️ Ver pet</a>
-            ${a.whatsapp && a.status !== 'rejected' ? `<a href="https://wa.me/55${a.whatsapp.replace(/\D/g,'')}" target="_blank" class="btn btn-whatsapp btn-sm" style="background:#25d366;color:#fff;border:none;text-decoration:none;display:flex;justify-content:center;">💬 WhatsApp</a>` : ''}
-            ${a.status==='pending'?`<button class="btn btn-outline btn-sm btn-danger" onclick="cancelRequest(${a.id})">🗑️ Cancelar</button>`:''}
-            ${a.status==='approved' && !a.has_feedback ? `<button class="btn btn-primary btn-sm" onclick="openFeedbackTab(${a.id})">⭐ Avaliar</button>` : ''}
-            ${a.has_feedback ? `<span class="feedback-evaluated-badge">⭐ Avaliado</span>` : ''}
+          
+          <div style="margin-top: 20px; padding-top: 16px; border-top: 1px solid #e5e7eb;">
+            <strong style="color:var(--navy); display:block; margin-bottom:12px; font-size: 1.05rem;">Informações do Responsável</strong>
+            <div style="display: flex; align-items: center; justify-content: space-between; background: #f8fafc; padding: 12px 16px; border-radius: 8px;">
+              <div>
+                <div style="font-weight: 600; color: #1f2937;">${a.ongName || 'Tutor Responsável'}</div>
+                <div style="font-size: 0.85rem; color: #6b7280; margin-top: 2px;">${a.whatsapp ? '📞 ' + a.whatsapp : 'Sem telefone cadastrado'}</div>
+              </div>
+              ${a.whatsapp ? `<a href="https://wa.me/55${String(a.whatsapp).replace(/\D/g,'')}" target="_blank" class="btn btn-whatsapp btn-sm" style="background:#25d366;color:#fff;border:none;text-decoration:none;display:flex;align-items:center;gap:6px;"><span style="font-size:1.1rem;">💬</span> Entrar em contato</a>` : ''}
+            </div>
           </div>
-        </div>`).join('');
+
+          ${msgFormatted ? `
+          <div style="margin-top: 16px;">
+            <strong style="color:var(--navy); display:block; margin-bottom:4px; font-size: 1.05rem;">Sua Solicitação</strong>
+            ${msgFormatted}
+          </div>
+          ` : ''}
+        </div>`;
+      }).join('');
     });
 }
 
@@ -470,23 +562,92 @@ function renderReceived() {
   fetch('/api/user/solicitacoes')
     .then(r => r.json())
     .then(data => {
-      const recebidas = data.solicitacoes || [];
+      ALL_RECEIVED = data.solicitacoes || [];
+      updateReceivedUI();
+    });
+}
+
+function updateReceivedUI() {
+      const recebidas = ALL_RECEIVED;
       const el = document.getElementById('received-list');
       
       const pendentes = recebidas.filter(s => s.status === 'pending').length;
       if(document.getElementById('stat-received')) document.getElementById('stat-received').textContent = pendentes;
       
-      if (!recebidas.length) {
-        el.innerHTML = `<div class="empty"><div class="empty-icon">📥</div><div class="empty-title">Nenhum pedido recebido</div><p class="empty-desc">Quando alguém quiser adotar seus pets, os pedidos aparecerão aqui.</p></div>`;
+      const today = new Date();
+      today.setHours(0,0,0,0);
+      
+      let filtered = recebidas.filter(r => {
+        if (receivedFilterDate === 'all') return true;
+        if (!r.data) return true;
+        const [y, m, d] = r.data.split('-');
+        const dt = new Date(y, m - 1, d);
+        
+        if (receivedFilterDate === 'today') {
+           return dt.getTime() === today.getTime();
+        }
+        if (receivedFilterDate === 'week') {
+           const diff = today.getTime() - dt.getTime();
+           return diff <= 7 * 24 * 60 * 60 * 1000 && diff >= 0;
+        }
+        if (receivedFilterDate === 'month') {
+           return dt.getMonth() === today.getMonth() && dt.getFullYear() === today.getFullYear();
+        }
+        if (receivedFilterDate === 'specific') {
+           if (!receivedSpecificDate) return true;
+           return r.data === receivedSpecificDate;
+        }
+        if (receivedFilterDate === 'range') {
+           if (!receivedStartDate && !receivedEndDate) return true;
+           const reqDate = new Date(y, m - 1, d).getTime();
+           let startValid = true, endValid = true;
+           
+           if (receivedStartDate) {
+             const [sy, sm, sd] = receivedStartDate.split('-');
+             startValid = reqDate >= new Date(sy, sm - 1, sd).getTime();
+           }
+           if (receivedEndDate) {
+             const [ey, em, ed] = receivedEndDate.split('-');
+             endValid = reqDate <= new Date(ey, em - 1, ed).getTime();
+           }
+           return startValid && endValid;
+        }
+        return true;
+      });
+
+      const filterHtml = `
+        <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom: 16px; background: #fff; padding: 12px 16px; border-radius: 12px; border: 1px solid #e5e7eb; flex-wrap: wrap; gap: 10px;">
+          <span style="font-weight:600; color:var(--navy);">Filtrar solicitações:</span>
+          <div style="display:flex; gap:10px; flex-wrap: wrap;">
+            <select class="form-input" style="width:auto; min-width: 200px; padding: 6px 12px; margin: 0;" onchange="receivedFilterDate=this.value; updateReceivedUI()">
+              <option value="today" ${receivedFilterDate==='today'?'selected':''}>📅 Apenas Hoje</option>
+              <option value="week" ${receivedFilterDate==='week'?'selected':''}>📅 Últimos 7 dias</option>
+              <option value="month" ${receivedFilterDate==='month'?'selected':''}>📅 Este Mês</option>
+              <option value="specific" ${receivedFilterDate==='specific'?'selected':''}>📅 Data Específica</option>
+              <option value="range" ${receivedFilterDate==='range'?'selected':''}>📅 Intervalo de Datas</option>
+              <option value="all" ${receivedFilterDate==='all'?'selected':''}>📅 Todas as datas</option>
+            </select>
+            ${receivedFilterDate === 'specific' ? `<input type="date" class="form-input" style="width:auto; padding: 6px 12px; margin: 0;" value="${receivedSpecificDate}" onchange="receivedSpecificDate=this.value; updateReceivedUI()">` : ''}
+            ${receivedFilterDate === 'range' ? `
+              <input type="date" class="form-input" style="width:auto; padding: 6px 12px; margin: 0;" value="${receivedStartDate}" onchange="receivedStartDate=this.value; updateReceivedUI()">
+              <span style="color:var(--muted); font-size:0.9rem; font-weight:600; display:flex; align-items:center;">até</span>
+              <input type="date" class="form-input" style="width:auto; padding: 6px 12px; margin: 0;" value="${receivedEndDate}" onchange="receivedEndDate=this.value; updateReceivedUI()">
+            ` : ''}
+          </div>
+        </div>
+      `;
+
+      if (!filtered.length) {
+        el.innerHTML = filterHtml + `<div class="empty"><div class="empty-icon">📥</div><div class="empty-title">Nenhum pedido encontrado</div><p class="empty-desc">Nenhuma solicitação para o período selecionado.</p></div>`;
         return;
       }
-      el.innerHTML = recebidas.map(r => {
-        const phoneMatch = r.msg.match(/📞 Contato:\s*(.*?)\s*\(/);
+      el.innerHTML = filterHtml + filtered.map(r => {
+        const phoneMatch = r.msg ? r.msg.match(/📞 Contato:\s*(.*?)\s*\(/) : null;
         const derivedPhone = r.phone || (phoneMatch ? phoneMatch[1] : '');
 
         // Transformar a mensagem única em blocos de estilo do projeto
         let msgFormatted = '';
-        if (r.msg.includes('📞 Contato:')) {
+        if (r.msg && r.msg.includes('📞 Contato:')) {
           const parts = r.msg.split('\n\n💬 Mensagem:');
           const infoList = parts[0].split('\n').filter(l => l.trim() !== '');
           const obs = parts.length > 1 ? parts[1].trim() : '';
@@ -502,10 +663,32 @@ function renderReceived() {
             return `<div style="background:#fff; border: 1px solid #e5e7eb; border-left: 4px solid ${borderColors[index % borderColors.length]}; padding: 12px 16px; border-radius: 12px; font-size: 0.88rem; color: #374151; box-shadow: 0 4px 14px rgba(46, 134, 193, 0.08);"><strong style="color:var(--navy); font-weight:700; display:block; margin-bottom:2px;">${label}</strong> ${val}</div>`;
           }).join('');
           
-          msgFormatted = `<div style="display:grid; grid-template-columns: repeat(auto-fit, minmax(200px, 1fr)); gap: 12px; margin-top: 16px;">${gridItems}</div>` + 
-                         (obs ? `<div style="background:#fff; border: 1px solid #e5e7eb; border-left: 4px solid var(--blue); padding: 14px 18px; border-radius: 12px; box-shadow: 0 4px 14px rgba(46, 134, 193, 0.08); font-size:.87rem; color:var(--bark-m); margin-top:12px; line-height:1.6;"><strong style="color:var(--navy); display:block; margin-bottom:4px; font-weight:700;">💬 Mensagem do Adotante:</strong>${obs}</div>` : '');
-        } else {
-          msgFormatted = `<div style="background:#fff; border: 1px solid #e5e7eb; border-left: 4px solid var(--blue); padding: 14px 18px; border-radius: 12px; box-shadow: 0 4px 14px rgba(46, 134, 193, 0.08); font-size:.87rem; color:var(--bark-m); margin-top:12px; line-height:1.6; white-space:pre-wrap;"><strong style="color:var(--navy); display:block; margin-bottom:4px; font-weight:700;">💬 Mensagem do Adotante:</strong>\n${r.msg}</div>`;
+          msgFormatted = `
+            <details style="margin-top: 12px; border: 1px solid #e5e7eb; border-radius: 10px; background: #fff; box-shadow: 0 2px 8px rgba(0,0,0,0.02);">
+              <summary style="list-style: none; outline: none; cursor: pointer;">
+                <div style="padding: 12px 16px; display: flex; justify-content: space-between; align-items: center; font-size: 0.9rem; font-weight: 600; color: var(--navy);">
+                  <span style="display: flex; align-items: center; gap: 8px;">📋 <span>Detalhes da solicitação</span></span>
+                  <span style="font-size: 0.8rem; background: #f1f5f9; border: 1px solid #e2e8f0; padding: 4px 10px; border-radius: 20px; color: #475569;">Ver informações ▾</span>
+                </div>
+              </summary>
+              <div style="padding: 0 16px 16px 16px; border-top: 1px solid #f1f5f9; margin-top: 4px; padding-top: 16px;">
+                <div style="display:grid; grid-template-columns: repeat(auto-fit, minmax(200px, 1fr)); gap: 12px;">${gridItems}</div>
+                ${obs ? `<div style="background:#f8fafc; border: 1px solid #e5e7eb; border-left: 4px solid var(--blue); padding: 14px 18px; border-radius: 10px; font-size:.87rem; color:var(--bark-m); margin-top:12px; line-height:1.6;"><strong style="color:var(--navy); display:block; margin-bottom:4px; font-weight:700;">💬 Mensagem do Adotante:</strong>${obs}</div>` : ''}
+              </div>
+            </details>`;
+        } else if (r.msg) {
+          msgFormatted = `
+            <details style="margin-top: 12px; border: 1px solid #e5e7eb; border-radius: 10px; background: #fff; box-shadow: 0 2px 8px rgba(0,0,0,0.02);">
+              <summary style="list-style: none; outline: none; cursor: pointer;">
+                <div style="padding: 12px 16px; display: flex; justify-content: space-between; align-items: center; font-size: 0.9rem; font-weight: 600; color: var(--navy);">
+                  <span style="display: flex; align-items: center; gap: 8px;">📋 <span>Mensagem do Adotante</span></span>
+                  <span style="font-size: 0.8rem; background: #f1f5f9; border: 1px solid #e2e8f0; padding: 4px 10px; border-radius: 20px; color: #475569;">Ver informações ▾</span>
+                </div>
+              </summary>
+              <div style="padding: 0 16px 16px 16px; border-top: 1px solid #f1f5f9; margin-top: 4px; padding-top: 16px;">
+                <div style="background:#f8fafc; border: 1px solid #e5e7eb; border-left: 4px solid var(--blue); padding: 14px 18px; border-radius: 10px; font-size:.87rem; color:var(--bark-m); line-height:1.6; white-space:pre-wrap;"><strong style="color:var(--navy); display:block; margin-bottom:4px; font-weight:700;">💬 Mensagem do Adotante:</strong>\n${r.msg}</div>
+              </div>
+            </details>`;
         }
 
         return `
@@ -516,19 +699,15 @@ function renderReceived() {
             <div class="item-meta">Interesse em: <strong>${r.petName}</strong></div>
             ${msgFormatted}
             <div style="display:flex;gap:8px;margin-top:10px;flex-wrap:wrap;align-items:center;">
+              <span style="font-size:.82rem;color:var(--muted)">📅 ${r.data ? r.data.split('-').reverse().join('/') : 'Recente'}</span>
               <span style="font-size:.82rem;color:var(--muted)"> ${r.city}</span>
             </div>
           </div>
           <div class="item-actions" style="flex-direction:column; min-width: 220px;">
-            ${derivedPhone ? `<a href="https://wa.me/55${derivedPhone.replace(/\D/g,'')}" target="_blank" class="btn btn-whatsapp btn-sm" style="background:#25d366;color:#fff;border:none;text-decoration:none;display:flex;justify-content:center;">💬 Chamar no WhatsApp</a>` : `<div style="font-size: 0.8rem; color: var(--muted); text-align: center; padding: 4px;">Sem WhatsApp</div>`}
-            ${r.status==='pending'?`
-              <button class="btn btn-adopt-confirm btn-sm" onclick="respondRequest(${r.id}, 'approved')" style="margin-top:6px;">🏆 Confirmar Adoção</button>
-              <button class="btn btn-adopt-dismiss btn-sm" onclick="respondRequest(${r.id}, 'rejected')" style="margin-top:4px;">❌ Dispensar</button>
-            `:(r.status === 'approved' ? `<span class="status-pill pill-approved" style="margin-top:6px; justify-content:center;">🏆 Adoção Confirmada</span>` : `<span class="status-pill pill-rejected" style="margin-top:6px; justify-content:center;">❌ Dispensado</span>`)}
+            ${derivedPhone ? `<a href="https://wa.me/55${String(derivedPhone).replace(/\D/g,'')}" target="_blank" class="btn btn-whatsapp btn-sm" style="background:#25d366;color:#fff;border:none;text-decoration:none;display:flex;justify-content:center;">💬 Entrar em contato</a>` : `<div style="font-size: 0.8rem; color: var(--muted); text-align: center; padding: 4px;">Sem WhatsApp</div>`}
           </div>
         </div>`;
       }).join('');
-    });
 }
 
 function respondRequest(id, status) {
@@ -541,7 +720,7 @@ function respondRequest(id, status) {
   .then(r => r.json())
   .then(data => {
     if(data.sucesso) {
-      showToast(status === 'approved' ? '🏆 Parabéns! Adoção confirmada e pet atualizado.' : 'Solicitação dispensada.', status === 'approved' ? 'success' : '');
+      showToast(status === 'approved' ? '✅ Solicitação aceita!' : 'Solicitação dispensada.', status === 'approved' ? 'success' : '');
       renderReceived();
       renderMyPets(); // Atualiza a aba de pets para refletir que foi adotado
     } else {

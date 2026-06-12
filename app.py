@@ -184,6 +184,8 @@ def build_site_impact_payload():
 @app.route('/api/pets', methods=['POST'])
 @login_required
 def criar_pet():
+    if current_user.role == 'user':
+        return jsonify({'erro': 'Apenas ONGs e Administradores podem cadastrar pets.'}), 403
     try:
         # Coleta dados do formulário
         nome = request.form.get('nome', '').strip()
@@ -722,6 +724,64 @@ def delete_pet(pet_id):
         db.session.rollback()
         return jsonify({'erro': str(e)}), 500
 
+# GET - Solicitações recebidas (para usuário comum)
+@app.route('/api/user/solicitacoes', methods=['GET'])
+@login_required
+def get_user_solicitacoes():
+    pets = Pet.query.filter_by(usuario_id=current_user.id).all()
+    pet_ids = [p.id for p in pets]
+    solicitacoes = SolicitacaoAdocao.query.filter(SolicitacaoAdocao.pet_id.in_(pet_ids)).all()
+    return jsonify({'solicitacoes': [{
+        'id': s.id,
+        'petName': s.pet.nome,
+        'petId': s.pet.id,
+        'from': s.solicitante.name,
+        'phone': s.solicitante.telefone or '',
+        'city': f"{s.solicitante.cidade}/{s.solicitante.estado}" if s.solicitante.cidade else '',
+        'msg': s.mensagem,
+        'status': s.status,
+        'data': s.criado_em.strftime('%Y-%m-%d') if s.criado_em else ''
+    } for s in solicitacoes]})
+
+# GET - Minhas Adoções (Pedidos feitos pelo usuário)
+@app.route('/api/user/adocoes', methods=['GET'])
+@login_required
+def get_user_adocoes():
+    solicitacoes = SolicitacaoAdocao.query.filter_by(solicitante_id=current_user.id).all()
+    adocoes = []
+    for s in solicitacoes:
+        tutor = s.pet.usuario
+        ong = Ong.query.filter_by(usuario_id=tutor.id).first() if tutor and tutor.role == 'ong' else None
+        contato = (ong.whatsapp if ong and ong.whatsapp else tutor.telefone) if tutor else ''
+        
+        adocoes.append({
+            'id': s.id,
+            'petId': s.pet.id,
+            'petName': s.pet.nome,
+            'petBreed': s.pet.raca,
+            'city': s.pet.cidade,
+            'state': s.pet.estado,
+            'photo': s.pet.foto_capa,
+            'date': s.criado_em.strftime('%d/%m/%Y'),
+            'status': s.status,
+            'msg': s.mensagem,
+            'ongName': ong.nome if ong else (tutor.name if tutor else 'Tutor'),
+            'whatsapp': contato,
+            'has_feedback': 'Feedback' in globals() and globals()['Feedback'].query.filter_by(solicitacao_id=s.id).first() is not None
+        })
+    return jsonify({'adocoes': adocoes})
+
+# POST - Cancelar solicitação
+@app.route('/api/user/solicitacao/<int:req_id>/cancel', methods=['POST'])
+@login_required
+def cancel_solicitacao(req_id):
+    solicitacao = SolicitacaoAdocao.query.get_or_404(req_id)
+    if solicitacao.solicitante_id != current_user.id:
+        return jsonify({'erro': 'Acesso negado'}), 403
+    db.session.delete(solicitacao)
+    db.session.commit()
+    return jsonify({'sucesso': True})
+
 @app.route('/')
 def index():
     return render_template('index.html')
@@ -835,6 +895,8 @@ def pet(pet_id):
 @app.route('/new-pet')
 @login_required
 def new_pet():
+    if current_user.role == 'user':
+        return redirect(url_for('dashboard'))
     return render_template('new-pet.html')
 
 @app.route('/pet-submitted')
@@ -960,7 +1022,8 @@ def api_ong_solicitacoes():
         'telefone': s.solicitante.telefone,
         'cidade': s.solicitante.cidade,
         'estado': s.solicitante.estado,
-        'mensagem': s.mensagem, 'status': s.status
+        'mensagem': s.mensagem, 'status': s.status,
+        'data': s.criado_em.strftime('%Y-%m-%d') if s.criado_em else ''
     } for s in solicitacoes]})
 
 @app.route('/api/ong/pet/<int:pet_id>/marcar-adotado', methods=['POST'])
@@ -978,18 +1041,14 @@ def api_ong_marcar_adotado(pet_id):
 @app.route('/api/ong/solicitacao/<int:req_id>/status', methods=['POST'])
 @login_required
 def api_ong_solicitacao_status(req_id):
-    if current_user.role != 'ong':
-        return jsonify({'erro': 'Acesso negado'}), 403
     solicitacao = SolicitacaoAdocao.query.get(req_id)
     if not solicitacao or solicitacao.pet.usuario_id != current_user.id:
-        return jsonify({'erro': 'Solicitação não encontrada'}), 404
+        return jsonify({'erro': 'Solicitação não encontrada ou acesso negado'}), 404
     data = request.get_json()
     novo_status = data.get('status', solicitacao.status)
     if novo_status not in ['approved', 'rejected', 'pending']:
         return jsonify({'erro': 'Status inválido'}), 400
     solicitacao.status = novo_status
-    if novo_status == 'approved':
-        solicitacao.pet.status = 'reserved'
     db.session.commit()
     return jsonify({'sucesso': True})
 

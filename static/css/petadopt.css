@@ -923,3 +923,8 @@ footer{background:var(--bark);color:rgba(255,255,255,.7);padding:36px 0 24px}
   .ong-profile-page .pets-grid{grid-template-columns:1fr}
   .ong-profile-page .footer-bar{justify-content:center;text-align:center}
 }
+
+/* Ocultar seta padrão do details/summary nos quadros expansíveis */
+details > summary::marker, details > summary::-webkit-details-marker {
+  display: none;
+}

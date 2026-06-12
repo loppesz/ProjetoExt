@@ -154,10 +154,6 @@ function checkUserAdoptionStatus(pet) {
           const container = document.querySelector('.adopt-box');
           if(!container) return;
           
-          let statusText = myReq.status === 'pending' ? '⏳ Em análise' : (myReq.status === 'approved' ? '🏆 Adoção Aprovada!' : '❌ Não aprovado');
-          let statusColor = myReq.status === 'pending' ? '#d97706' : (myReq.status === 'approved' ? '#059669' : '#6b7280');
-          let statusBg = myReq.status === 'pending' ? '#fef3c7' : (myReq.status === 'approved' ? '#d1fae5' : '#f3f4f6');
-
           container.innerHTML = `
             <div class="owner-row">
               <div class="owner-avatar">🧑</div>
@@ -166,9 +162,9 @@ function checkUserAdoptionStatus(pet) {
                 <div class="owner-sub">📍 ${pet.city}/${pet.state} · Responsável pelo pet</div>
               </div>
             </div>
-            <div style="background:#fff; border: 1px solid #e5e7eb; border-left: 4px solid ${statusColor}; padding: 18px; border-radius: 12px; box-shadow: 0 4px 14px rgba(46, 134, 193, 0.05); margin-top: 16px; margin-bottom: 12px;">
+            <div style="background:#fff; border: 1px solid #e5e7eb; border-left: 4px solid #d97706; padding: 18px; border-radius: 12px; box-shadow: 0 4px 14px rgba(46, 134, 193, 0.05); margin-top: 16px; margin-bottom: 12px;">
               <h3 style="color:var(--navy); margin-top:0; margin-bottom:12px; font-size:1.05rem;">Sua Solicitação</h3>
-              <div style="display:inline-block; padding:4px 10px; border-radius:20px; font-size:0.8rem; font-weight:700; background:${statusBg}; color:${statusColor}; margin-bottom:12px;">${statusText}</div>
+              <div style="display:inline-block; padding:4px 10px; border-radius:20px; font-size:0.8rem; font-weight:700; background:#fef3c7; color:#d97706; margin-bottom:12px;">⏳ Aguardando contato</div>
               <p style="font-size:0.88rem; color:var(--bark-m); margin-bottom:16px;">Você já enviou um pedido para este pet. Acompanhe os detalhes e o contato no seu painel.</p>
               <a href="/dashboard#adoptions" class="btn btn-primary btn-full">📋 Acompanhar Pedido</a>
             </div>
@@ -291,7 +287,7 @@ function confirmAdopt(){
   btn.disabled = true;
   btn.textContent = 'Enviando...';
 
-  fetch(`/api/pets/${currentPet.id}/solicitar`, {
+  fetch(`/api/pets/${currentPet.id}/adopt`, {
     method: 'POST',
     headers: {'Content-Type': 'application/json'},
     body: JSON.stringify({ mensagem: msgFormatada })
@@ -299,6 +295,13 @@ function confirmAdopt(){
   .then(r => r.json())
   .then(data => {
     if(data.sucesso) {
+      // Limpa os campos do formulário
+      document.getElementById('adopt-moradia').value = '';
+      document.getElementById('adopt-outros').value = '';
+      document.getElementById('adopt-rotina').value = '';
+      document.getElementById('adopt-msg').value = '';
+      document.getElementById('adopt-phone').value = '';
+
       const textoZap = encodeURIComponent(`Olá! Tenho interesse em adotar o(a) ${currentPet.name}.\n\n*Meu Perfil:*\n${msgFormatada}`);
       const zapLink = data.whatsapp ? 
         `<a href="https://wa.me/${data.whatsapp.replace(/\D/g,'')}?text=${textoZap}" target="_blank" class="btn btn-whatsapp" style="margin-top:14px;background:#25d366;color:#fff;text-decoration:none;display:block;text-align:center;padding:12px;border-radius:var(--r-xl);font-weight:600;">💬 Enviar mensagem no WhatsApp</a>` 
@@ -362,30 +365,6 @@ function showToast(msg,type=''){
 
 window.setPhoto = setPhoto;
 window.openAdoptModal = openAdoptModal;
-function confirmAdoptRequest(){
-  const msg = document.getElementById('adopt-msg').value.trim();
-  if(!msg){showToast('Por favor, escreva uma mensagem!',''); return;}
-  fetch(`/api/pets/${currentPet.id}/adopt`, {
-    method: 'POST',
-    headers: { 'Content-Type': 'application/json' },
-    body: JSON.stringify({ mensagem: msg })
-  })
-    .then(r => r.json().then(data => ({ ok: r.ok, data })))
-    .then(({ ok, data }) => {
-      if (!ok || !data.sucesso) {
-        showToast(data.erro || 'Não foi possível enviar a solicitação.', '');
-        return;
-      }
-      document.getElementById('modal-content').innerHTML = `
-        <div class="success-modal">
-          <div class="success-icon">🎉</div>
-          <div class="success-title">Solicitação enviada!</div>
-          <p class="success-sub">Sua mensagem foi enviada ao responsável. Aguarde o retorno da ONG ou tutor.</p>
-          <button class="btn btn-primary" onclick="closeModal()">Entendido!</button>
-        </div>`;
-    })
-    .catch(() => showToast('Erro de conexão com o servidor.', ''));
-}
-window.confirmAdopt = confirmAdoptRequest;
+window.confirmAdopt = confirmAdopt;
 window.toggleFav = toggleFav;
 window.closeModal = closeModal;
