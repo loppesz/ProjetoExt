@@ -1,0 +1,446 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>ER Visual — PetAdopt</title>
+<style>
+* { box-sizing: border-box; margin: 0; padding: 0; }
+body { font-family: 'Segoe UI', sans-serif; background: #f0f4f8; overflow: hidden; user-select: none; }
+
+#toolbar {
+  position: fixed; top: 0; left: 0; right: 0; height: 52px;
+  background: #1a4161; display: flex; align-items: center;
+  padding: 0 20px; gap: 16px; z-index: 100;
+  box-shadow: 0 2px 12px rgba(0,0,0,.2);
+}
+#toolbar h1 { color: #f0c040; font-size: 1rem; font-weight: 700; }
+#toolbar span { color: rgba(255,255,255,.5); font-size: .8rem; }
+.tb-btn {
+  background: rgba(255,255,255,.1); color: #fff; border: 1px solid rgba(255,255,255,.2);
+  padding: 6px 14px; border-radius: 6px; cursor: pointer; font-size: .8rem;
+  transition: background .2s;
+}
+.tb-btn:hover { background: rgba(255,255,255,.2); }
+
+#canvas-wrap {
+  position: fixed; top: 52px; left: 0; right: 0; bottom: 0;
+  overflow: hidden; cursor: grab;
+}
+#canvas-wrap.grabbing { cursor: grabbing; }
+
+#canvas {
+  position: absolute;
+  width: 4000px; height: 3000px;
+  transform-origin: 0 0;
+}
+
+/* SVG de linhas */
+#svg-lines {
+  position: absolute; top: 0; left: 0;
+  width: 4000px; height: 3000px;
+  pointer-events: none;
+}
+
+/* NODOS */
+.node {
+  position: absolute;
+  background: #fff;
+  border-radius: 12px;
+  box-shadow: 0 4px 20px rgba(0,0,0,.12);
+  cursor: move;
+  min-width: 160px;
+  transition: box-shadow .2s;
+  border: 2px solid transparent;
+}
+.node:hover { box-shadow: 0 8px 32px rgba(0,0,0,.2); }
+.node.selected { border-color: #f0c040; }
+
+.node-header {
+  padding: 10px 14px;
+  border-radius: 10px 10px 0 0;
+  font-weight: 700; font-size: .85rem;
+  display: flex; align-items: center; gap: 8px;
+  color: #fff;
+}
+.node-fields {
+  padding: 8px 0;
+}
+.field-row {
+  padding: 5px 14px;
+  font-size: .75rem;
+  display: flex; align-items: center; gap: 6px;
+  border-bottom: 1px solid #f1f5f9;
+  color: #374151;
+}
+.field-row:last-child { border-bottom: none; }
+.field-name { font-weight: 600; flex: 1; }
+.field-type { color: #94a3b8; font-size: .7rem; }
+.badge { font-size: .6rem; font-weight: 700; padding: 1px 5px; border-radius: 3px; }
+.pk { background: #fef3c7; color: #92400e; }
+.fk { background: #dbeafe; color: #1e40af; }
+.uk { background: #ede9fe; color: #5b21b6; }
+
+/* cores dos headers */
+.h-usuario  { background: #1a4161; }
+.h-ong      { background: #166534; }
+.h-pet      { background: #9a3412; }
+.h-foto     { background: #5b21b6; }
+.h-solicit  { background: #1e3a5f; }
+.h-favorito { background: #9d174d; }
+.h-doacao   { background: #3f6212; }
+.h-modlog   { background: #78350f; }
+
+/* LABELS nas linhas */
+.edge-label {
+  position: absolute;
+  background: #fff;
+  border: 1px solid #e2e8f0;
+  border-radius: 6px;
+  padding: 3px 8px;
+  font-size: .68rem;
+  font-weight: 600;
+  color: #1a4161;
+  pointer-events: none;
+  white-space: nowrap;
+  box-shadow: 0 2px 8px rgba(0,0,0,.08);
+}
+
+/* ZOOM indicator */
+#zoom-info {
+  position: fixed; bottom: 16px; right: 16px;
+  background: #1a4161; color: #fff;
+  padding: 6px 12px; border-radius: 8px;
+  font-size: .78rem; z-index: 100;
+}
+
+/* MINI LEGEND */
+#legend {
+  position: fixed; bottom: 16px; left: 16px;
+  background: #fff; border-radius: 10px;
+  padding: 12px 16px; z-index: 100;
+  box-shadow: 0 4px 20px rgba(0,0,0,.12);
+  font-size: .75rem; color: #374151;
+}
+#legend h4 { font-size: .72rem; color: #94a3b8; text-transform: uppercase; letter-spacing: .05em; margin-bottom: 8px; }
+.leg-row { display: flex; align-items: center; gap: 8px; margin-bottom: 5px; }
+.leg-line { width: 28px; height: 2px; background: #2e86c1; }
+.leg-line.dashed { background: repeating-linear-gradient(90deg,#2e86c1 0,#2e86c1 4px,transparent 4px,transparent 8px); }
+</style>
+</head>
+<body>
+
+<div id="toolbar">
+  <h1>🐾 PetAdopt — Diagrama ER</h1>
+  <span>Arraste para mover · Scroll para zoom · Clique nas caixas para mover</span>
+  <button class="tb-btn" onclick="resetView()">⟳ Resetar visão</button>
+  <button class="tb-btn" onclick="zoomIn()">＋ Zoom</button>
+  <button class="tb-btn" onclick="zoomOut()">－ Zoom</button>
+</div>
+
+<div id="canvas-wrap">
+  <div id="canvas">
+    <svg id="svg-lines"></svg>
+
+    <!-- USUARIO -->
+    <div class="node" id="n-usuario" style="left:120px;top:200px">
+      <div class="node-header h-usuario">👤 USUARIO</div>
+      <div class="node-fields">
+        <div class="field-row"><span class="field-name">id</span><span class="badge pk">PK</span><span class="field-type">INT</span></div>
+        <div class="field-row"><span class="field-name">nome</span><span class="field-type">VARCHAR</span></div>
+        <div class="field-row"><span class="field-name">email</span><span class="badge uk">UK</span><span class="field-type">VARCHAR</span></div>
+        <div class="field-row"><span class="field-name">senha_hash</span><span class="field-type">VARCHAR</span></div>
+        <div class="field-row"><span class="field-name">telefone</span><span class="field-type">VARCHAR</span></div>
+        <div class="field-row"><span class="field-name">cidade / estado</span><span class="field-type">VARCHAR</span></div>
+        <div class="field-row"><span class="field-name">role</span><span class="field-type">user | admin</span></div>
+        <div class="field-row"><span class="field-name">criado_em</span><span class="field-type">DATETIME</span></div>
+      </div>
+    </div>
+
+    <!-- ONG -->
+    <div class="node" id="n-ong" style="left:120px;top:620px">
+      <div class="node-header h-ong">🏢 ONG</div>
+      <div class="node-fields">
+        <div class="field-row"><span class="field-name">id</span><span class="badge pk">PK</span><span class="field-type">INT</span></div>
+        <div class="field-row"><span class="field-name">nome</span><span class="field-type">VARCHAR</span></div>
+        <div class="field-row"><span class="field-name">descricao</span><span class="field-type">TEXT</span></div>
+        <div class="field-row"><span class="field-name">cidade / estado</span><span class="field-type">VARCHAR</span></div>
+        <div class="field-row"><span class="field-name">whatsapp</span><span class="field-type">VARCHAR</span></div>
+        <div class="field-row"><span class="field-name">chave_pix</span><span class="field-type">VARCHAR</span></div>
+        <div class="field-row"><span class="field-name">link_vakinha</span><span class="field-type">VARCHAR</span></div>
+        <div class="field-row"><span class="field-name">foto_url</span><span class="field-type">VARCHAR</span></div>
+      </div>
+    </div>
+
+    <!-- PET -->
+    <div class="node" id="n-pet" style="left:560px;top:340px">
+      <div class="node-header h-pet">🐾 PET</div>
+      <div class="node-fields">
+        <div class="field-row"><span class="field-name">id</span><span class="badge pk">PK</span><span class="field-type">INT</span></div>
+        <div class="field-row"><span class="field-name">usuario_id</span><span class="badge fk">FK</span><span class="field-type">INT</span></div>
+        <div class="field-row"><span class="field-name">ong_id</span><span class="badge fk">FK</span><span class="field-type">INT</span></div>
+        <div class="field-row"><span class="field-name">nome</span><span class="field-type">VARCHAR</span></div>
+        <div class="field-row"><span class="field-name">especie</span><span class="field-type">dog | cat</span></div>
+        <div class="field-row"><span class="field-name">raca / porte / sexo</span><span class="field-type">ENUM</span></div>
+        <div class="field-row"><span class="field-name">idade_anos / meses</span><span class="field-type">INT</span></div>
+        <div class="field-row"><span class="field-name">vacinado / castrado</span><span class="field-type">BOOLEAN</span></div>
+        <div class="field-row"><span class="field-name">descricao</span><span class="field-type">TEXT</span></div>
+        <div class="field-row"><span class="field-name">cidade / estado</span><span class="field-type">VARCHAR</span></div>
+        <div class="field-row"><span class="field-name">status</span><span class="field-type">available|reserved|adopted</span></div>
+        <div class="field-row"><span class="field-name">mod_status</span><span class="field-type">pending|approved|removed</span></div>
+      </div>
+    </div>
+
+    <!-- FOTO_PET -->
+    <div class="node" id="n-foto" style="left:1020px;top:200px">
+      <div class="node-header h-foto">📸 FOTO_PET</div>
+      <div class="node-fields">
+        <div class="field-row"><span class="field-name">id</span><span class="badge pk">PK</span><span class="field-type">INT</span></div>
+        <div class="field-row"><span class="field-name">pet_id</span><span class="badge fk">FK</span><span class="field-type">INT</span></div>
+        <div class="field-row"><span class="field-name">url</span><span class="field-type">VARCHAR</span></div>
+        <div class="field-row"><span class="field-name">is_capa</span><span class="field-type">BOOLEAN</span></div>
+        <div class="field-row"><span class="field-name">ordem</span><span class="field-type">INT</span></div>
+      </div>
+    </div>
+
+    <!-- SOLICITACAO_ADOCAO -->
+    <div class="node" id="n-solicit" style="left:1020px;top:480px">
+      <div class="node-header h-solicit">💌 SOLICITACAO_ADOCAO</div>
+      <div class="node-fields">
+        <div class="field-row"><span class="field-name">id</span><span class="badge pk">PK</span><span class="field-type">INT</span></div>
+        <div class="field-row"><span class="field-name">pet_id</span><span class="badge fk">FK</span><span class="field-type">INT</span></div>
+        <div class="field-row"><span class="field-name">solicitante_id</span><span class="badge fk">FK</span><span class="field-type">INT</span></div>
+        <div class="field-row"><span class="field-name">mensagem</span><span class="field-type">TEXT</span></div>
+        <div class="field-row"><span class="field-name">status</span><span class="field-type">pending|approved|rejected</span></div>
+        <div class="field-row"><span class="field-name">criado_em</span><span class="field-type">DATETIME</span></div>
+      </div>
+    </div>
+
+    <!-- FAVORITO -->
+    <div class="node" id="n-favorito" style="left:1020px;top:760px">
+      <div class="node-header h-favorito">❤️ FAVORITO</div>
+      <div class="node-fields">
+        <div class="field-row"><span class="field-name">id</span><span class="badge pk">PK</span><span class="field-type">INT</span></div>
+        <div class="field-row"><span class="field-name">usuario_id</span><span class="badge fk">FK</span><span class="field-type">INT</span></div>
+        <div class="field-row"><span class="field-name">pet_id</span><span class="badge fk">FK</span><span class="field-type">INT</span></div>
+        <div class="field-row"><span class="field-name">criado_em</span><span class="field-type">DATETIME</span></div>
+      </div>
+    </div>
+
+    <!-- DOACAO -->
+    <div class="node" id="n-doacao" style="left:120px;top:1020px">
+      <div class="node-header h-doacao">💚 DOACAO</div>
+      <div class="node-fields">
+        <div class="field-row"><span class="field-name">id</span><span class="badge pk">PK</span><span class="field-type">INT</span></div>
+        <div class="field-row"><span class="field-name">usuario_id</span><span class="badge fk">FK</span><span class="field-type">INT</span></div>
+        <div class="field-row"><span class="field-name">ong_id</span><span class="badge fk">FK</span><span class="field-type">INT</span></div>
+        <div class="field-row"><span class="field-name">valor</span><span class="field-type">DECIMAL</span></div>
+        <div class="field-row"><span class="field-name">metodo</span><span class="field-type">pix | link_externo</span></div>
+        <div class="field-row"><span class="field-name">status</span><span class="field-type">pendente | confirmada</span></div>
+        <div class="field-row"><span class="field-name">criado_em</span><span class="field-type">DATETIME</span></div>
+      </div>
+    </div>
+
+    <!-- MODERACAO_LOG -->
+    <div class="node" id="n-modlog" style="left:560px;top:900px">
+      <div class="node-header h-modlog">🛡️ MODERACAO_LOG</div>
+      <div class="node-fields">
+        <div class="field-row"><span class="field-name">id</span><span class="badge pk">PK</span><span class="field-type">INT</span></div>
+        <div class="field-row"><span class="field-name">admin_id</span><span class="badge fk">FK</span><span class="field-type">INT</span></div>
+        <div class="field-row"><span class="field-name">pet_id</span><span class="badge fk">FK</span><span class="field-type">INT</span></div>
+        <div class="field-row"><span class="field-name">acao</span><span class="field-type">approved | removed</span></div>
+        <div class="field-row"><span class="field-name">motivo</span><span class="field-type">TEXT</span></div>
+        <div class="field-row"><span class="field-name">criado_em</span><span class="field-type">DATETIME</span></div>
+      </div>
+    </div>
+
+  </div><!-- /canvas -->
+</div>
+
+<div id="zoom-info">Zoom: 100%</div>
+
+<div id="legend">
+  <h4>Legenda</h4>
+  <div class="leg-row"><span class="badge pk" style="font-size:.72rem;padding:2px 6px">PK</span> Chave Primária</div>
+  <div class="leg-row"><span class="badge fk" style="font-size:.72rem;padding:2px 6px">FK</span> Chave Estrangeira</div>
+  <div class="leg-row"><span class="badge uk" style="font-size:.72rem;padding:2px 6px">UK</span> Valor Único</div>
+  <div class="leg-row"><div class="leg-line"></div> Relação 1:N</div>
+  <div class="leg-row"><div class="leg-line dashed"></div> Relação N:N</div>
+</div>
+
+<script>
+// ── EDGES (conexões) ──────────────────────────────────────────────────────────
+const EDGES = [
+  { from:'n-usuario', to:'n-pet',      label:'cadastra (1:N)',    dashed:false },
+  { from:'n-ong',     to:'n-pet',      label:'gerencia (1:N)',    dashed:false },
+  { from:'n-pet',     to:'n-foto',     label:'possui (1:N)',      dashed:false },
+  { from:'n-pet',     to:'n-solicit',  label:'recebe (1:N)',      dashed:false },
+  { from:'n-usuario', to:'n-solicit',  label:'envia (1:N)',       dashed:false },
+  { from:'n-usuario', to:'n-favorito', label:'favorita (N:N)',    dashed:true  },
+  { from:'n-pet',     to:'n-favorito', label:'é favoritado (N:N)',dashed:true  },
+  { from:'n-usuario', to:'n-doacao',   label:'realiza (1:N)',     dashed:false },
+  { from:'n-ong',     to:'n-doacao',   label:'recebe (1:N)',      dashed:false },
+  { from:'n-usuario', to:'n-modlog',   label:'modera (admin 1:N)',dashed:false },
+  { from:'n-pet',     to:'n-modlog',   label:'é moderado (1:N)',  dashed:false },
+];
+
+// ── DRAG nodes ────────────────────────────────────────────────────────────────
+let dragNode = null, dragOX = 0, dragOY = 0;
+
+document.querySelectorAll('.node').forEach(node => {
+  node.addEventListener('mousedown', e => {
+    if (e.button !== 0) return;
+    e.stopPropagation();
+    dragNode = node;
+    const rect = node.getBoundingClientRect();
+    const wrap = document.getElementById('canvas-wrap').getBoundingClientRect();
+    dragOX = (e.clientX - wrap.left) / scale - node.offsetLeft;
+    dragOY = (e.clientY - wrap.top)  / scale - node.offsetTop;
+    node.classList.add('selected');
+    node.style.zIndex = 10;
+  });
+});
+
+document.addEventListener('mousemove', e => {
+  if (dragNode) {
+    const wrap = document.getElementById('canvas-wrap').getBoundingClientRect();
+    dragNode.style.left = ((e.clientX - wrap.left) / scale - dragOX) + 'px';
+    dragNode.style.top  = ((e.clientY - wrap.top)  / scale - dragOY) + 'px';
+    drawEdges();
+  } else if (panning) {
+    panX += e.clientX - lastMX;
+    panY += e.clientY - lastMY;
+    lastMX = e.clientX; lastMY = e.clientY;
+    applyTransform();
+  }
+});
+
+document.addEventListener('mouseup', () => {
+  if (dragNode) { dragNode.classList.remove('selected'); dragNode.style.zIndex = ''; dragNode = null; }
+  panning = false;
+  document.getElementById('canvas-wrap').classList.remove('grabbing');
+});
+
+// ── PAN canvas ────────────────────────────────────────────────────────────────
+let panX = -60, panY = -60, scale = 0.75, panning = false, lastMX = 0, lastMY = 0;
+
+const wrap = document.getElementById('canvas-wrap');
+wrap.addEventListener('mousedown', e => {
+  if (e.button === 0 && !dragNode) {
+    panning = true; lastMX = e.clientX; lastMY = e.clientY;
+    wrap.classList.add('grabbing');
+  }
+});
+
+wrap.addEventListener('wheel', e => {
+  e.preventDefault();
+  const delta = e.deltaY > 0 ? -0.08 : 0.08;
+  scale = Math.min(2, Math.max(0.25, scale + delta));
+  applyTransform();
+}, { passive: false });
+
+function applyTransform() {
+  document.getElementById('canvas').style.transform = `translate(${panX}px,${panY}px) scale(${scale})`;
+  document.getElementById('zoom-info').textContent = 'Zoom: ' + Math.round(scale * 100) + '%';
+}
+
+function zoomIn()  { scale = Math.min(2, scale + 0.1); applyTransform(); }
+function zoomOut() { scale = Math.max(0.25, scale - 0.1); applyTransform(); }
+function resetView() { panX = -60; panY = -60; scale = 0.75; applyTransform(); drawEdges(); }
+
+// ── DRAW EDGES ────────────────────────────────────────────────────────────────
+function getCenter(id) {
+  const el = document.getElementById(id);
+  return {
+    x: el.offsetLeft + el.offsetWidth  / 2,
+    y: el.offsetTop  + el.offsetHeight / 2,
+    w: el.offsetWidth,
+    h: el.offsetHeight,
+    l: el.offsetLeft,
+    t: el.offsetTop,
+    r: el.offsetLeft + el.offsetWidth,
+    b: el.offsetTop  + el.offsetHeight,
+  };
+}
+
+function closestEdgePoint(from, to) {
+  const dx = to.x - from.x, dy = to.y - from.y;
+  if (Math.abs(dx) > Math.abs(dy)) {
+    return dx > 0
+      ? { x: from.r, y: from.y }
+      : { x: from.l, y: from.y };
+  } else {
+    return dy > 0
+      ? { x: from.x, y: from.b }
+      : { x: from.x, y: from.t };
+  }
+}
+
+// remove old labels
+const labelEls = [];
+
+function drawEdges() {
+  const svg = document.getElementById('svg-lines');
+  svg.innerHTML = '';
+  labelEls.forEach(el => el.remove());
+  labelEls.length = 0;
+
+  // arrowhead marker
+  svg.innerHTML = `
+    <defs>
+      <marker id="arrow" markerWidth="8" markerHeight="8" refX="6" refY="3" orient="auto">
+        <path d="M0,0 L0,6 L8,3 z" fill="#2e86c1"/>
+      </marker>
+      <marker id="arrow-dash" markerWidth="8" markerHeight="8" refX="6" refY="3" orient="auto">
+        <path d="M0,0 L0,6 L8,3 z" fill="#9d174d"/>
+      </marker>
+    </defs>`;
+
+  EDGES.forEach(edge => {
+    const f = getCenter(edge.from);
+    const t = getCenter(edge.to);
+    const fp = closestEdgePoint(f, t);
+    const tp = closestEdgePoint(t, f);
+
+    // bezier control points
+    const mx = (fp.x + tp.x) / 2;
+    const my = (fp.y + tp.y) / 2;
+    const d = `M${fp.x},${fp.y} Q${mx},${fp.y} ${tp.x},${tp.y}`;
+
+    const color  = edge.dashed ? '#9d174d' : '#2e86c1';
+    const marker = edge.dashed ? 'arrow-dash' : 'arrow';
+
+    const path = document.createElementNS('http://www.w3.org/2000/svg','path');
+    path.setAttribute('d', d);
+    path.setAttribute('stroke', color);
+    path.setAttribute('stroke-width', '2');
+    path.setAttribute('fill', 'none');
+    path.setAttribute('marker-end', `url(#${marker})`);
+    if (edge.dashed) path.setAttribute('stroke-dasharray', '6,4');
+    svg.appendChild(path);
+
+    // label
+    const lx = (fp.x + tp.x) / 2 - 2;
+    const ly = (fp.y + tp.y) / 2 - 2;
+    const lbl = document.createElement('div');
+    lbl.className = 'edge-label';
+    lbl.textContent = edge.label;
+    lbl.style.left = lx + 'px';
+    lbl.style.top  = ly + 'px';
+    document.getElementById('canvas').appendChild(lbl);
+    labelEls.push(lbl);
+  });
+}
+
+// init
+applyTransform();
+setTimeout(drawEdges, 100);
+
+// redraw on node drag
+const observer = new MutationObserver(drawEdges);
+document.querySelectorAll('.node').forEach(n =>
+  observer.observe(n, { attributes: true, attributeFilter: ['style'] })
+);
+</script>
+</body>
+</html>
