@@ -123,17 +123,19 @@ class Favorito(db.Model):
     usuario_id = db.Column(db.Integer, db.ForeignKey('usuario.id'), nullable=False)
     pet_id = db.Column(db.Integer, db.ForeignKey('pet.id', ondelete='CASCADE'), nullable=False)
     criado_em = db.Column(db.DateTime, default=db.func.now())
-    __table_args__ = (db.UniqueConstraint('usuario_id', 'pet_id', name='_usuario_pet_uc'),)
+    __table_args__ = (
+        db.UniqueConstraint('usuario_id', 'pet_id', name='uq_favorito_usuario_pet'),
+    )
 
 class Feedback(db.Model):
     __tablename__ = 'feedback'
     id = db.Column(db.Integer, primary_key=True)
-    solicitacao_id = db.Column(db.Integer, db.ForeignKey('solicitacao_adocao.id'), nullable=False)
+    solicitacao_id = db.Column(db.Integer, db.ForeignKey('solicitacao_adocao.id'), nullable=False, unique=True)
     mensagem = db.Column(db.Text, nullable=False)
     nota = db.Column(db.Integer, default=5)
+    aprovado = db.Column(db.Boolean, default=True)
     criado_em = db.Column(db.DateTime, default=db.func.now())
     solicitacao = db.relationship('SolicitacaoAdocao', backref=db.backref('feedback', uselist=False))
-
 
 class SiteImpactConfig(db.Model):
     __tablename__ = 'site_impact_config'
@@ -303,11 +305,13 @@ def listar_pets():
         )
     
     pets = query.all()
-    
-    user_favorites = []
+    favoritos = set()
     if current_user.is_authenticated:
-        user_favorites = [f.pet_id for f in Favorito.query.filter_by(usuario_id=current_user.id).all()]
-
+        favoritos = {
+            favorito.pet_id
+            for favorito in Favorito.query.filter_by(usuario_id=current_user.id).all()
+        }
+    
     # Mapeamento de porte para label
     size_labels = {
         'small': 'Pequeno',
@@ -330,7 +334,7 @@ def listar_pets():
                 'state': p.estado,
                 'photo': p.foto_capa,
                 'status': p.status,
-                'fav': p.id in user_favorites
+                'fav': p.id in favoritos
             }
             for p in pets
         ]
@@ -814,56 +818,74 @@ def toggle_favorite(pet_id):
         db.session.delete(favorito)
         db.session.commit()
         return jsonify({'sucesso': True, 'fav': False})
-    else:
-        novo_favorito = Favorito(usuario_id=current_user.id, pet_id=pet.id)
-        db.session.add(novo_favorito)
-        db.session.commit()
-        return jsonify({'sucesso': True, 'fav': True})
+
+    db.session.add(Favorito(usuario_id=current_user.id, pet_id=pet.id))
+    db.session.commit()
+    return jsonify({'sucesso': True, 'fav': True})
 
 @app.route('/api/user/favorites', methods=['GET'])
 @login_required
 def get_user_favorites():
-    favoritos = Favorito.query.filter_by(usuario_id=current_user.id).all()
-    pet_ids = [f.pet_id for f in favoritos]
-    pets = Pet.query.filter(Pet.id.in_(pet_ids)).all()
-    
+    favoritos = Favorito.query.filter_by(usuario_id=current_user.id).order_by(Favorito.criado_em.desc()).all()
+    pet_ids = [favorito.pet_id for favorito in favoritos]
+    pets_by_id = {pet.id: pet for pet in Pet.query.filter(Pet.id.in_(pet_ids)).all()} if pet_ids else {}
+    pets = [pets_by_id[pet_id] for pet_id in pet_ids if pet_id in pets_by_id]
+
     return jsonify({'favorites': [{
-        'id': p.id,
-        'name': p.nome,
-        'breed': p.raca,
-        'city': p.cidade,
-        'photo': p.foto_capa,
-        'status': p.status
-    } for p in pets]})
+        'id': pet.id,
+        'name': pet.nome,
+        'breed': pet.raca,
+        'city': pet.cidade,
+        'photo': pet.foto_capa,
+        'status': pet.status
+    } for pet in pets]})
 
 @app.route('/api/feedbacks', methods=['GET'])
 def get_feedbacks():
-    feedbacks = Feedback.query.order_by(Feedback.criado_em.desc()).limit(6).all()
+    feedbacks = (
+        Feedback.query
+        .join(Feedback.solicitacao)
+        .filter(Feedback.aprovado.is_(True))
+        .order_by(Feedback.criado_em.desc())
+        .limit(6)
+        .all()
+    )
     return jsonify({'feedbacks': [{
-        'id': f.id,
-        'mensagem': f.mensagem,
-        'nota': f.nota,
-        'tutor': f.solicitacao.solicitante.name,
-        'pet_name': f.solicitacao.pet.nome,
-        'pet_photo': f.solicitacao.pet.foto_capa
-    } for f in feedbacks]})
+        'id': feedback.id,
+        'mensagem': feedback.mensagem,
+        'nota': feedback.nota,
+        'tutor': feedback.solicitacao.solicitante.name,
+        'pet_name': feedback.solicitacao.pet.nome,
+        'pet_photo': feedback.solicitacao.pet.foto_capa
+    } for feedback in feedbacks]})
 
 @app.route('/api/feedbacks', methods=['POST'])
 @login_required
 def create_feedback():
-    data = request.get_json()
+    data = request.get_json() or {}
     solicitacao_id = data.get('solicitacao_id')
-    mensagem = data.get('mensagem')
+    mensagem = data.get('mensagem', '').strip()
+    nota = data.get('nota', 5)
 
     if not solicitacao_id or not mensagem:
         return jsonify({'erro': 'Dados incompletos.'}), 400
+    if not isinstance(nota, int) or nota < 1 or nota > 5:
+        return jsonify({'erro': 'A nota deve estar entre 1 e 5.'}), 400
 
     solicitacao = SolicitacaoAdocao.query.get_or_404(solicitacao_id)
     if solicitacao.solicitante_id != current_user.id:
-        return jsonify({'erro': 'Solicitação inválida ou não pertence a você.'}), 403
-    
-    feedback = Feedback(solicitacao_id=solicitacao_id, mensagem=mensagem, nota=data.get('nota', 5))
-    db.session.add(feedback)
+        return jsonify({'erro': 'Solicitacao invalida ou nao pertence a voce.'}), 403
+    if solicitacao.status != 'approved':
+        return jsonify({'erro': 'O feedback so pode ser enviado apos a adocao ser aprovada.'}), 400
+    if Feedback.query.filter_by(solicitacao_id=solicitacao.id).first():
+        return jsonify({'erro': 'Esta adocao ja possui feedback.'}), 409
+
+    db.session.add(Feedback(
+        solicitacao_id=solicitacao.id,
+        mensagem=mensagem,
+        nota=nota,
+        aprovado=True
+    ))
     db.session.commit()
     return jsonify({'sucesso': True, 'mensagem': 'Obrigado pelo seu feedback!'}), 201
 
