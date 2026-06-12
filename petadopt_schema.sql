@@ -173,26 +173,6 @@ CREATE TABLE moderacao_log (
   INDEX idx_modlog_admin (admin_id)
 ) ENGINE=InnoDB;
 
--- ============================================================
--- 9. PEDIDO_RESGATE
--- ============================================================
-CREATE TABLE pedido_resgate (
-  id              INT UNSIGNED  NOT NULL AUTO_INCREMENT,
-  ong_id          INT UNSIGNED  NOT NULL,
-  solicitante_id  INT UNSIGNED  NOT NULL,
-  especie         VARCHAR(50)       NULL,
-  porte           VARCHAR(50)       NULL,
-  local           VARCHAR(100)      NULL,
-  situacao        VARCHAR(100)      NULL,
-  detalhes        TEXT              NULL,
-  status          ENUM('pending','answered','rejected') NOT NULL DEFAULT 'pending',
-  criado_em       DATETIME      NOT NULL DEFAULT CURRENT_TIMESTAMP,
-
-  PRIMARY KEY (id),
-  CONSTRAINT fk_resgate_ong   FOREIGN KEY (ong_id)         REFERENCES ong     (id) ON DELETE CASCADE,
-  CONSTRAINT fk_resgate_user  FOREIGN KEY (solicitante_id) REFERENCES usuario (id) ON DELETE CASCADE
-) ENGINE=InnoDB;
-
 
 -- ============================================================
 -- DADOS DE EXEMPLO (seed)
