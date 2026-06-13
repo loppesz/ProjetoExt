@@ -1,18 +1,46 @@
 :root{
-  --cream:#faf7f2;--cream-d:#f2ebe0;--cream-dd:#e8dece;
-  --bark:#2d2016;--bark-m:#4a3728;--bark-l:#6b5444;
-  --terra:#c06a3a;--terra-l:#d4845a;--terra-ll:#e8a882;
-  --sage:#4e7352;--sage-l:#6a9b6e;
-  --blush:#e8b4a0;--sand:#ddd0bc;--gold:#c9973a;
-  --muted:#8a7a6a;--white:#ffffff;
-  --error:#c0392b;
-  --r-sm:8px;--r:16px;--r-lg:24px;--r-xl:40px;
-  --sh-sm:0 2px 10px rgba(45,32,22,.07);
-  --sh:0 6px 28px rgba(45,32,22,.11);
-  --sh-lg:0 20px 60px rgba(45,32,22,.16);
-  --ease:.22s cubic-bezier(.4,0,.2,1);
-  --ff-display:'Fraunces',Georgia,serif;
-  --ff-body:'DM Sans',system-ui,sans-serif;
+  /* =========================================
+     NOVA PALETA PETADOPT
+     ========================================= */
+  --navy: #1a4161;
+  --navy-d: #0d1b2a;
+  --blue: #2e86c1;
+  --blue-l: #5ba3d4;
+  --yellow: #f0c040;
+  --yellow-d: #d4a820;
+
+  /* Conversão do tema antigo (Marrom/Terra) para o novo (Azul/Amarelo) */
+  --cream: #f4f7fb;         /* Fundo principal claro */
+  --cream-d: #e8f1f7;       /* Fundo secundário claro */
+  --cream-dd: #e5e7eb;      /* Bordas e divisórias */
+  
+  --bark: var(--navy-d);    /* Textos escuros */
+  --bark-m: var(--navy);    /* Textos médios */
+  --bark-l: var(--blue);    /* Textos claros / detalhes */
+  
+  --terra: var(--navy);     /* Cor primária antiga -> Nova primária */
+  --terra-l: var(--blue);   /* Cor hover primária */
+  --terra-ll: var(--blue-l);
+  
+  --sage: #065f46;          /* Verde modernizado (sucesso) */
+  --sage-l: #10b981;
+  
+  --blush: #dbeafe;         /* Fundo de chips e avatares */
+  --sand: #e5e7eb;          /* Linhas e bordas */
+  --gold: var(--yellow);    /* Destaques antigos -> Amarelo novo */
+  
+  --muted: #6b7280;         /* Textos secundários (cinza) */
+  --white: #ffffff;
+  --error: #dc2626;
+
+  /* Arredondamentos e Sombras Modernizados */
+  --r-sm: 8px; --r: 16px; --r-lg: 20px; --r-xl: 40px;
+  --sh-sm: 0 2px 12px rgba(26,65,97,.07);
+  --sh: 0 6px 24px rgba(26,65,97,.11);
+  --sh-lg: 0 20px 60px rgba(26,65,97,.16);
+  --ease: .22s cubic-bezier(.4,0,.2,1);
+  --ff-display: 'Fraunces', Georgia, serif;
+  --ff-body: 'DM Sans', system-ui, sans-serif;
 }
 *,*::before,*::after{box-sizing:border-box;margin:0;padding:0}
 html{scroll-behavior:smooth}

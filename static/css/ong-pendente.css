@@ -1,0 +1,87 @@
+/* ==========================================================================
+   ONG Pendente - Tela de Espera
+   ========================================================================== */
+
+:root {
+  --navy: #1a4161;
+  --navy-d: #0d1b2a;
+  --blue: #2e86c1;
+  --blue-l: #5ba3d4;
+  --yellow: #f0c040;
+  --yellow-d: #d4a820;
+}
+
+body.pending-page {
+  background: linear-gradient(135deg, #f4f7fb 0%, #e8f1f7 100%);
+  min-height: 100vh;
+  display: flex;
+  flex-direction: column;
+}
+
+/* Navbar Específica da tela de pendência (fundo sólido) */
+.nav.pending-nav {
+  background-color: var(--navy) !important;
+  border-bottom: 1px solid rgba(255, 255, 255, 0.08) !important;
+  position: relative !important;
+}
+
+.nav.pending-nav .logo {
+  color: #fff;
+}
+
+.nav.pending-nav .btn-logout {
+  background: transparent;
+  color: #fff;
+  border: 2px solid rgba(255, 255, 255, 0.6);
+  border-radius: 40px;
+  font-weight: 600;
+  padding: 8px 20px;
+  text-decoration: none;
+  transition: all 0.2s ease;
+}
+
+.nav.pending-nav .btn-logout:hover {
+  background: rgba(255, 255, 255, 0.1);
+  border-color: #fff;
+}
+
+/* Main Content */
+.pending-main {
+  flex: 1;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  padding: 40px 20px;
+}
+
+.pending-card {
+  background: #fff;
+  border-radius: 20px;
+  box-shadow: 0 8px 40px rgba(26, 65, 97, 0.12);
+  border-top: 4px solid var(--navy);
+  max-width: 520px;
+  width: 100%;
+  text-align: center;
+  padding: 48px 40px;
+}
+
+.pending-icon {
+  font-size: 4rem;
+  margin-bottom: 16px;
+}
+
+.pending-title {
+  font-family: 'Fraunces', serif;
+  font-size: 2rem;
+  font-weight: 800;
+  color: var(--navy);
+  margin-bottom: 12px;
+  line-height: 1.2;
+}
+
+.pending-desc {
+  color: #6b7280;
+  line-height: 1.6;
+  margin-bottom: 32px;
+  font-size: 0.95rem;
+}

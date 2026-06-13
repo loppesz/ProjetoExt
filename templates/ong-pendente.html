@@ -2,38 +2,49 @@
 <html lang="pt-BR">
 <head>
   <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
   <title>Cadastro em Análise — PetAdopt</title>
-  <link rel="stylesheet" href="/static/css/petadopt.css">
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Fraunces:ital,opsz,wght@0,9..144,400..900;1,9..144,400..900&family=DM+Sans:wght@400;500;600;700&display=swap" rel="stylesheet">
+  <link rel="stylesheet" href="{{ url_for('static', filename='css/petadopt.css') }}">
+  <link rel="stylesheet" href="{{ url_for('static', filename='css/ong-pendente.css') }}">
 </head>
-<body>
-  <nav class="nav">
+<body class="pending-page">
+
+  <!-- Navbar Simples -->
+  <nav class="nav pending-nav">
     <div class="nav-i">
-      <a href="/" class="logo">🐾 PetAdopt</a>
-      <a href="#" onclick="localStorage.removeItem('petadopt_user'); window.location.href='/logout'" class="btn btn-outline btn-sm">Sair da Conta</a>
+      <a href="{{ url_for('index') }}" class="logo">🐾 PetAdopt</a>
+      <div class="nav-auth">
+        <a href="{{ url_for('logout') }}" class="btn-logout">Sair da Conta</a>
+      </div>
     </div>
   </nav>
 
-  <main class="page-wrap pending-main">
-    <div class="card pending-card">
-      {% if status == 'rejected' %}
-      <div class="pending-icon">❌</div>
-      <h1 class="step-title pending-title">Cadastro Recusado</h1>
-      <p class="pending-desc">
-        Infelizmente, o perfil da sua ONG/Projeto não foi aprovado pela nossa equipe de moderação no momento.
-      </p>
-      {% else %}
+  <!-- Conteúdo Centralizado -->
+  <main class="pending-main">
+    <div class="pending-card">
       <div class="pending-icon">⏳</div>
-      <h1 class="step-title pending-title">Cadastro em Análise</h1>
-      <p class="pending-desc">
-        Olá! O perfil da sua ONG/Projeto está sendo analisado pela nossa equipe de moderação para garantir a segurança da plataforma. 
-        Não se preocupe, aprovaremos seu acesso em breve!
-      </p>
+      
+      {% if status == 'rejected' %}
+        <h1 class="pending-title">Cadastro Recusado</h1>
+        <p class="pending-desc">
+          Infelizmente, o perfil da sua ONG/Projeto não foi aprovado pela nossa equipe de moderação no momento. Agradecemos o interesse em fazer parte do PetAdopt.
+        </p>
+      {% else %}
+        <h1 class="pending-title">Cadastro em Análise</h1>
+        <p class="pending-desc">
+          Olá! O perfil da sua ONG/Projeto está sendo analisado pela nossa equipe de moderação para garantir a segurança da plataforma. Não se preocupe, avaliaremos seu acesso em breve!
+        </p>
       {% endif %}
+
       <div class="pending-actions">
-        <a href="/" class="btn-primary pending-btn">Explorar Pets Disponíveis</a>
-        <a href="#" onclick="localStorage.removeItem('petadopt_user'); window.location.href='/logout'" class="btn-outline pending-btn">Sair da Conta</a>
+        <a href="{{ url_for('pets') }}" class="btn btn-primary" style="border-radius: 40px; padding: 14px 24px;">Explorar Pets Disponíveis</a>
+        <a href="{{ url_for('logout') }}" class="btn btn-outline" style="border-radius: 40px; padding: 12px 24px;">Sair da Conta</a>
       </div>
     </div>
   </main>
+
 </body>
 </html>
