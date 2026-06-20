@@ -2,34 +2,34 @@
 
 Plataforma web para conectar pessoas interessadas em adotar animais a ONGs e responsáveis por pets.
 
-O projeto está atualmente na fase de **MVP funcional em desenvolvimento**. A aplicação já possui backend em Flask, persistência em SQLite, autenticação por sessão, perfis com diferentes permissões e fluxos de adoção e moderação. Ainda existem funcionalidades em evolução e pontos que precisam ser preparados antes de um uso em produção.
+O projeto está na fase de **MVP acadêmico funcional para apresentação**. A aplicação entrega os principais fluxos previstos: autenticação, perfis de usuário, ONG e administrador, cadastro e moderação de pets, solicitação de adoção, painéis de acompanhamento e páginas públicas para pets e ONGs.
 
 ## Estado atual
 
 ### Implementado
 
-- Cadastro e login de usuários com senha armazenada em hash
+- Cadastro e login com senha armazenada em hash
 - Perfis de usuário comum, ONG e administrador
-- Listagem e busca de pets por espécie, porte, estado, cidade, nome ou raça
+- Cadastro de ONGs, com aprovação ou recusa pelo administrador
+- Listagem pública de ONGs aprovadas
+- Página pública de perfil da ONG
+- Cadastro, edição e remoção de pets por ONGs e administradores
+- Upload de imagens para pets e ONGs
+- Moderação administrativa de pets e ONGs
+- Busca e filtros de pets por espécie, porte, estado, cidade, nome ou raça
 - Página de detalhes do pet
-- Cadastro de pets por ONGs e administradores, incluindo upload de imagem
-- Moderação de pets e ONGs pelo administrador
-- Solicitação e acompanhamento de adoções
-- Painel do usuário para acompanhar pets e solicitações
-- Painel da ONG para gerenciar perfil, pets e pedidos de adoção
-- Alteração do status do pet para disponível, reservado ou adotado
-- Listagem e página pública das ONGs aprovadas
-- Informações para doação via Pix ou link externo
+- Solicitação de adoção com mensagem ao responsável
+- Aprovação, recusa e cancelamento de solicitações de adoção
+- Alteração de status do pet para disponível, reservado ou adotado
+- Painel do usuário para acompanhar adoções, favoritos e solicitações
+- Painel da ONG para gerenciar perfil, pets e pedidos recebidos
+- Painel administrativo para gerenciar usuários, ONGs, pets e métricas
+- Favoritos de pets
+- Feedback após adoção aprovada
 - Contato com ONGs por WhatsApp
+- Informações de apoio/doação por chave Pix ou link externo
 - Métricas de impacto calculadas a partir do banco e ajustáveis pelo administrador
-
-### Em desenvolvimento
-
-- Registro e confirmação de doações dentro da plataforma
-- Cobertura de testes automatizados
-- Migrações versionadas do banco de dados
-- Validações e configurações de segurança para produção
-- Revisão e sincronização do script de seed e do schema SQL de referência
+- Script de seed para recriar uma base demonstrativa
 
 ## Tecnologias
 
@@ -68,17 +68,39 @@ python app.py
 
 Acesse `http://127.0.0.1:5000` no navegador.
 
-O banco usado pela aplicação fica em `instance/petadopt.db`. As tabelas necessárias são criadas automaticamente pelo SQLAlchemy quando os fluxos que acessam o banco são executados.
+O banco usado pela aplicação fica em `instance/petadopt.db`.
 
-> O arquivo `seed.py` ainda precisa ser atualizado para acompanhar os modelos atuais. Ele apaga e recria as tabelas, portanto não deve ser executado sobre dados importantes.
+### 4. Popular dados de exemplo
+
+Opcionalmente, execute:
+
+```powershell
+python seed.py
+```
+
+O `seed.py` apaga e recria as tabelas antes de inserir dados demonstrativos. Não execute esse comando sobre uma base com dados importantes.
+
+### Acessos de demonstração
+
+Quando a base for recriada pelo `seed.py`, é possível acessar o sistema com os seguintes usuários:
+
+|    Perfil     |         E-mail        |   Senha   |
+|      ---      |          ---          |    ---    |
+| Administrador | `admin@petadopt.com`  | `123456`  |
+| Usuário       | `maria@email.com`     | `123456`  |
+| Usuário       | `carlos@email.com`    | `123456`  |
+| ONG           | `ong1@petadopt.com`   | `123456`  |
+| ONG           | `ong2@petadopt.com`   | `123456`  |
+| ONG           | `ong3@petadopt.com`   | `123456`  |
+| ONG           | `ong4@petadopt.com`   | `123456`  |
 
 ## Perfis e permissões
 
 | Perfil | Principais ações |
 |---|---|
-| Usuário | Buscar pets, solicitar adoção e acompanhar solicitações |
-| ONG | Editar o perfil da ONG, cadastrar pets e gerenciar pedidos de adoção |
-| Administrador | Moderar pets e ONGs, editar cadastros e gerenciar métricas da plataforma |
+| Usuário | Buscar pets, favoritar, solicitar adoção, cancelar pedidos e enviar feedback após adoção aprovada |
+| ONG | Editar o perfil da ONG, cadastrar pets e gerenciar pedidos de adoção recebidos |
+| Administrador | Moderar pets e ONGs, gerenciar usuários, editar cadastros e ajustar métricas da plataforma |
 
 Novas contas de ONG ficam pendentes até a aprovação de um administrador. Pets recém-cadastrados também entram com status de moderação pendente e só aparecem publicamente após aprovação.
 
@@ -96,23 +118,25 @@ Novas contas de ONG ficam pendentes até a aprovação de um administrador. Pets
 | `/dashboard` | Painel do usuário ou administrador |
 | `/dashboard-ong` | Painel exclusivo da ONG |
 | `/new-pet` | Cadastro de pet |
+| `/pet-submitted` | Confirmação de envio do pet para análise |
 | `/sobre` | Informações sobre o projeto |
 
-O backend também disponibiliza endpoints JSON sob `/api`, usados pelas páginas para consultar e alterar pets, ONGs, solicitações, perfis e dados de moderação.
+O backend também disponibiliza endpoints JSON sob `/api`, usados pelas páginas para consultar e alterar pets, ONGs, usuários, favoritos, feedbacks, solicitações, perfis e dados de moderação.
 
 ## Estrutura do projeto
 
 ```text
 ProjetoExt/
 |-- app.py                  # Aplicação Flask, modelos e rotas
-|-- requirements.txt       # Dependências Python
-|-- seed.py                 # Carga inicial em revisão
-|-- petadopt_schema.sql     # Referência histórica de schema MySQL
+|-- requirements.txt        # Dependências Python
+|-- seed.py                 # Carga demonstrativa de dados
+|-- petadopt_schema.sql     # Referência histórica de schema SQL
 |-- instance/
 |   `-- petadopt.db         # Banco SQLite usado pela aplicação
 |-- templates/              # Templates Jinja2/HTML
 |-- static/
 |   |-- css/                # Estilos das páginas
+|   |-- images/             # Imagens estáticas e diagrama ER
 |   |-- js/                 # Interações e consumo da API
 |   `-- uploads/            # Imagens enviadas pelos usuários
 `-- README.md
@@ -120,7 +144,7 @@ ProjetoExt/
 
 ## Banco de dados
 
-Os modelos ativos estão definidos em `app.py` e utilizam SQLite por meio do Flask-SQLAlchemy. Atualmente, as principais entidades são:
+Os modelos ativos estão definidos em `app.py` e utilizam SQLite por meio do Flask-SQLAlchemy. As principais entidades atuais são:
 
 - `Usuario`
 - `Ong`
@@ -130,25 +154,16 @@ Os modelos ativos estão definidos em `app.py` e utilizam SQLite por meio do Fla
 - `Feedback`
 - `SiteImpactConfig`
 
-O arquivo `petadopt_schema.sql` descreve uma proposta anterior para MySQL/MariaDB e não corresponde integralmente à implementação atual. Para alterações no banco, a fonte de verdade desta fase são os modelos declarados em `app.py`.
+O arquivo `petadopt_schema.sql` funciona como referência histórica do modelo, mas a fonte de verdade da aplicação atual são os modelos declarados em `app.py`.
 
-## Observações de desenvolvimento
+## Observações
 
-- A aplicação está configurada com `debug=True` e não deve ser publicada assim.
-- A chave secreta está fixa no código e deverá ser movida para uma variável de ambiente.
+- O projeto foi configurado para execução local em contexto acadêmico.
+- A aplicação utiliza `debug=True` durante o desenvolvimento e apresentação.
+- A chave secreta está fixa no código para simplificar a execução local.
 - Os uploads aceitam PNG, JPG, JPEG e WebP, com limite total de 16 MB por requisição.
 - O diretório `static/uploads/` contém arquivos gerados durante o uso da aplicação.
-- Não há suíte de testes automatizados configurada nesta fase.
-- O projeto ainda não possui configuração de deploy ou servidor WSGI de produção.
-
-## Próximos passos
-
-1. Corrigir e alinhar `seed.py`, `requirements.txt` e o schema de referência.
-2. Implementar o registro e a confirmação de doações de forma persistente.
-3. Separar configurações sensíveis em variáveis de ambiente.
-4. Adicionar migrações de banco e testes automatizados.
-5. Preparar a aplicação para deploy e homologação.
 
 ---
 
-Projeto acadêmico de extensão, em desenvolvimento durante 2026.
+Projeto de extensão desenvolvido no 1º Semestre de 2026 por alunos do 3º Período de ADS.
