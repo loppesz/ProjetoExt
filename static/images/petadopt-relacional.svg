@@ -1,0 +1,301 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<svg xmlns="http://www.w3.org/2000/svg" width="1440" height="1480" viewBox="0 0 1440 1480">
+<defs>
+<linearGradient id="header" x1="0" y1="0" x2="0" y2="1"><stop offset="0" stop-color="#a9cee2"/><stop offset="1" stop-color="#82b4d0"/></linearGradient>
+<linearGradient id="index" x1="0" y1="0" x2="0" y2="1"><stop offset="0" stop-color="#d4d4d4"/><stop offset="1" stop-color="#bcbcbc"/></linearGradient>
+<filter id="shadow" x="-10%" y="-10%" width="120%" height="130%"><feDropShadow dx="1" dy="2" stdDeviation="2" flood-color="#607d8b" flood-opacity=".3"/></filter>
+<style>text{font-family:Tahoma,Arial,sans-serif}.table-name{font-family:Georgia,serif;font-size:17px;font-weight:bold;fill:#111}.column{font-size:13px;fill:#111}.type{font-size:12px;fill:#222}.index-label{font-size:13px;font-weight:bold;fill:#fff}.relation{fill:none;stroke:#222;stroke-width:1.35;stroke-dasharray:10 5}.symbol{stroke:#222;stroke-width:1.4;fill:none}</style>
+</defs>
+<rect width="1440" height="1480" fill="#fff"/>
+<path class="relation" d="M 1030 574 H 996 V 199 H 425"/>
+<path class="symbol" d="M 1030 574 l -10 -7 M 1030 574 l -10 7 M 1026 565 V 583"/>
+<path class="symbol" d="M 429 190 V 208 M 434 190 V 208"/>
+<path class="relation" d="M 1030 599 H 996 V 184 H 1405"/>
+<path class="symbol" d="M 1030 599 l -10 -7 M 1030 599 l -10 7 M 1026 590 V 608"/>
+<path class="symbol" d="M 1409 175 V 193 M 1414 175 V 193"/>
+<path class="relation" d="M 520 1224 H 486 V 219 H 910"/>
+<path class="symbol" d="M 520 1224 l -10 -7 M 520 1224 l -10 7 M 516 1215 V 1233"/>
+<path class="symbol" d="M 914 210 V 228 M 919 210 V 228"/>
+<path class="relation" d="M 910 789 H 944 V 234 H 1015"/>
+<path class="symbol" d="M 910 789 l 10 -7 M 910 789 l 10 7 M 914 780 V 798"/>
+<path class="symbol" d="M 1011 225 V 243 M 1006 225 V 243"/>
+<path class="relation" d="M 425 299 H 459 V 309 H 1015"/>
+<path class="symbol" d="M 425 299 l 10 -7 M 425 299 l 10 7 M 429 290 V 308"/>
+<path class="symbol" d="M 1011 300 V 318 M 1006 300 V 318"/>
+<path class="relation" d="M 910 294 H 944 V 109 H 1015"/>
+<path class="symbol" d="M 910 294 l 10 -7 M 910 294 l 10 7 M 914 285 V 303"/>
+<path class="symbol" d="M 1011 100 V 118 M 1006 100 V 118"/>
+<path class="relation" d="M 520 319 H 486 V 174 H 425"/>
+<path class="symbol" d="M 520 319 l -10 -7 M 520 319 l -10 7 M 516 310 V 328"/>
+<path class="symbol" d="M 429 165 V 183 M 434 165 V 183"/>
+<g filter="url(#shadow)">
+<rect x="1030" y="510" width="390" height="157" rx="8" fill="#f8f8f8" stroke="#8b8b8b"/>
+<path d="M 1030 518 Q 1030 510 1038 510 H 1412 Q 1420 510 1420 518 V 544 H 1030 Z" fill="url(#header)"/>
+<rect x="1039" y="519" width="16" height="16" rx="2" fill="#7aa8d6" stroke="#477ba9"/>
+<path d="M 1043 522 V 532 M 1048 522 V 532 M 1052 522 V 532" stroke="#dcecff"/>
+<text x="1061" y="533" class="table-name">favorito</text>
+<path d="M 1398 523 l 9 0 l -4.5 8 z" fill="#65737d"/>
+<rect x="1030" y="544" width="390" height="92" fill="#fff"/>
+<circle cx="1045" cy="556" r="4" fill="#f2c500"/><path d="M 1045 559 v 8 m 0 -4 h 5 m -5 3 h 4" stroke="#b58c00" stroke-width="1.4"/>
+<text x="1058" y="561" class="column">id</text>
+<text x="1247" y="561" class="type">INTEGER</text>
+<rect x="1041" y="575" width="8" height="8" transform="rotate(45 1045 579)" fill="#ef9d91" stroke="#6fa5a7" stroke-width=".7"/>
+<text x="1058" y="584" class="column">usuario_id</text>
+<text x="1247" y="584" class="type">INTEGER</text>
+<rect x="1041" y="598" width="8" height="8" transform="rotate(45 1045 602)" fill="#ef9d91" stroke="#6fa5a7" stroke-width=".7"/>
+<text x="1058" y="607" class="column">pet_id</text>
+<text x="1247" y="607" class="type">INTEGER</text>
+<rect x="1041" y="621" width="8" height="8" transform="rotate(45 1045 625)" fill="#8ed7db" stroke="#6fa5a7" stroke-width=".7"/>
+<text x="1058" y="630" class="column">criado_em</text>
+<text x="1247" y="630" class="type">DATETIME</text>
+<rect x="1030" y="636" width="390" height="31" rx="0" fill="url(#index)"/>
+<text x="1040" y="657" class="index-label">Indexes</text>
+<path d="M 1397 646 l 0 12 l 9 -6 z" fill="#777"/>
+</g>
+<g filter="url(#shadow)">
+<rect x="520" y="1110" width="390" height="180" rx="8" fill="#f8f8f8" stroke="#8b8b8b"/>
+<path d="M 520 1118 Q 520 1110 528 1110 H 902 Q 910 1110 910 1118 V 1144 H 520 Z" fill="url(#header)"/>
+<rect x="529" y="1119" width="16" height="16" rx="2" fill="#7aa8d6" stroke="#477ba9"/>
+<path d="M 533 1122 V 1132 M 538 1122 V 1132 M 542 1122 V 1132" stroke="#dcecff"/>
+<text x="551" y="1133" class="table-name">feedback</text>
+<path d="M 888 1123 l 9 0 l -4.5 8 z" fill="#65737d"/>
+<rect x="520" y="1144" width="390" height="115" fill="#fff"/>
+<circle cx="535" cy="1156" r="4" fill="#f2c500"/><path d="M 535 1159 v 8 m 0 -4 h 5 m -5 3 h 4" stroke="#b58c00" stroke-width="1.4"/>
+<text x="548" y="1161" class="column">id</text>
+<text x="737" y="1161" class="type">INTEGER</text>
+<rect x="531" y="1175" width="8" height="8" transform="rotate(45 535 1179)" fill="#ef9d91" stroke="#6fa5a7" stroke-width=".7"/>
+<text x="548" y="1184" class="column">solicitacao_id</text>
+<text x="737" y="1184" class="type">INTEGER</text>
+<rect x="531" y="1198" width="8" height="8" transform="rotate(45 535 1202)" fill="#8ed7db" stroke="#6fa5a7" stroke-width=".7"/>
+<text x="548" y="1207" class="column">mensagem</text>
+<text x="737" y="1207" class="type">TEXT</text>
+<rect x="531" y="1221" width="8" height="8" transform="rotate(45 535 1225)" fill="#8ed7db" stroke="#6fa5a7" stroke-width=".7"/>
+<text x="548" y="1230" class="column">nota</text>
+<text x="737" y="1230" class="type">INTEGER</text>
+<rect x="531" y="1244" width="8" height="8" transform="rotate(45 535 1248)" fill="#8ed7db" stroke="#6fa5a7" stroke-width=".7"/>
+<text x="548" y="1253" class="column">criado_em</text>
+<text x="737" y="1253" class="type">DATETIME</text>
+<rect x="520" y="1259" width="390" height="31" rx="0" fill="url(#index)"/>
+<text x="530" y="1280" class="index-label">Indexes</text>
+<path d="M 887 1269 l 0 12 l 9 -6 z" fill="#777"/>
+</g>
+<g filter="url(#shadow)">
+<rect x="520" y="650" width="390" height="410" rx="8" fill="#f8f8f8" stroke="#8b8b8b"/>
+<path d="M 520 658 Q 520 650 528 650 H 902 Q 910 650 910 658 V 684 H 520 Z" fill="url(#header)"/>
+<rect x="529" y="659" width="16" height="16" rx="2" fill="#7aa8d6" stroke="#477ba9"/>
+<path d="M 533 662 V 672 M 538 662 V 672 M 542 662 V 672" stroke="#dcecff"/>
+<text x="551" y="673" class="table-name">ong</text>
+<path d="M 888 663 l 9 0 l -4.5 8 z" fill="#65737d"/>
+<rect x="520" y="684" width="390" height="345" fill="#fff"/>
+<circle cx="535" cy="696" r="4" fill="#f2c500"/><path d="M 535 699 v 8 m 0 -4 h 5 m -5 3 h 4" stroke="#b58c00" stroke-width="1.4"/>
+<text x="548" y="701" class="column">id</text>
+<text x="737" y="701" class="type">INTEGER</text>
+<rect x="531" y="715" width="8" height="8" transform="rotate(45 535 719)" fill="#ef9d91" stroke="#6fa5a7" stroke-width=".7"/>
+<text x="548" y="724" class="column">usuario_id</text>
+<text x="737" y="724" class="type">INTEGER</text>
+<rect x="531" y="738" width="8" height="8" transform="rotate(45 535 742)" fill="#8ed7db" stroke="#6fa5a7" stroke-width=".7"/>
+<text x="548" y="747" class="column">nome</text>
+<text x="737" y="747" class="type">VARCHAR(120)</text>
+<rect x="531" y="761" width="8" height="8" transform="rotate(45 535 765)" fill="#8ed7db" stroke="#6fa5a7" stroke-width=".7"/>
+<text x="548" y="770" class="column">descricao</text>
+<text x="737" y="770" class="type">VARCHAR(255)</text>
+<rect x="531" y="784" width="8" height="8" transform="rotate(45 535 788)" fill="#8ed7db" stroke="#6fa5a7" stroke-width=".7"/>
+<text x="548" y="793" class="column">descricao_completa</text>
+<text x="737" y="793" class="type">TEXT</text>
+<rect x="531" y="807" width="8" height="8" transform="rotate(45 535 811)" fill="#8ed7db" stroke="#6fa5a7" stroke-width=".7"/>
+<text x="548" y="816" class="column">cidade</text>
+<text x="737" y="816" class="type">VARCHAR(100)</text>
+<rect x="531" y="830" width="8" height="8" transform="rotate(45 535 834)" fill="#8ed7db" stroke="#6fa5a7" stroke-width=".7"/>
+<text x="548" y="839" class="column">estado</text>
+<text x="737" y="839" class="type">VARCHAR(2)</text>
+<rect x="531" y="853" width="8" height="8" transform="rotate(45 535 857)" fill="#8ed7db" stroke="#6fa5a7" stroke-width=".7"/>
+<text x="548" y="862" class="column">whatsapp</text>
+<text x="737" y="862" class="type">VARCHAR(20)</text>
+<rect x="531" y="876" width="8" height="8" transform="rotate(45 535 880)" fill="#8ed7db" stroke="#6fa5a7" stroke-width=".7"/>
+<text x="548" y="885" class="column">chave_pix</text>
+<text x="737" y="885" class="type">VARCHAR(120)</text>
+<rect x="531" y="899" width="8" height="8" transform="rotate(45 535 903)" fill="#8ed7db" stroke="#6fa5a7" stroke-width=".7"/>
+<text x="548" y="908" class="column">link_vakinha</text>
+<text x="737" y="908" class="type">VARCHAR(255)</text>
+<rect x="531" y="922" width="8" height="8" transform="rotate(45 535 926)" fill="#8ed7db" stroke="#6fa5a7" stroke-width=".7"/>
+<text x="548" y="931" class="column">foto_url</text>
+<text x="737" y="931" class="type">VARCHAR(255)</text>
+<rect x="531" y="945" width="8" height="8" transform="rotate(45 535 949)" fill="#8ed7db" stroke="#6fa5a7" stroke-width=".7"/>
+<text x="548" y="954" class="column">status</text>
+<text x="737" y="954" class="type">VARCHAR(20)</text>
+<rect x="531" y="968" width="8" height="8" transform="rotate(45 535 972)" fill="#8ed7db" stroke="#6fa5a7" stroke-width=".7"/>
+<text x="548" y="977" class="column">pets_count</text>
+<text x="737" y="977" class="type">INTEGER</text>
+<rect x="531" y="991" width="8" height="8" transform="rotate(45 535 995)" fill="#8ed7db" stroke="#6fa5a7" stroke-width=".7"/>
+<text x="548" y="1000" class="column">adopted_count</text>
+<text x="737" y="1000" class="type">INTEGER</text>
+<rect x="531" y="1014" width="8" height="8" transform="rotate(45 535 1018)" fill="#8ed7db" stroke="#6fa5a7" stroke-width=".7"/>
+<text x="548" y="1023" class="column">donations_count</text>
+<text x="737" y="1023" class="type">FLOAT</text>
+<rect x="520" y="1029" width="390" height="31" rx="0" fill="url(#index)"/>
+<text x="530" y="1050" class="index-label">Indexes</text>
+<path d="M 887 1039 l 0 12 l 9 -6 z" fill="#777"/>
+</g>
+<g filter="url(#shadow)">
+<rect x="35" y="85" width="390" height="502" rx="8" fill="#f8f8f8" stroke="#8b8b8b"/>
+<path d="M 35 93 Q 35 85 43 85 H 417 Q 425 85 425 93 V 119 H 35 Z" fill="url(#header)"/>
+<rect x="44" y="94" width="16" height="16" rx="2" fill="#7aa8d6" stroke="#477ba9"/>
+<path d="M 48 97 V 107 M 53 97 V 107 M 57 97 V 107" stroke="#dcecff"/>
+<text x="66" y="108" class="table-name">pet</text>
+<path d="M 403 98 l 9 0 l -4.5 8 z" fill="#65737d"/>
+<rect x="35" y="119" width="390" height="437" fill="#fff"/>
+<circle cx="50" cy="131" r="4" fill="#f2c500"/><path d="M 50 134 v 8 m 0 -4 h 5 m -5 3 h 4" stroke="#b58c00" stroke-width="1.4"/>
+<text x="63" y="136" class="column">id</text>
+<text x="252" y="136" class="type">INTEGER</text>
+<rect x="46" y="150" width="8" height="8" transform="rotate(45 50 154)" fill="#ef9d91" stroke="#6fa5a7" stroke-width=".7"/>
+<text x="63" y="159" class="column">usuario_id</text>
+<text x="252" y="159" class="type">INTEGER</text>
+<rect x="46" y="173" width="8" height="8" transform="rotate(45 50 177)" fill="#8ed7db" stroke="#6fa5a7" stroke-width=".7"/>
+<text x="63" y="182" class="column">nome</text>
+<text x="252" y="182" class="type">VARCHAR(80)</text>
+<rect x="46" y="196" width="8" height="8" transform="rotate(45 50 200)" fill="#8ed7db" stroke="#6fa5a7" stroke-width=".7"/>
+<text x="63" y="205" class="column">especie</text>
+<text x="252" y="205" class="type">VARCHAR(20)</text>
+<rect x="46" y="219" width="8" height="8" transform="rotate(45 50 223)" fill="#8ed7db" stroke="#6fa5a7" stroke-width=".7"/>
+<text x="63" y="228" class="column">raca</text>
+<text x="252" y="228" class="type">VARCHAR(80)</text>
+<rect x="46" y="242" width="8" height="8" transform="rotate(45 50 246)" fill="#8ed7db" stroke="#6fa5a7" stroke-width=".7"/>
+<text x="63" y="251" class="column">porte</text>
+<text x="252" y="251" class="type">VARCHAR(20)</text>
+<rect x="46" y="265" width="8" height="8" transform="rotate(45 50 269)" fill="#8ed7db" stroke="#6fa5a7" stroke-width=".7"/>
+<text x="63" y="274" class="column">sexo</text>
+<text x="252" y="274" class="type">VARCHAR(20)</text>
+<rect x="46" y="288" width="8" height="8" transform="rotate(45 50 292)" fill="#8ed7db" stroke="#6fa5a7" stroke-width=".7"/>
+<text x="63" y="297" class="column">idade_anos</text>
+<text x="252" y="297" class="type">INTEGER</text>
+<rect x="46" y="311" width="8" height="8" transform="rotate(45 50 315)" fill="#8ed7db" stroke="#6fa5a7" stroke-width=".7"/>
+<text x="63" y="320" class="column">idade_meses</text>
+<text x="252" y="320" class="type">INTEGER</text>
+<rect x="46" y="334" width="8" height="8" transform="rotate(45 50 338)" fill="#8ed7db" stroke="#6fa5a7" stroke-width=".7"/>
+<text x="63" y="343" class="column">cor</text>
+<text x="252" y="343" class="type">VARCHAR(80)</text>
+<rect x="46" y="357" width="8" height="8" transform="rotate(45 50 361)" fill="#8ed7db" stroke="#6fa5a7" stroke-width=".7"/>
+<text x="63" y="366" class="column">vacinado</text>
+<text x="252" y="366" class="type">BOOLEAN</text>
+<rect x="46" y="380" width="8" height="8" transform="rotate(45 50 384)" fill="#8ed7db" stroke="#6fa5a7" stroke-width=".7"/>
+<text x="63" y="389" class="column">castrado</text>
+<text x="252" y="389" class="type">BOOLEAN</text>
+<rect x="46" y="403" width="8" height="8" transform="rotate(45 50 407)" fill="#8ed7db" stroke="#6fa5a7" stroke-width=".7"/>
+<text x="63" y="412" class="column">descricao</text>
+<text x="252" y="412" class="type">TEXT</text>
+<rect x="46" y="426" width="8" height="8" transform="rotate(45 50 430)" fill="#8ed7db" stroke="#6fa5a7" stroke-width=".7"/>
+<text x="63" y="435" class="column">cidade</text>
+<text x="252" y="435" class="type">VARCHAR(100)</text>
+<rect x="46" y="449" width="8" height="8" transform="rotate(45 50 453)" fill="#8ed7db" stroke="#6fa5a7" stroke-width=".7"/>
+<text x="63" y="458" class="column">estado</text>
+<text x="252" y="458" class="type">VARCHAR(2)</text>
+<rect x="46" y="472" width="8" height="8" transform="rotate(45 50 476)" fill="#8ed7db" stroke="#6fa5a7" stroke-width=".7"/>
+<text x="63" y="481" class="column">status</text>
+<text x="252" y="481" class="type">VARCHAR(20)</text>
+<rect x="46" y="495" width="8" height="8" transform="rotate(45 50 499)" fill="#8ed7db" stroke="#6fa5a7" stroke-width=".7"/>
+<text x="63" y="504" class="column">mod_status</text>
+<text x="252" y="504" class="type">VARCHAR(20)</text>
+<rect x="46" y="518" width="8" height="8" transform="rotate(45 50 522)" fill="#8ed7db" stroke="#6fa5a7" stroke-width=".7"/>
+<text x="63" y="527" class="column">foto_capa</text>
+<text x="252" y="527" class="type">VARCHAR(255)</text>
+<rect x="46" y="541" width="8" height="8" transform="rotate(45 50 545)" fill="#8ed7db" stroke="#6fa5a7" stroke-width=".7"/>
+<text x="63" y="550" class="column">criado_em</text>
+<text x="252" y="550" class="type">DATETIME</text>
+<rect x="35" y="556" width="390" height="31" rx="0" fill="url(#index)"/>
+<text x="45" y="577" class="index-label">Indexes</text>
+<path d="M 402 566 l 0 12 l 9 -6 z" fill="#777"/>
+</g>
+<g filter="url(#shadow)">
+<rect x="35" y="1110" width="390" height="180" rx="8" fill="#f8f8f8" stroke="#8b8b8b"/>
+<path d="M 35 1118 Q 35 1110 43 1110 H 417 Q 425 1110 425 1118 V 1144 H 35 Z" fill="url(#header)"/>
+<rect x="44" y="1119" width="16" height="16" rx="2" fill="#7aa8d6" stroke="#477ba9"/>
+<path d="M 48 1122 V 1132 M 53 1122 V 1132 M 57 1122 V 1132" stroke="#dcecff"/>
+<text x="66" y="1133" class="table-name">site_impact_config</text>
+<path d="M 403 1123 l 9 0 l -4.5 8 z" fill="#65737d"/>
+<rect x="35" y="1144" width="390" height="115" fill="#fff"/>
+<circle cx="50" cy="1156" r="4" fill="#f2c500"/><path d="M 50 1159 v 8 m 0 -4 h 5 m -5 3 h 4" stroke="#b58c00" stroke-width="1.4"/>
+<text x="63" y="1161" class="column">id</text>
+<text x="252" y="1161" class="type">INTEGER</text>
+<rect x="46" y="1175" width="8" height="8" transform="rotate(45 50 1179)" fill="#8ed7db" stroke="#6fa5a7" stroke-width=".7"/>
+<text x="63" y="1184" class="column">pets_offset</text>
+<text x="252" y="1184" class="type">INTEGER</text>
+<rect x="46" y="1198" width="8" height="8" transform="rotate(45 50 1202)" fill="#8ed7db" stroke="#6fa5a7" stroke-width=".7"/>
+<text x="63" y="1207" class="column">adoptions_offset</text>
+<text x="252" y="1207" class="type">INTEGER</text>
+<rect x="46" y="1221" width="8" height="8" transform="rotate(45 50 1225)" fill="#8ed7db" stroke="#6fa5a7" stroke-width=".7"/>
+<text x="63" y="1230" class="column">cities_offset</text>
+<text x="252" y="1230" class="type">INTEGER</text>
+<rect x="46" y="1244" width="8" height="8" transform="rotate(45 50 1248)" fill="#8ed7db" stroke="#6fa5a7" stroke-width=".7"/>
+<text x="63" y="1253" class="column">show_trust</text>
+<text x="252" y="1253" class="type">BOOLEAN</text>
+<rect x="35" y="1259" width="390" height="31" rx="0" fill="url(#index)"/>
+<text x="45" y="1280" class="index-label">Indexes</text>
+<path d="M 402 1269 l 0 12 l 9 -6 z" fill="#777"/>
+</g>
+<g filter="url(#shadow)">
+<rect x="520" y="55" width="390" height="203" rx="8" fill="#f8f8f8" stroke="#8b8b8b"/>
+<path d="M 520 63 Q 520 55 528 55 H 902 Q 910 55 910 63 V 89 H 520 Z" fill="url(#header)"/>
+<rect x="529" y="64" width="16" height="16" rx="2" fill="#7aa8d6" stroke="#477ba9"/>
+<path d="M 533 67 V 77 M 538 67 V 77 M 542 67 V 77" stroke="#dcecff"/>
+<text x="551" y="78" class="table-name">solicitacao_adocao</text>
+<path d="M 888 68 l 9 0 l -4.5 8 z" fill="#65737d"/>
+<rect x="520" y="89" width="390" height="138" fill="#fff"/>
+<circle cx="535" cy="101" r="4" fill="#f2c500"/><path d="M 535 104 v 8 m 0 -4 h 5 m -5 3 h 4" stroke="#b58c00" stroke-width="1.4"/>
+<text x="548" y="106" class="column">id</text>
+<text x="737" y="106" class="type">INTEGER</text>
+<rect x="531" y="120" width="8" height="8" transform="rotate(45 535 124)" fill="#ef9d91" stroke="#6fa5a7" stroke-width=".7"/>
+<text x="548" y="129" class="column">pet_id</text>
+<text x="737" y="129" class="type">INTEGER</text>
+<rect x="531" y="143" width="8" height="8" transform="rotate(45 535 147)" fill="#ef9d91" stroke="#6fa5a7" stroke-width=".7"/>
+<text x="548" y="152" class="column">solicitante_id</text>
+<text x="737" y="152" class="type">INTEGER</text>
+<rect x="531" y="166" width="8" height="8" transform="rotate(45 535 170)" fill="#8ed7db" stroke="#6fa5a7" stroke-width=".7"/>
+<text x="548" y="175" class="column">mensagem</text>
+<text x="737" y="175" class="type">TEXT</text>
+<rect x="531" y="189" width="8" height="8" transform="rotate(45 535 193)" fill="#8ed7db" stroke="#6fa5a7" stroke-width=".7"/>
+<text x="548" y="198" class="column">status</text>
+<text x="737" y="198" class="type">VARCHAR(20)</text>
+<rect x="531" y="212" width="8" height="8" transform="rotate(45 535 216)" fill="#8ed7db" stroke="#6fa5a7" stroke-width=".7"/>
+<text x="548" y="221" class="column">criado_em</text>
+<text x="737" y="221" class="type">DATETIME</text>
+<rect x="520" y="227" width="390" height="31" rx="0" fill="url(#index)"/>
+<text x="530" y="248" class="index-label">Indexes</text>
+<path d="M 887 237 l 0 12 l 9 -6 z" fill="#777"/>
+</g>
+<g filter="url(#shadow)">
+<rect x="1015" y="45" width="390" height="249" rx="8" fill="#f8f8f8" stroke="#8b8b8b"/>
+<path d="M 1015 53 Q 1015 45 1023 45 H 1397 Q 1405 45 1405 53 V 79 H 1015 Z" fill="url(#header)"/>
+<rect x="1024" y="54" width="16" height="16" rx="2" fill="#7aa8d6" stroke="#477ba9"/>
+<path d="M 1028 57 V 67 M 1033 57 V 67 M 1037 57 V 67" stroke="#dcecff"/>
+<text x="1046" y="68" class="table-name">usuario</text>
+<path d="M 1383 58 l 9 0 l -4.5 8 z" fill="#65737d"/>
+<rect x="1015" y="79" width="390" height="184" fill="#fff"/>
+<circle cx="1030" cy="91" r="4" fill="#f2c500"/><path d="M 1030 94 v 8 m 0 -4 h 5 m -5 3 h 4" stroke="#b58c00" stroke-width="1.4"/>
+<text x="1043" y="96" class="column">id</text>
+<text x="1232" y="96" class="type">INTEGER</text>
+<rect x="1026" y="110" width="8" height="8" transform="rotate(45 1030 114)" fill="#8ed7db" stroke="#6fa5a7" stroke-width=".7"/>
+<text x="1043" y="119" class="column">name</text>
+<text x="1232" y="119" class="type">VARCHAR(120)</text>
+<rect x="1026" y="133" width="8" height="8" transform="rotate(45 1030 137)" fill="#8ed7db" stroke="#6fa5a7" stroke-width=".7"/>
+<text x="1043" y="142" class="column">email</text>
+<text x="1232" y="142" class="type">VARCHAR(120)</text>
+<rect x="1026" y="156" width="8" height="8" transform="rotate(45 1030 160)" fill="#8ed7db" stroke="#6fa5a7" stroke-width=".7"/>
+<text x="1043" y="165" class="column">senha_hash</text>
+<text x="1232" y="165" class="type">VARCHAR(256)</text>
+<rect x="1026" y="179" width="8" height="8" transform="rotate(45 1030 183)" fill="#8ed7db" stroke="#6fa5a7" stroke-width=".7"/>
+<text x="1043" y="188" class="column">role</text>
+<text x="1232" y="188" class="type">VARCHAR(20)</text>
+<rect x="1026" y="202" width="8" height="8" transform="rotate(45 1030 206)" fill="#8ed7db" stroke="#6fa5a7" stroke-width=".7"/>
+<text x="1043" y="211" class="column">telefone</text>
+<text x="1232" y="211" class="type">VARCHAR(20)</text>
+<rect x="1026" y="225" width="8" height="8" transform="rotate(45 1030 229)" fill="#8ed7db" stroke="#6fa5a7" stroke-width=".7"/>
+<text x="1043" y="234" class="column">cidade</text>
+<text x="1232" y="234" class="type">VARCHAR(100)</text>
+<rect x="1026" y="248" width="8" height="8" transform="rotate(45 1030 252)" fill="#8ed7db" stroke="#6fa5a7" stroke-width=".7"/>
+<text x="1043" y="257" class="column">estado</text>
+<text x="1232" y="257" class="type">VARCHAR(2)</text>
+<rect x="1015" y="263" width="390" height="31" rx="0" fill="url(#index)"/>
+<text x="1025" y="284" class="index-label">Indexes</text>
+<path d="M 1382 273 l 0 12 l 9 -6 z" fill="#777"/>
+</g>
+</svg>
